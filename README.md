@@ -10,12 +10,15 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 
 - **Spieler erstellen:** Name, Nationalität, Position und Rückennummer wählen.
 - **Nachwuchsleistungszentrum:** Drei Vereine bieten dir einen Platz in ihrer U19 an.
-- **Saison:** Jede Saison besteht aus vier Stationen:
-  - **Ereignisse** mit Entscheidungen (Verletzungen, Partys, Interviews, Konkurrenz, Kapitänsbinde …)
-  - **Schlüsselszenen** in Topspielen, die du selbst entscheidest (Schuss, Pass, Dribbling, Grätsche, Elfmeter halten …)
+- **Trainingsschwerpunkt:** Vor jeder Saison wählst du Abschluss, Athletik, Technik, Taktik oder Regeneration.
+- **Saison:** Jede Saison besteht aus sechs Stationen:
+  - **Ereignisse** mit Entscheidungen – über 40 verschiedene (Verletzungen, Partys, Interviews, Trainerwechsel, Liebe und Hochzeit, Heimweh, Investments …)
+  - **Schlüsselszenen** in Liga, Pokal und Europapokal, die du selbst entscheidest (Schuss, Freistoß, Elfmeter schießen, Kopfball, Grätsche, Elfmeter halten, Flanken abfangen …)
 - **Saisonbilanz:** Spiele, Tore, Vorlagen, Durchschnittsnote, Tabelle, Pokal, Champions League / Europa League und Auszeichnungen (Torjägerkanone, Goldener Schuh, Golden Boy, Ballon d'Or …).
 - **Nationalmannschaft:** WM und EM (bzw. Copa América, Afrika-Cup …) alle zwei Jahre.
-- **Transferfenster:** Wechsel, Leihen, Vertragsverlängerung oder Gehaltserhöhung fordern. Ab 33 kannst du deine Karriere beenden.
+- **Transferfenster:** Wechsel, Leihen, Vertragsverlängerung, Gehaltserhöhung fordern oder einen Topberater engagieren. Ab 33 kannst du deine Karriere beenden.
+- **Privatleben:** Partner, Hochzeit und Kinder.
+- **Nach der Karriere:** Trainer, TV-Experte, Sportdirektor oder Ruhestand.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen

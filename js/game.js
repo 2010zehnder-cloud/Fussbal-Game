@@ -152,19 +152,46 @@ function roleFor(rating, str, trust) {
   return d >= -2 ? 'Stammspieler' : d >= -8 ? 'Rotation' : 'Ergänzungsspieler';
 }
 
+// ---------- Trainingsschwerpunkt ----------
+const FOCUS = {
+  balanced: { name: 'Ausgewogen', desc: 'Kein besonderer Schwerpunkt.' },
+  shooting: { name: 'Abschluss', gkName: 'Reflexe', desc: 'Mehr Tore und Vorlagen.', gkDesc: 'Mehr Spiele ohne Gegentor.' },
+  athletic: { name: 'Athletik', desc: 'Dein Verletzungsrisiko sinkt deutlich.' },
+  technique: { name: 'Technik', desc: 'Du entwickelst dich schneller.' },
+  tactics: { name: 'Taktik', desc: 'Videoanalyse mit dem Trainer: mehr Vertrauen.' },
+  recovery: { name: 'Regeneration', desc: 'Bessere Form, kürzere Ausfälle.' },
+};
+const focusOf = () => (S.season && S.season.focus) || 'balanced';
+
+// ---------- Privatleben ----------
+const PARTNER_NAMES = ['Lena', 'Sophie', 'Mia', 'Laura', 'Emma', 'Anna', 'Lea', 'Julia', 'Jonas', 'Luca', 'Noah', 'Elias'];
+function life() {
+  if (!S.life) S.life = { partner: null, married: false, kids: 0 };
+  return S.life;
+}
+function lifeText() {
+  const l = life();
+  if (!l.partner) return 'Single';
+  let t = l.married ? `Verheiratet mit ${l.partner}` : `In einer Beziehung mit ${l.partner}`;
+  if (l.kids) t += `, ${l.kids} ${l.kids === 1 ? 'Kind' : 'Kinder'}`;
+  return t;
+}
+
 // ---------- Saisonablauf ----------
 const STEPS = [
   { type: 'event', label: 'August – Saisonstart' },
-  { type: 'match', label: 'Oktober – Topspiel' },
-  { type: 'event', label: 'Januar – Winterpause' },
-  { type: 'match', label: 'April – Saisonendspurt' },
+  { type: 'match', label: 'September – Topspiel' },
+  { type: 'event', label: 'November – Herbst' },
+  { type: 'match', label: 'Dezember – Pokal & Europa' },
+  { type: 'event', label: 'Februar – Rückrunde' },
+  { type: 'match', label: 'Mai – Saisonfinale' },
 ];
 
 function startSeason() {
   const p = S.player;
   const str = clubStr(S.clubId);
   const role = S.youth ? 'U19' : roleFor(p.rating, str, p.trust);
-  S.season = { role, devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
+  S.season = { role, focus: 'balanced', devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
@@ -200,19 +227,146 @@ function setupEvent() {
   S.current.text = ev.text(); // Text einmal festhalten (Zufallswerte stabil)
 }
 
+// Spielszenen je Positionsgruppe. p = Erfolgschance, q = Qualität des Spielers (0–1,2)
+const SCENES = {
+  att: [
+    q => ({
+      situation: 'Du bekommst den Ball 18 Meter vor dem Tor. Ein Verteidiger rückt heraus, links läuft ein Mitspieler frei.',
+      options: [
+        { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal' },
+        { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist' },
+        { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true },
+      ],
+    }),
+    () => ({
+      situation: 'Foul an dir im Strafraum – Elfmeter! Du schnappst dir den Ball. Wohin schießt du?',
+      options: [
+        { label: 'Links unten', kind: 'shoot', dir: 0 },
+        { label: 'Frech in die Mitte', kind: 'shoot', dir: 1 },
+        { label: 'Rechts oben', kind: 'shoot', dir: 2 },
+      ],
+    }),
+    q => ({
+      situation: 'Freistoß aus 20 Metern, halbrechts. Die Mauer steht, der Torwart schreit Kommandos.',
+      options: [
+        { label: 'Über die Mauer zirkeln', p: 0.12 + q * 0.3, kind: 'goal', bonus: true },
+        { label: 'Scharf ins Torwarteck', p: 0.18 + q * 0.25, kind: 'goal' },
+        { label: 'Kurz ablegen', p: 0.35 + q * 0.2, kind: 'assist' },
+      ],
+    }),
+    q => ({
+      situation: 'Flanke von rechts! Du stehst am langen Pfosten, der Verteidiger klebt an dir.',
+      options: [
+        { label: 'Volley nehmen', p: 0.15 + q * 0.3, kind: 'goal', bonus: true },
+        { label: 'Kopfball aufs Tor', p: 0.22 + q * 0.28, kind: 'goal' },
+        { label: 'Quer auf den Mitspieler köpfen', p: 0.3 + q * 0.25, kind: 'assist' },
+      ],
+    }),
+  ],
+  mid: [
+    q => ({
+      situation: 'Ballgewinn im Mittelfeld! Vor dir öffnet sich Raum für einen Konter.',
+      options: [
+        { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist' },
+        { label: 'Selbst durchlaufen und schießen', p: 0.18 + q * 0.28, kind: 'goal' },
+        { label: 'Tempo rausnehmen, Ballbesitz sichern', p: 0.85, kind: 'safe' },
+      ],
+    }),
+    q => ({
+      situation: 'Ein abgewehrter Ball springt dir 25 Meter vor dem Tor vor die Füße.',
+      options: [
+        { label: 'Volley aus der Distanz', p: 0.1 + q * 0.28, kind: 'goal', bonus: true },
+        { label: 'Annehmen und in die Gasse spielen', p: 0.3 + q * 0.25, kind: 'assist' },
+        { label: 'Flanke in den Strafraum', p: 0.25 + q * 0.22, kind: 'assist' },
+      ],
+    }),
+    q => ({
+      situation: 'Freistoß aus 22 Metern, zentral. Alle schauen auf dich.',
+      options: [
+        { label: 'Direkt schießen', p: 0.12 + q * 0.28, kind: 'goal', bonus: true },
+        { label: 'Hoch in den Strafraum flanken', p: 0.28 + q * 0.22, kind: 'assist' },
+        { label: 'Einstudierte Variante spielen', p: 0.2 + q * 0.3, kind: 'assist' },
+      ],
+    }),
+    q => ({
+      situation: 'Der Gegner kontert mit drei gegen zwei. Du sprintest zurück.',
+      options: [
+        { label: 'In den Passweg grätschen', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: 'Pass abgefangen! Du leitest sofort den nächsten Angriff ein.' },
+        { label: 'Den Ballführenden stellen', p: 0.35 + q * 0.3, kind: 'stop', okText: 'Du verzögerst lange genug – die Abwehr ist wieder sortiert.' },
+        { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
+      ],
+    }),
+  ],
+  def: [
+    q => ({
+      situation: 'Der gegnerische Stürmer ist durch und läuft allein auf dich zu. Du bist der letzte Mann!',
+      options: [
+        { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'stop', risky: true },
+        { label: 'Stellung halten und abdrängen', p: 0.4 + q * 0.25, kind: 'stop' },
+        { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
+      ],
+    }),
+    q => ({
+      situation: 'Ecke für euch in der Nachspielzeit! Du gehst mit nach vorne.',
+      options: [
+        { label: 'Kopfball aufs Tor', p: 0.18 + q * 0.25, kind: 'goal', bonus: true },
+        { label: 'Ball für den Mitspieler zurücklegen', p: 0.25 + q * 0.2, kind: 'assist' },
+        { label: 'Hinten bleiben und absichern', p: 0.85, kind: 'safe' },
+      ],
+    }),
+    q => ({
+      situation: 'Gefährliche Flanke von links, der Stürmer steigt hinter dir hoch.',
+      options: [
+        { label: 'Kopfball-Duell annehmen', p: 0.35 + q * 0.35, kind: 'stop', okText: 'Du gewinnst das Luftduell und köpfst den Ball weit weg!' },
+        { label: 'Den Ball ins Aus klären', p: 0.5 + q * 0.25, kind: 'stop', okText: 'Ecke statt Gefahr – das reicht. Ihr übersteht die Situation.' },
+        { label: 'Auf Abseits spekulieren', p: 0.3 + q * 0.2, kind: 'stop', okText: 'Die Fahne geht hoch – Abseits! Genau richtig gelesen.' },
+      ],
+    }),
+  ],
+  gk: [
+    () => ({
+      situation: 'Elfmeter gegen euch! Der Schütze legt sich den Ball zurecht. Wohin springst du?',
+      options: [
+        { label: 'Links', kind: 'save', dir: 0 },
+        { label: 'Mitte', kind: 'save', dir: 1 },
+        { label: 'Rechts', kind: 'save', dir: 2 },
+      ],
+    }),
+    q => ({
+      situation: 'Ein Stürmer läuft allein auf dich zu!',
+      options: [
+        { label: 'Rauslaufen und Winkel verkürzen', p: 0.35 + q * 0.35, kind: 'stop', risky: true, okText: 'Du machst dich riesig und hältst den Ball fest!' },
+        { label: 'Auf der Linie bleiben', p: 0.28 + q * 0.3, kind: 'stop', okText: 'Reflex! Du lenkst den Schuss mit den Fingerspitzen um den Pfosten.' },
+        { label: 'Früh abtauchen', p: 0.25 + q * 0.35, kind: 'stop', okText: 'Du spekulierst richtig und begräbst den Ball unter dir.' },
+      ],
+    }),
+    q => ({
+      situation: 'Hohe Flanke in den Fünfmeterraum, drei Spieler rennen auf den Ball zu.',
+      options: [
+        { label: 'Rauskommen und fangen', p: 0.35 + q * 0.45, kind: 'stop', okText: 'Sicher gefangen – das ganze Stadion atmet auf.' },
+        { label: 'Den Ball wegfausten', p: 0.5 + q * 0.3, kind: 'stop', okText: 'Du faustest den Ball 30 Meter weit aus der Gefahrenzone.' },
+        { label: 'Auf der Linie bleiben', p: 0.3 + q * 0.3, kind: 'stop', okText: 'Der Kopfball kommt – und du reißt die Arme hoch. Gehalten!' },
+      ],
+    }),
+  ],
+};
+
 function setupMatch() {
   const p = S.player, se = S.season;
   const own = S.clubId;
   const L = clubLeague(own);
   let comp = L.name, opp;
-  const second = se.step === 3;
+  const matchNo = STEPS.slice(0, se.step).filter(st => st.type === 'match').length; // 0, 1, 2
   if (S.youth) {
     comp = 'U19-Liga';
     opp = pick(clubsIn(L.id).filter(n => n !== own));
-  } else if (second && S.europe && chance(0.6)) {
+  } else if (matchNo === 1 && S.europe && chance(0.65)) {
     comp = euroName();
     const pool = euroPool(own, S.europe).sort((x, y) => y.str - x.str);
     opp = pick(pool.slice(0, Math.max(3, Math.ceil(pool.length / 3)))).name;
+  } else if (matchNo === 1) {
+    comp = L.cup;
+    opp = pick(Object.keys(S.clubs).filter(n => n !== own && clubLeague(n).country === L.country));
   } else {
     const others = clubsIn(L.id).filter(n => n !== own).sort((a, b) => clubStr(b) - clubStr(a));
     opp = pick(others.slice(0, 6));
@@ -221,41 +375,10 @@ function setupMatch() {
   const minute = randInt(62, 89);
   const a = randInt(0, 2);
   const b = clamp(a + randInt(-1, 1), 0, 3);
-  const group = POSITIONS[p.pos].group;
-  const q = quality();
-  let situation, options;
-  if (group === 'att') {
-    situation = 'Du bekommst den Ball 18 Meter vor dem Tor. Ein Verteidiger rückt heraus, links läuft ein Mitspieler frei.';
-    options = [
-      { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal' },
-      { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist' },
-      { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true },
-    ];
-  } else if (group === 'mid') {
-    situation = 'Ballgewinn im Mittelfeld! Vor dir öffnet sich Raum für einen Konter.';
-    options = [
-      { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist' },
-      { label: 'Selbst durchlaufen und schießen', p: 0.18 + q * 0.28, kind: 'goal' },
-      { label: 'Tempo rausnehmen, Ballbesitz sichern', p: 0.85, kind: 'safe' },
-    ];
-  } else if (group === 'def') {
-    situation = 'Der gegnerische Stürmer ist durch und läuft allein auf dich zu. Du bist der letzte Mann!';
-    options = [
-      { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'tackle', risky: true },
-      { label: 'Stellung halten und abdrängen', p: 0.4 + q * 0.25, kind: 'tackle' },
-      { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
-    ];
-  } else {
-    situation = 'Elfmeter gegen euch! Der Schütze legt sich den Ball zurecht. Wohin springst du?';
-    options = [
-      { label: 'Links', kind: 'save', dir: 0 },
-      { label: 'Mitte', kind: 'save', dir: 1 },
-      { label: 'Rechts', kind: 'save', dir: 2 },
-    ];
-  }
+  const scene = pick(SCENES[POSITIONS[p.pos].group])(quality());
   S.current = {
-    type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, situation,
-    options: options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
+    type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, situation: scene.situation,
+    options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
 }
 
@@ -267,7 +390,12 @@ function quality() {
 function resolveMatch(i) {
   const c = S.current, o = c.options[i], p = S.player;
   let us = c.a, them = c.b, text, eff;
-  if (o.kind === 'save') {
+  if (o.kind === 'shoot') {
+    const keeper = randInt(0, 2);
+    const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
+    if (scored) { us++; text = `TOOOR! Der Torwart springt ${['nach links', 'nicht', 'nach rechts'][keeper]}${keeper === 1 ? ' weg' : ''} – eiskalt verwandelt zum ${us}:${them}. Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
+    else { text = `Der Torwart ahnt die Ecke und hält! Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
+  } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
     const saved = shot === o.dir ? chance(0.55 + quality() * 0.3) : chance(0.04 + quality() * 0.06);
     if (saved) { text = `Gehalten! Du ahnst die Ecke und parierst. Ihr bringt das ${us}:${them} über die Zeit.`; eff = { form: 3, trust: 3, popularity: 5 }; }
@@ -283,10 +411,10 @@ function resolveMatch(i) {
     } else if (o.kind === 'safe') {
       if (ok) { text = `Clever gespielt. Ihr kontrolliert das Spiel. Endstand ${us}:${them}.`; eff = { trust: 2 }; }
       else { them++; text = `Ballverlust im Aufbau – Gegentor! Endstand ${us}:${them}.`; eff = { form: -2, trust: -3 }; }
-    } else if (o.kind === 'tackle') {
-      if (ok) { text = `Ball erobert! Die Fans feiern deine Rettungstat. Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: o.risky ? 5 : 3 }; }
+    } else if (o.kind === 'stop') {
+      if (ok) { text = `${o.okText || 'Ball erobert! Die Fans feiern deine Rettungstat.'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: o.risky ? 5 : 3 }; }
       else if (o.risky && chance(0.35)) { them++; text = `Zu spät! Rote Karte und Elfmeter – ${us}:${them}. Du bist für 3 Spiele gesperrt.`; eff = { form: -3, trust: -5, injuredGames: 3 }; }
-      else { them++; text = `Der Stürmer lässt dich stehen und trifft. Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
+      else { them++; text = `Nicht zu verhindern – der Ball ist drin. Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
     } else {
       if (ok) { text = `Gelbe Karte – aber der Konter ist gestoppt. Endstand ${us}:${them}.`; eff = { trust: 1 }; }
       else { text = `Der Schiri zeigt Rot! Du fliegst vom Platz. Endstand ${us}:${them}.`; eff = { trust: -4, injuredGames: 2 }; }
@@ -343,6 +471,8 @@ function endSeason() {
   const pos = myTable.rows.findIndex(r => r.name === own) + 1;
 
   // Einsätze
+  const focus = focusOf();
+  if (focus === 'recovery') se.injuredGames = Math.round(se.injuredGames * 0.6);
   const avail = Math.max(0, myTable.games - se.injuredGames);
   const trustAdj = (p.trust - 50) / 400;
   let leagueGames = youth ? randInt(20, 28) - Math.min(10, se.injuredGames) : Math.round(avail * clamp(rand(share[0], share[1]) + trustAdj, 0.03, 1));
@@ -361,10 +491,11 @@ function endSeason() {
   const P = POSITIONS[p.pos];
   const refStr = youth ? 58 : str;
   const q = clamp(0.5 + (p.rating - 72) * 0.035 + (p.rating - refStr) * 0.02 + p.form * 0.02, 0.15, 1.8) * ROLE_MIN[se.role];
-  const goals = Math.max(0, Math.round(games * P.goals * q * rand(0.8, 1.2)) + se.extraGoals);
+  const shootF = focus === 'shooting' ? 1.2 : 1;
+  const goals = Math.max(0, Math.round(games * P.goals * q * shootF * rand(0.8, 1.2)) + se.extraGoals);
   const leagueGoals = games ? Math.round(goals * leagueGames / games) : 0;
-  const assists = Math.max(0, Math.round(games * P.assists * q * rand(0.8, 1.2)) + se.extraAssists);
-  const cleanSheets = P.group === 'gk' ? Math.round(games * clamp(0.2 + (refStr - 70) * 0.015 + (p.rating - 70) * 0.006, 0.08, 0.6)) : 0;
+  const assists = Math.max(0, Math.round(games * P.assists * q * (focus === 'shooting' ? 1.1 : 1) * rand(0.8, 1.2)) + se.extraAssists);
+  const cleanSheets = P.group === 'gk' ? Math.round(games * clamp(0.2 + (refStr - 70) * 0.015 + (p.rating - 70) * 0.006 + (focus === 'shooting' ? 0.04 : 0), 0.08, 0.6)) : 0;
   let note = 3.6 - (p.rating - refStr) * 0.04 - (p.rating - 70) * 0.03 - p.form * 0.05;
   note -= games ? ((goals + assists) / games) * 0.6 + (cleanSheets / games) * 0.8 : 0;
   note = clamp(note + gauss() * 0.12, 1.3, 5.0);
@@ -407,7 +538,7 @@ function endSeason() {
     else if (note >= 3.8) p.trust = clamp(p.trust - 8, 0, 100);
     p.popularity = clamp(p.popularity + (3.2 - note) * 4 + res.titles.length * 3, 0, 100);
   }
-  p.trust = Math.round(p.trust + (50 - p.trust) * 0.15);
+  p.trust = Math.round(p.trust + (50 - p.trust) * 0.15 + (focus === 'tactics' ? 6 : 0));
   p.popularity = Math.round(p.popularity);
 
   // Entwicklung
@@ -420,14 +551,14 @@ function endSeason() {
     if (p.rating >= p.potential) g *= 0.15;
     else if (p.rating + g > p.potential) g = p.potential - p.rating + 0.3;
   }
-  g += se.devBonus + rand(-1.2, 1.2) + (note !== null && note < 2.3 ? 0.8 : 0);
+  g += se.devBonus + rand(-1.2, 1.2) + (note !== null && note < 2.3 ? 0.8 : 0) + (focus === 'technique' ? 0.7 : 0);
   if (se.injuredGames > 12) g -= 1;
   p.rating = clamp(p.rating + g, 35, 99);
   S.peak = Math.max(S.peak, Math.round(p.rating));
   res.ratingBefore = Math.round(before);
   res.ratingAfter = Math.round(p.rating);
   p.form = Math.round(p.form * 0.4);
-  p.injuryProne = clamp(p.injuryProne + (a >= 30 ? 1.5 : -0.5), 0, 40);
+  p.injuryProne = clamp(p.injuryProne + (a >= 30 ? 1.5 : -0.5) - (focus === 'athletic' ? 4 : 0), 0, 40);
 
   res.table = myTable.rows.map(r => ({ name: r.name, pts: r.pts }));
   res.scenes = se.scenes.slice();
@@ -455,11 +586,12 @@ function endSeason() {
   const sponsor = youth ? 0 : sponsorIncome();
   const upkeep = SHOP.reduce((sum, it) => sum + ownedCount(it.id) * it.price * it.upkeep, 0);
   const fund = ownedCount('fund') * rand(-0.08, 0.14);
-  const net = (gross + bonusPay + sponsor) * 0.55;
+  const agentFee = S.agent ? gross * 0.1 : 0;
+  const net = (gross + bonusPay + sponsor - agentFee) * 0.55;
   S.money += net - upkeep + fund;
   S.earned += net;
   c.years -= 1;
-  res.finance = { gross, bonusPay, sponsor, net, upkeep, fund, total: net - upkeep + fund };
+  res.finance = { gross, bonusPay, sponsor, agentFee, net, upkeep, fund, total: net - upkeep + fund };
 
   p.age++;
   S.seasonEnd = res;
@@ -595,14 +727,14 @@ function openTransfer() {
   const lo = p.rating - (released ? 22 : 12);
   const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi)
     .sort((a, b) => clubStr(b) - clubStr(a));
-  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) - (p.age >= 33 ? 1 : 0);
+  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) - (p.age >= 33 ? 1 : 0);
   if (released) k = Math.max(k, 2);
   const chosen = [];
   const top = cands.slice(0, Math.max(6, Math.ceil(cands.length / 3)));
   for (const n of shuffle(top)) { if (chosen.length >= k) break; chosen.push(n); }
   const expired = S.contract.years <= 0;
   const newOffer = n => {
-    const sal = salaryFor(p.rating, n, roleFor(p.rating, clubStr(n), 45)) * rand(1, 1.3);
+    const sal = salaryFor(p.rating, n, roleFor(p.rating, clubStr(n), 45)) * rand(1, 1.3) * (S.agent ? 1.15 : 1);
     return {
       club: n, loan: false, salary: sal, years: p.age >= 31 ? randInt(1, 2) : randInt(2, 5),
       // Ablösefrei bei auslaufendem Vertrag – dafür gibt es ein höheres Handgeld
@@ -638,7 +770,10 @@ function openTransfer() {
   const extension = !released && expired
     ? { salary: salaryFor(p.rating, S.clubId, stayRole) * rand(0.95, 1.15), years: p.age >= 31 ? randInt(1, 2) : randInt(2, 4) }
     : null;
-  S.offers = { list: offers, released, msgs, extension, raiseTried: false };
+  // Ein weiterer Interessent, den nur ein Topberater an Land zieht
+  const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
+  const spare = spareClub ? newOffer(spareClub) : null;
+  S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
   S.phase = 'transfer';
 }
 
@@ -658,6 +793,16 @@ function acceptOffer(o) {
   S.offers = null;
   S.year++;
   startSeason();
+}
+
+function hireAgent() {
+  const o = S.offers;
+  S.agent = true;
+  o.list.forEach(of => { if (!of.loan) { of.salary *= 1.15; of.signing *= 1.15; } });
+  if (o.extension) o.extension.salary *= 1.15;
+  if (o.spare) { o.spare.salary *= 1.15; o.spare.signing *= 1.15; o.list.push(o.spare); o.spare = null; }
+  o.list.sort((a, b) => clubStr(b.club) - clubStr(a.club));
+  o.msgs.push('Dein neuer Topberater verhandelt ab sofort für dich: bessere Gehälter und mehr Angebote, dafür 10 % Provision.');
 }
 
 function demandRaise() {
@@ -786,6 +931,7 @@ function renderPlayerCard() {
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
       <p class="mv">Saison ${seasonLabel(S.year)} · Marktwert ${money(marketValue())}</p>
+      <p class="mv">Privat: ${esc(lifeText())}${S.agent ? ' · mit Topberater' : ''}</p>
     </div>
     <div class="wallet">
       <div><span>Vermögen</span><b class="${S.money < 0 ? 'down' : ''}">${money(S.money)}</b></div>
@@ -821,7 +967,16 @@ function renderPreseason() {
       ${S.youth ? '' : `<li><span>Erwartete Platzierung</span><b>${exp}. Platz</b></li>`}
       <li><span>Wettbewerbe</span><b>${comps.map(esc).join(', ')}</b></li>
     </ul>
-    <div class="actions">${btn('Saison starten', () => { nextStep(); render(); }, 'primary')}</div>
+    <h3>Trainingsschwerpunkt</h3>
+    <div class="focus">${Object.entries(FOCUS).map(([k, f]) => {
+      const gk = S.player.pos === 'TW';
+      return btn(`${esc(gk && f.gkName ? f.gkName : f.name)}<small>${esc(gk && f.gkDesc ? f.gkDesc : f.desc)}</small>`,
+        () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
+    }).join('')}</div>
+    <div class="actions">${btn('Saison starten', () => {
+      if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
+      nextStep(); render();
+    }, 'primary')}</div>
   </section>
   ${renderShop()}
   ${renderHistory()}`;
@@ -937,6 +1092,9 @@ function renderTransfer() {
   const raise = !o.released && !ext && !o.raiseTried && fair > c.salary * 1.35
     ? btn(`Gehaltserhöhung fordern<small>ca. ${money(fair)}/Jahr</small>`, () => { demandRaise(); render(); })
     : '';
+  const agentBtn = S.agent
+    ? btn('Berater entlassen<small>keine Provision mehr</small>', () => { S.agent = false; o.msgs.push('Du trennst dich von deinem Berater.'); render(); }, 'small')
+    : btn('Topberater engagieren<small>+15 % Gehalt, mehr Angebote · 10 % Provision</small>', () => { hireAgent(); render(); });
   return `
   <section class="card">
     <h2>Transferfenster – Sommer ${S.year + 1}</h2>
@@ -945,6 +1103,7 @@ function renderTransfer() {
     <div class="actions">
       ${stay}
       ${raise}
+      ${agentBtn}
       ${p.age >= 33 ? btn('Karriere beenden', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
     </div>
   </section>
@@ -961,6 +1120,7 @@ function renderFinance(f) {
       <li><span>Gehalt (brutto)</span><b>${money(f.gross)}</b></li>
       ${f.bonusPay ? `<li><span>Titel- und Erfolgsprämien (brutto)</span><b>${money(f.bonusPay)}</b></li>` : ''}
       ${f.sponsor >= 0.001 ? `<li><span>Werbeverträge (brutto)</span><b>${money(f.sponsor)}</b></li>` : ''}
+      ${f.agentFee ? `<li><span>Beraterprovision (10 %)</span><b class="down">−${money(f.agentFee)}</b></li>` : ''}
       ${row('Nach Steuern (45 %)', f.net, 'up')}
       ${f.upkeep ? row('Unterhalt für Besitz', -f.upkeep, 'down') : ''}
       ${f.fund ? row('Rendite Fonds', f.fund, f.fund >= 0 ? 'up' : 'down') : ''}
@@ -1031,6 +1191,46 @@ function legacy() {
   return ['🙂', 'Wandervogel', 'Nicht jeder wird ein Superstar – aber du hast deinen Traum gelebt.'];
 }
 
+const AFTER_CAREER = {
+  coach: {
+    label: 'Trainer werden', run: () => {
+      const club = pick(S.clubsPlayed);
+      return S.titles.length >= 8
+        ? `Du machst deinen Trainerschein und übernimmst später ${club}. In deiner dritten Saison holst du als Trainer die Meisterschaft!`
+        : chance(0.5)
+          ? `Du wirst Jugendtrainer bei ${club} und bringst drei Spieler in die Nationalmannschaft.`
+          : `Du trainierst ein paar Jahre ${club}, wirst aber nach einer Negativserie entlassen. Heute bist du Co-Trainer und glücklich damit.`;
+    },
+  },
+  tv: {
+    label: 'TV-Experte werden', run: () => S.player.popularity >= 60
+      ? 'Du wirst das Gesicht der Samstagabend-Show. Deine Analysen gehen regelmäßig viral.'
+      : 'Du kommentierst Spiele im Pay-TV. Nicht jeder mag deine Sprüche, aber die Quote stimmt.',
+  },
+  director: {
+    label: 'Sportdirektor werden', run: () => chance(0.55)
+      ? `Als Sportdirektor bei ${pick(S.clubsPlayed)} findest du ein Supertalent für 2 Mio. € und verkaufst es später für 80 Mio. €.`
+      : `Als Sportdirektor bei ${pick(S.clubsPlayed)} verpflichtest du einige Flops. Nach zwei Jahren ist Schluss.`,
+  },
+  beach: {
+    label: 'Ruhestand genießen', run: () => S.money >= 20
+      ? 'Du lebst in deiner Villa am Meer, spielst Golf und besuchst ab und zu deinen alten Verein.'
+      : S.money >= 1
+        ? 'Du ziehst zurück in deine Heimatstadt, eröffnest ein Café und spielst in der Altherrenmannschaft.'
+        : 'Das Geld ist knapp. Du nimmst einen Job als Fußballlehrer an einer Schule an – und merkst, dass dir das richtig Spaß macht.',
+  },
+};
+
+function renderAfterCareer() {
+  if (S.after) return `<section class="card"><h2>Nach der Karriere</h2><p>${esc(S.after)}</p></section>`;
+  return `
+  <section class="card">
+    <h2>Wie geht es weiter?</h2>
+    <p>Die Schuhe hängen am Nagel. Was machst du jetzt?</p>
+    <div class="choices">${Object.values(AFTER_CAREER).map(a => btn(esc(a.label), () => { S.after = a.run(); render(); })).join('')}</div>
+  </section>`;
+}
+
 function renderRetired() {
   const p = S.player, t = totals();
   const [icon, title, text] = legacy();
@@ -1041,6 +1241,7 @@ function renderRetired() {
     <p class="lead">${esc(p.name)} beendet die Karriere mit ${p.age} Jahren. ${esc(S.retireReason || '')}</p>
     <p>${esc(text)}</p>
   </section>
+  ${renderAfterCareer()}
   <section class="card">
     <div class="stats">
       <div><b>${t.seasons}</b><span>Profisaisons</span></div>
@@ -1053,6 +1254,7 @@ function renderRetired() {
       <div><b>${money(S.earned)}</b><span>Netto verdient</span></div>
     </div>
     <p>Vereine: ${S.clubsPlayed.map(esc).join(' → ')}</p>
+    <p>Privat: ${esc(lifeText())}</p>
     <div class="actions">${btn('Neue Karriere starten', () => { deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
   </section>
   ${renderHistory()}`;

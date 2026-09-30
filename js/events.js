@@ -249,7 +249,213 @@ const EVENTS = [
       },
     ],
   },
+  {
+    id: 'penaltyTaker', title: 'Neuer Elfmeterschütze gesucht',
+    cond: () => !S.youth && ['att', 'mid'].includes(POSITIONS[S.player.pos].group),
+    text: () => 'Euer Elfmeterschütze hat dreimal in Folge verschossen. Der Trainer fragt in der Kabine, wer den Job übernimmt.',
+    options: [
+      {
+        label: 'Ich mach das!', run: () => chance(0.35 + quality() * 0.4)
+          ? 'Du verwandelst die nächsten Elfmeter eiskalt. Der Job gehört jetzt dir.' + mod({ goals: randInt(2, 4), trust: 4, popularity: 3 })
+          : 'Gleich beim ersten Versuch hält der Torwart. Das Pfeifkonzert ist laut.' + mod({ form: -2, popularity: -3 }),
+      },
+      { label: 'Soll ein anderer machen', run: () => 'Du hältst dich raus. Ein Mitspieler übernimmt.' + mod({}) },
+    ],
+  },
+  {
+    id: 'coachFired', title: 'Trainer entlassen!',
+    cond: () => !S.youth,
+    text: () => `Nach einer Niederlagenserie trennt sich ${S.clubId} vom Trainer. Der Neue kennt dich noch nicht.`,
+    options: [
+      { label: 'Im ersten Training Vollgas geben', run: () => { S.player.trust = 50; return 'Der neue Trainer ist beeindruckt von deiner Einstellung.' + mod({ trust: 8, injuryProne: 1 }); } },
+      { label: 'Abwarten und ruhig bleiben', run: () => { S.player.trust = 50; return 'Alles startet bei null. Du musst dich neu beweisen.' + mod({}); } },
+      { label: 'Dem alten Trainer öffentlich danken', run: () => { S.player.trust = 45; return 'Die Fans finden das stark, der Neue weniger.' + mod({ popularity: 5 }); } },
+    ],
+  },
+  {
+    id: 'winterRumor', title: 'Angebot im Winter',
+    cond: () => !S.youth && !S.loan && S.player.rating >= 70,
+    text: () => `Dein Berater meldet: ${bigClub()} will dich unbedingt haben und fragt, ob du im Sommer offen für Gespräche wärst.`,
+    options: [
+      { label: 'Gespräche führen', run: () => { S.season.transferBoost = (S.season.transferBoost || 0) + 1; return 'Die Gespräche sickern durch. Im Verein ist man verstimmt, aber im Sommer hast du mehr Optionen.' + mod({ trust: -6 }); } },
+      { label: 'Klar absagen', run: () => 'Du bekennst dich öffentlich zu deinem Verein.' + mod({ trust: 6, popularity: 4 }) },
+    ],
+  },
+  {
+    id: 'tattoo', title: 'Neues Tattoo?',
+    text: () => 'Du überlegst, dir ein riesiges Tattoo mit dem Vereinswappen auf den Rücken stechen zu lassen.',
+    options: [
+      { label: 'Stechen lassen', run: () => chance(0.6) ? 'Die Fans lieben es!' + mod({ popularity: 6 }) : 'Das Motiv sieht irgendwie schief aus. Das Internet lacht.' + mod({ popularity: -3 }) },
+      { label: 'Lieber nicht', run: () => 'Deine Haut bleibt, wie sie ist.' + mod({}) },
+    ],
+  },
+  {
+    id: 'love', title: 'Liebe auf den ersten Blick',
+    cond: () => !life().partner && S.player.age >= 18,
+    text: () => `Auf einer Charity-Gala lernst du ${partnerName()} kennen. Es funkt sofort.`,
+    options: [
+      { label: 'Nach einem Date fragen', run: () => { life().partner = partnerName(); return `Ihr seid jetzt ein Paar! ${partnerName()} gibt dir Halt.` + mod({ form: 2, popularity: 2 }); } },
+      { label: 'Fokus auf die Karriere', run: () => 'Du bleibst Single und konzentrierst dich auf Fußball.' + mod({ devBonus: 0.3 }) },
+    ],
+  },
+  {
+    id: 'wedding', title: 'Hochzeit',
+    cond: () => life().partner && !life().married && S.player.age >= 22,
+    text: () => `Du und ${life().partner} wollt heiraten. Wie groß soll die Feier werden?`,
+    options: [
+      { label: 'Riesige Party auf Mallorca', run: () => { life().married = true; return 'Die Bilder gehen um die Welt. Unvergesslich – und teuer.' + mod({ popularity: 5, money: -Math.max(0.03, Math.min(1.5, S.money * 0.1)) }); } },
+      { label: 'Kleine Feier mit Familie', run: () => { life().married = true; return 'Ein wunderschöner Tag im kleinen Kreis.' + mod({ form: 2 }); } },
+      { label: 'Noch warten', run: () => 'Ihr lasst euch noch Zeit.' + mod({}) },
+    ],
+  },
+  {
+    id: 'baby', title: 'Nachwuchs!',
+    cond: () => life().married && life().kids < 4,
+    weight: () => 0.7,
+    text: () => `${life().partner} ist schwanger – ihr bekommt ein Baby! Das Kind kommt mitten in der Saison.`,
+    options: [
+      { label: 'Zwei Wochen Elternzeit', run: () => { life().kids++; return 'Du bist bei der Geburt dabei und genießt die ersten Tage. Der Verein zeigt Verständnis.' + mod({ form: 2, injuredGames: 2, popularity: 3 }); } },
+      { label: 'Sofort zurück zum Training', run: () => { life().kids++; return 'Du trainierst weiter, aber schläfst kaum.' + mod({ form: -2, trust: 2 }); } },
+    ],
+  },
+  {
+    id: 'homesick', title: 'Heimweh',
+    cond: () => !S.youth && clubLeague(S.clubId).country !== nation().country,
+    text: () => `Das Leben in ${clubLeague(S.clubId).name === 'Major League Soccer' ? 'den USA' : 'der Fremde'} ist nicht leicht. Du vermisst Familie und Freunde.`,
+    options: [
+      { label: 'Sprachkurs machen', run: () => 'Du lernst die Sprache und findest schnell Anschluss.' + mod({ form: 2, trust: 3 }) },
+      { label: 'Familie einfliegen lassen', run: () => 'Deine Familie besucht dich für einen Monat. Das tut gut.' + mod({ form: 3, money: -0.02 }) },
+      { label: 'Durchbeißen', run: () => 'Du ziehst dich zurück. Man merkt es dir auf dem Platz an.' + mod({ form: -2 }) },
+    ],
+  },
+  {
+    id: 'referee', title: 'Fehlentscheidung',
+    cond: () => !S.youth,
+    text: () => 'In der Nachspielzeit gibt der Schiri einen klaren Elfmeter nicht. Ihr verliert. Die Kameras sind auf dich gerichtet.',
+    options: [
+      { label: 'Den Schiri öffentlich kritisieren', run: () => 'Deine Wutrede geht viral – der Verband sperrt dich für zwei Spiele.' + mod({ popularity: 5, injuredGames: 2, trust: -2 }) },
+      { label: 'Tief durchatmen', run: () => '„Wir müssen das Spiel vorher entscheiden.“ Starke Worte.' + mod({ trust: 3 }) },
+    ],
+  },
+  {
+    id: 'flu', title: 'Grippewelle',
+    text: () => 'Die halbe Mannschaft liegt mit Grippe flach. Du fühlst dich auch schon schlapp.',
+    options: [
+      { label: 'Trotzdem spielen', run: () => chance(0.5) ? 'Du hältst durch und bist einer der wenigen Fitten.' + mod({ trust: 5 }) : 'Du brichst in der Halbzeit zusammen und fällst länger aus.' + mod({ injuredGames: 4, form: -2 }) },
+      { label: 'Im Bett bleiben', run: () => 'Eine Woche Tee und Schlaf.' + mod({ injuredGames: 1 }) },
+    ],
+  },
+  {
+    id: 'fanSong', title: 'Dein eigenes Fanlied',
+    cond: () => S.player.popularity >= 55,
+    text: () => 'Die Fans haben ein Lied über dich gedichtet und singen es in jedem Heimspiel.',
+    options: [
+      { label: 'Nach dem Spiel mitsingen', run: () => 'Du stellst dich vor die Kurve und singst mit. Gänsehaut!' + mod({ popularity: 6, form: 1 }) },
+      { label: 'Einfach genießen', run: () => 'Du lächelst still in dich hinein.' + mod({ form: 1 }) },
+    ],
+  },
+  {
+    id: 'cover', title: 'Cover-Star',
+    cond: () => S.player.rating >= 84,
+    text: () => 'Ein großes Fußball-Videospiel will dich aufs Cover der neuen Ausgabe nehmen.',
+    options: [
+      { label: 'Zusagen', run: () => 'Dein Gesicht ist jetzt in Millionen Kinderzimmern.' + mod({ popularity: 8, money: dealSize() * 2 }) },
+      { label: 'Ablehnen', run: () => 'Du bleibst lieber bescheiden.' + mod({ trust: 1 }) },
+    ],
+  },
+  {
+    id: 'podcast', title: 'Eigener Podcast',
+    cond: () => !S.youth && S.player.popularity >= 40,
+    text: () => 'Ein Streaming-Dienst bietet dir einen eigenen Podcast an – jede Woche eine Folge.',
+    options: [
+      { label: 'Machen', run: () => 'Die Klickzahlen sind stark, aber der Trainer findet, du redest zu viel.' + mod({ popularity: 5, money: dealSize(), trust: -3 }) },
+      { label: 'Nein danke', run: () => 'Du lässt lieber deine Füße sprechen.' + mod({ form: 1 }) },
+    ],
+  },
+  {
+    id: 'legend', title: 'Tipps von der Vereinslegende',
+    cond: () => S.player.age <= 22,
+    text: () => `Eine Vereinslegende von ${S.clubId} bietet dir an, nach dem Training mit dir zu arbeiten.`,
+    options: [
+      { label: 'Sofort annehmen', run: () => 'Du lernst Tricks, die in keinem Lehrbuch stehen.' + mod({ devBonus: 1, trust: 2 }) },
+      { label: 'Höflich ablehnen', run: () => 'Du gehst deinen eigenen Weg.' + mod({}) },
+    ],
+  },
+  {
+    id: 'autograph', title: 'Der kleine Fan',
+    text: () => 'Ein kleiner Junge wartet seit drei Stunden im Regen vor dem Trainingsgelände auf ein Autogramm.',
+    options: [
+      { label: 'Anhalten und Trikot schenken', run: () => 'Das Video von der Szene sehen Millionen Menschen.' + mod({ popularity: 6 }) },
+      { label: 'Schnell weiterfahren', run: () => 'Du hast es eilig. Jemand filmt, wie du vorbeifährst …' + mod({ popularity: -4 }) },
+    ],
+  },
+  {
+    id: 'matchFixing', title: 'Ein verdächtiger Anruf',
+    cond: () => !S.youth,
+    text: () => 'Ein Unbekannter bietet dir Geld dafür, im nächsten Spiel absichtlich eine Gelbe Karte zu holen.',
+    options: [
+      { label: 'Sofort dem Verein und der Polizei melden', run: () => 'Die Ermittler heben einen Wettbetrüger-Ring aus. Du wirst für deine Ehrlichkeit gefeiert.' + mod({ popularity: 8, trust: 6 }) },
+      { label: 'Auflegen und vergessen', run: () => 'Du legst auf. Ein ungutes Gefühl bleibt.' + mod({ form: -1 }) },
+    ],
+  },
+  {
+    id: 'carDealer', title: 'Der Autohändler',
+    cond: () => S.money >= 0.3 && !ownedCount('car2'),
+    text: () => 'Ein Autohändler bietet dir einen Sportwagen für 200 Tsd. € an – 20 % unter Listenpreis.',
+    options: [
+      { label: 'Kaufen', run: () => { S.owned.car2 = 1; return 'Mit dem neuen Flitzer fährst du vor. Die Fans machen Fotos.' + mod({ money: -0.2, popularity: 2 }); } },
+      { label: 'Brauche ich nicht', run: () => 'Dein alter Wagen tut es auch.' + mod({}) },
+    ],
+  },
+  {
+    id: 'realEstate', title: 'Immobilien-Deal',
+    cond: () => S.money >= 2,
+    text: () => `Ein Makler bietet dir an, ${money(stake())} in ein Neubauprojekt zu stecken.`,
+    options: [
+      {
+        label: 'Investieren', run: () => {
+          const v = stake();
+          return chance(0.6)
+            ? 'Die Wohnungen verkaufen sich super. Du machst 40 % Gewinn.' + mod({ money: v * 0.4 })
+            : 'Der Bau verzögert sich, der Bauträger ist pleite. Die Hälfte ist weg.' + mod({ money: -v * 0.5 });
+        },
+      },
+      { label: 'Lieber nicht', run: () => 'Dein Geld bleibt, wo es ist.' + mod({}) },
+    ],
+  },
+  {
+    id: 'youthCaptain', title: 'Kapitän der U19',
+    cond: () => S.youth,
+    text: () => 'Der U19-Trainer will dir die Kapitänsbinde geben.',
+    options: [
+      { label: 'Gerne!', run: () => 'Du führst die Mannschaft an und wächst an der Verantwortung.' + mod({ trust: 5, devBonus: 0.4, popularity: 2 }) },
+      { label: 'Ich bin noch nicht so weit', run: () => 'Du konzentrierst dich auf dein eigenes Spiel.' + mod({ form: 1 }) },
+    ],
+  },
+  {
+    id: 'nerves', title: 'Schlaflose Nacht',
+    text: () => 'Vor dem wichtigsten Spiel der Saison kannst du nicht schlafen.',
+    options: [
+      { label: 'Spiel von gestern analysieren', run: () => 'Du findest eine Schwäche im Gegner. Müde, aber gut vorbereitet.' + mod({ trust: 2, form: -1 }) },
+      { label: 'Musik hören und entspannen', run: () => 'Irgendwann schläfst du doch ein.' + mod({ form: 1 }) },
+      { label: 'Den Mannschaftsarzt anrufen', run: () => 'Ein Kräutertee und ein ruhiges Gespräch helfen.' + mod({ form: 2 }) },
+    ],
+  },
 ];
+
+// Name eines großen Vereins aus einer anderen Liga (einmal pro Ereignis festgelegt)
+function bigClub() {
+  if (!ctx().big) {
+    const own = S.clubs[S.clubId].league;
+    const pool = Object.keys(S.clubs).filter(n => S.clubs[n].league !== own && clubStr(n) >= Math.max(S.player.rating, 78));
+    ctx().big = pool.length ? pick(pool) : pick(Object.keys(S.clubs).filter(n => n !== S.clubId));
+  }
+  return ctx().big;
+}
+function partnerName() {
+  if (!ctx().partner) ctx().partner = pick(PARTNER_NAMES);
+  return ctx().partner;
+}
 
 // Betrag für Geld-Ereignisse: 15 % des Vermögens, einmal pro Ereignis festgelegt
 function stake() {
