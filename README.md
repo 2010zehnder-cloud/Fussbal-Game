@@ -4,7 +4,7 @@ Ein Browser-Spiel, in dem du deine eigene Fußballkarriere simulierst – vom 17
 
 ## Spielen
 
-Einfach `index.html` im Browser öffnen. Es wird nichts installiert, der Spielstand wird automatisch im Browser gespeichert.
+Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarriere.html` als einzelne Datei mit allem drin (neu bauen mit `python3 tools/build_single.py`). Es wird nichts installiert, der Spielstand wird automatisch im Browser gespeichert.
 
 ## So funktioniert's
 
@@ -15,11 +15,14 @@ Einfach `index.html` im Browser öffnen. Es wird nichts installiert, der Spielst
   - **Schlüsselszenen** in Topspielen, die du selbst entscheidest (Schuss, Pass, Dribbling, Grätsche, Elfmeter halten …)
 - **Saisonbilanz:** Spiele, Tore, Vorlagen, Durchschnittsnote, Tabelle, Pokal, Champions League / Europa League und Auszeichnungen (Torjägerkanone, Goldener Schuh, Golden Boy, Ballon d'Or …).
 - **Nationalmannschaft:** WM und EM (bzw. Copa América, Afrika-Cup …) alle zwei Jahre.
-- **Transferfenster:** Wechsel, Leihen oder Vertragsverlängerung. Ab 33 kannst du deine Karriere beenden.
+- **Transferfenster:** Wechsel, Leihen, Vertragsverlängerung oder Gehaltserhöhung fordern. Ab 33 kannst du deine Karriere beenden.
+- **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen
 
-Bundesliga, 2. Bundesliga (mit Auf- und Abstieg), Premier League, LaLiga, Serie A, Ligue 1, Eredivisie, Liga Portugal, Österreichische Bundesliga und Schweizer Super League.
+17 Ligen mit echten Vereinen: Bundesliga, 2. Bundesliga (mit Auf- und Abstieg), Premier League, LaLiga, Serie A, Ligue 1, Eredivisie, Liga Portugal, Süper Lig, Belgische Pro League, Scottish Premiership, Österreichische Bundesliga, Schweizer Super League, Saudi Pro League, MLS, Brasileirão und die argentinische Liga Profesional.
+
+Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, Copa Sudamericana, AFC Champions League Elite und CONCACAF Champions Cup.
 
 ## Dateien
 
@@ -28,3 +31,4 @@ Bundesliga, 2. Bundesliga (mit Auf- und Abstieg), Premier League, LaLiga, Serie 
 - `js/data.js` – Ligen, Vereine, Nationen, Positionen
 - `js/events.js` – Ereignisse während der Saison
 - `js/game.js` – Spiellogik und Oberfläche
+- `tools/build_single.py` – baut die Einzeldatei in `dist/`

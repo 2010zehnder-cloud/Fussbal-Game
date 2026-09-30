@@ -27,7 +27,7 @@ const EVENTS = [
     id: 'nutrition', title: 'Ernährungsberater',
     text: () => 'Ein bekannter Ernährungsberater bietet dir einen persönlichen Plan an. Teuer, aber viele Profis schwören darauf.',
     options: [
-      { label: 'Investieren', run: () => 'Weniger Zucker, mehr Gemüse. Dein Körper dankt es dir.' + mod({ injuryProne: -4, devBonus: 0.5 }) },
+      { label: 'Investieren (20 Tsd. €)', run: () => 'Weniger Zucker, mehr Gemüse. Dein Körper dankt es dir.' + mod({ injuryProne: -4, devBonus: 0.5, money: -0.02 }) },
       { label: 'Nee, Döner schmeckt zu gut', run: () => 'Die Fans feiern dein Döner-Video, aber im Training bist du etwas schwerfälliger.' + mod({ form: -1, popularity: 3 }) },
     ],
   },
@@ -98,8 +98,49 @@ const EVENTS = [
     id: 'sponsor', title: 'Werbedeal',
     text: () => 'Eine Sportmarke will mit dir einen Werbespot drehen – mitten in der Saison.',
     options: [
-      { label: 'Annehmen', run: () => 'Dein Gesicht ist jetzt auf Plakaten in der ganzen Stadt. Der Dreh kostet aber Kraft.' + mod({ popularity: 6, form: -1 }) },
+      { label: 'Annehmen', run: () => 'Dein Gesicht ist jetzt auf Plakaten in der ganzen Stadt. Der Dreh kostet aber Kraft.' + mod({ popularity: 6, form: -1, money: dealSize() }) },
       { label: 'Fokus auf Fußball', run: () => 'Du lehnst ab und konzentrierst dich voll auf den Sport.' + mod({ form: 1, trust: 1 }) },
+    ],
+  },
+  {
+    id: 'startup', title: 'Ein Freund braucht Startkapital',
+    cond: () => S.money >= 0.05,
+    text: () => `Ein Schulfreund gründet ein Start-up für Fußball-Apps und bittet dich um ${money(stake())}.`,
+    options: [
+      {
+        label: 'Investieren', run: () => {
+          const v = stake();
+          return chance(0.35)
+            ? `Die App wird ein Hit! Deine Anteile sind jetzt viermal so viel wert.` + mod({ money: v * 3 })
+            : 'Das Start-up geht pleite. Das Geld ist weg.' + mod({ money: -v });
+        },
+      },
+      { label: 'Ablehnen', run: () => 'Du wünschst ihm viel Glück, bleibst aber vorsichtig.' + mod({}) },
+    ],
+  },
+  {
+    id: 'charity', title: 'Spendenaufruf',
+    cond: () => S.money >= 0.1,
+    text: () => `Eine Kinderklinik in deiner Heimatstadt sammelt Spenden für eine neue Station. Die Presse fragt, ob du ${money(stake())} gibst.`,
+    options: [
+      { label: 'Spenden', run: () => 'Die Kinder schicken dir ein riesiges Dankes-Plakat. Die ganze Stadt spricht darüber.' + mod({ money: -stake(), popularity: 8 }) },
+      { label: 'Diesmal nicht', run: () => 'Du sagst ab. Ein paar Fans sind enttäuscht.' + mod({ popularity: -2 }) },
+    ],
+  },
+  {
+    id: 'casino', title: 'Casino-Abend',
+    cond: () => !S.youth && S.money >= 0.05,
+    text: () => 'Ein paar Mitspieler nehmen dich nach dem Sieg mit ins Casino.',
+    options: [
+      {
+        label: 'Alles auf Rot', run: () => {
+          const v = stake();
+          return chance(0.47)
+            ? 'Rot! Du verdoppelst deinen Einsatz.' + mod({ money: v })
+            : 'Schwarz. Und ein Foto von dir am Roulettetisch landet in der Zeitung.' + mod({ money: -v, trust: -3, popularity: -2 });
+        },
+      },
+      { label: 'Nur zuschauen', run: () => 'Du trinkst eine Cola und gehst früh nach Hause.' + mod({ form: 1 }) },
     ],
   },
   {
@@ -209,3 +250,12 @@ const EVENTS = [
     ],
   },
 ];
+
+// Betrag für Geld-Ereignisse: 15 % des Vermögens, einmal pro Ereignis festgelegt
+function stake() {
+  if (ctx().stake === undefined) ctx().stake = Math.max(0.01, Math.round(S.money * 0.15 * 1000) / 1000);
+  return ctx().stake;
+}
+function dealSize() {
+  return Math.round(clamp(0.02 * Math.exp((S.player.rating - 65) / 8) * (0.5 + S.player.popularity / 100), 0.005, 10) * 1000) / 1000;
+}

@@ -109,6 +109,80 @@ const LEAGUES = [
       ['FC Sion', 65], ['Grasshopper Club Zürich', 64], ['FC Thun', 64], ['FC Winterthur', 62],
     ],
   },
+  {
+    id: 'tr', name: 'Süper Lig', country: 'tr', cup: 'Türkischer Pokal', champion: 'Türkischer Meister',
+    cl: 1, el: 2, topScorer: 'Torschützenkönig der Süper Lig', scorerBase: 22, top5: false,
+    clubs: [
+      ['Galatasaray Istanbul', 80], ['Fenerbahçe Istanbul', 79], ['Beşiktaş Istanbul', 76], ['Trabzonspor', 74],
+      ['İstanbul Başakşehir', 72], ['Samsunspor', 71], ['Göztepe Izmir', 70], ['Kasımpaşa', 68],
+      ['Alanyaspor', 68], ['Antalyaspor', 67], ['Çaykur Rizespor', 67], ['Konyaspor', 67],
+      ['Gaziantep FK', 67], ['Kayserispor', 66], ['Eyüpspor', 66], ['Kocaelispor', 65],
+      ['Gençlerbirliği Ankara', 65], ['Fatih Karagümrük', 64],
+    ],
+  },
+  {
+    id: 'be', name: 'Pro League', country: 'be', cup: 'Belgischer Pokal', champion: 'Belgischer Meister',
+    cl: 1, el: 1, topScorer: 'Torschützenkönig in Belgien', scorerBase: 20, top5: false,
+    clubs: [
+      ['FC Brügge', 77], ['Union Saint-Gilloise', 76], ['RSC Anderlecht', 74], ['KRC Genk', 74],
+      ['Royal Antwerpen', 72], ['KAA Gent', 72], ['Standard Lüttich', 70], ['KV Mechelen', 68],
+      ['Cercle Brügge', 67], ['Sporting Charleroi', 67], ['VV St. Truiden', 67], ['Oud-Heverlee Löwen', 66],
+      ['KVC Westerlo', 66], ['FCV Dender', 64], ['SV Zulte Waregem', 64], ['RAAL La Louvière', 63],
+    ],
+  },
+  {
+    id: 'sco', name: 'Scottish Premiership', country: 'sco', cup: 'Scottish Cup', champion: 'Schottischer Meister',
+    cl: 1, el: 1, topScorer: 'Torschützenkönig in Schottland', scorerBase: 20, top5: false,
+    clubs: [
+      ['Celtic Glasgow', 76], ['Glasgow Rangers', 74], ['Heart of Midlothian', 68], ['Hibernian Edinburgh', 67],
+      ['FC Aberdeen', 66], ['FC Motherwell', 65], ['Dundee United', 64], ['FC St. Mirren', 63],
+      ['FC Kilmarnock', 63], ['FC Falkirk', 62], ['FC Dundee', 62], ['FC Livingston', 61],
+    ],
+  },
+  {
+    id: 'sa', name: 'Saudi Pro League', country: 'sa', conf: 'AFC', cup: "King's Cup", champion: 'Saudischer Meister',
+    cl: 3, el: 0, topScorer: 'Torschützenkönig der Saudi Pro League', scorerBase: 22, top5: false,
+    clubs: [
+      ['Al-Hilal', 80], ['Al-Nassr', 80], ['Al-Ittihad', 79], ['Al-Ahli', 78],
+      ['Al-Qadsiah', 75], ['Al-Ettifaq', 72], ['Al-Shabab', 72], ['Al-Taawoun', 71],
+      ['Neom SC', 70], ['Al-Fateh', 68], ['Al-Khaleej', 68], ['Al-Fayha', 67],
+      ['Damac FC', 66], ['Al-Kholood', 66], ['Al-Riyadh', 65], ['Al-Hazem', 64],
+      ['Al-Okhdood', 64], ['Al-Najma', 63],
+    ],
+  },
+  {
+    id: 'mls', name: 'Major League Soccer', country: 'us', conf: 'CONCACAF', cup: 'U.S. Open Cup', champion: 'MLS-Meister',
+    cl: 3, el: 0, topScorer: 'Torschützenkönig der MLS', scorerBase: 22, top5: false,
+    clubs: [
+      ['Inter Miami', 74], ['Los Angeles FC', 74], ['LA Galaxy', 72], ['Columbus Crew', 72],
+      ['FC Cincinnati', 72], ['Philadelphia Union', 72], ['Seattle Sounders', 71], ['Vancouver Whitecaps', 71],
+      ['New York Red Bulls', 70], ['New York City FC', 70], ['Atlanta United', 70], ['Orlando City', 70],
+      ['Nashville SC', 70], ['San Diego FC', 70], ['Charlotte FC', 69], ['Real Salt Lake', 68],
+      ['Portland Timbers', 68], ['Toronto FC', 67],
+    ],
+  },
+  {
+    id: 'br', name: 'Brasileirão', country: 'br', conf: 'CONMEBOL', cup: 'Copa do Brasil', champion: 'Brasilianischer Meister',
+    cl: 6, el: 6, topScorer: 'Torschützenkönig in Brasilien', scorerBase: 20, top5: false,
+    clubs: [
+      ['Flamengo', 79], ['Palmeiras', 79], ['Botafogo', 76], ['Atlético Mineiro', 75],
+      ['Cruzeiro', 75], ['Fluminense', 75], ['São Paulo FC', 75], ['Corinthians', 74],
+      ['Internacional Porto Alegre', 74], ['Grêmio Porto Alegre', 73], ['EC Bahia', 73], ['Vasco da Gama', 72],
+      ['Red Bull Bragantino', 72], ['FC Santos', 72], ['Fortaleza EC', 71], ['Mirassol FC', 69],
+      ['EC Vitória', 69], ['Ceará SC', 68], ['EC Juventude', 68], ['Sport Recife', 67],
+    ],
+  },
+  {
+    id: 'ar', name: 'Liga Profesional', country: 'ar', conf: 'CONMEBOL', cup: 'Copa Argentina', champion: 'Argentinischer Meister',
+    cl: 5, el: 5, topScorer: 'Torschützenkönig in Argentinien', scorerBase: 18, top5: false,
+    clubs: [
+      ['River Plate', 77], ['Boca Juniors', 76], ['Racing Club', 75], ['Estudiantes de La Plata', 73],
+      ['Vélez Sarsfield', 72], ['Talleres Córdoba', 72], ['Independiente', 71], ['Argentinos Juniors', 71],
+      ['Rosario Central', 71], ['CA Lanús', 71], ['San Lorenzo', 70], ['CA Huracán', 70],
+      ['Godoy Cruz', 69], ['CA Belgrano', 69], ["Newell's Old Boys", 69], ['Defensa y Justicia', 69],
+      ['CA Tigre', 68], ['Unión de Santa Fe', 68], ['CA Platense', 67], ['Gimnasia La Plata', 67],
+    ],
+  },
 ];
 
 // Auf- und Abstieg zwischen Bundesliga und 2. Bundesliga
@@ -124,24 +198,24 @@ const NATIONS = [
   { name: 'Italien', str: 83, conf: 'UEFA', country: 'it' },
   { name: 'Portugal', str: 86, conf: 'UEFA', country: 'pt' },
   { name: 'Niederlande', str: 84, conf: 'UEFA', country: 'nl' },
-  { name: 'Belgien', str: 82, conf: 'UEFA' },
+  { name: 'Belgien', str: 82, conf: 'UEFA', country: 'be' },
   { name: 'Kroatien', str: 80, conf: 'UEFA' },
   { name: 'Dänemark', str: 78, conf: 'UEFA' },
   { name: 'Norwegen', str: 79, conf: 'UEFA' },
-  { name: 'Türkei', str: 78, conf: 'UEFA' },
+  { name: 'Türkei', str: 78, conf: 'UEFA', country: 'tr' },
   { name: 'Polen', str: 75, conf: 'UEFA' },
   { name: 'Serbien', str: 74, conf: 'UEFA' },
   { name: 'Ukraine', str: 74, conf: 'UEFA' },
   { name: 'Schweden', str: 75, conf: 'UEFA' },
-  { name: 'Schottland', str: 73, conf: 'UEFA' },
+  { name: 'Schottland', str: 73, conf: 'UEFA', country: 'sco' },
   { name: 'Tschechien', str: 73, conf: 'UEFA' },
   { name: 'Griechenland', str: 72, conf: 'UEFA' },
   { name: 'Ungarn', str: 72, conf: 'UEFA' },
   { name: 'Albanien', str: 68, conf: 'UEFA' },
   { name: 'Bosnien und Herzegowina', str: 68, conf: 'UEFA' },
   { name: 'Kosovo', str: 66, conf: 'UEFA' },
-  { name: 'Argentinien', str: 88, conf: 'CONMEBOL' },
-  { name: 'Brasilien', str: 87, conf: 'CONMEBOL' },
+  { name: 'Argentinien', str: 88, conf: 'CONMEBOL', country: 'ar' },
+  { name: 'Brasilien', str: 87, conf: 'CONMEBOL', country: 'br' },
   { name: 'Uruguay', str: 80, conf: 'CONMEBOL' },
   { name: 'Kolumbien', str: 80, conf: 'CONMEBOL' },
   { name: 'Ecuador', str: 76, conf: 'CONMEBOL' },
@@ -156,11 +230,35 @@ const NATIONS = [
   { name: 'Südkorea', str: 76, conf: 'AFC' },
   { name: 'Iran', str: 73, conf: 'AFC' },
   { name: 'Australien', str: 72, conf: 'AFC' },
-  { name: 'Saudi-Arabien', str: 68, conf: 'AFC' },
-  { name: 'USA', str: 77, conf: 'CONCACAF' },
+  { name: 'Saudi-Arabien', str: 68, conf: 'AFC', country: 'sa' },
+  { name: 'USA', str: 77, conf: 'CONCACAF', country: 'us' },
   { name: 'Mexiko', str: 76, conf: 'CONCACAF' },
   { name: 'Kanada', str: 74, conf: 'CONCACAF' },
 ];
+
+// Gehaltsniveau pro Liga (Faktor auf das Grundgehalt)
+const LEAGUE_WAGE = {
+  pl: 1.6, laliga: 1.3, bl: 1.2, seriea: 1.1, ligue1: 1.0, sa: 2.4, tr: 0.8, mls: 0.9, port: 0.6, ered: 0.6,
+  be: 0.5, sco: 0.45, aut: 0.45, sui: 0.5, bl2: 0.4, br: 0.5, ar: 0.3,
+};
+
+// Internationale Klubwettbewerbe je Kontinentalverband
+const CLUB_COMPS = {
+  UEFA: { cl: 'Champions League', el: 'Europa League', clMin: 76, elMin: 68, elMax: 82 },
+  AFC: { cl: 'AFC Champions League Elite', el: null, clMin: 66, elMin: 0, elMax: 0 },
+  CONCACAF: { cl: 'CONCACAF Champions Cup', el: null, clMin: 66, elMin: 0, elMax: 0 },
+  CONMEBOL: { cl: 'Copa Libertadores', el: 'Copa Sudamericana', clMin: 71, elMin: 64, elMax: 74 },
+};
+
+// Gegner in internationalen Wettbewerben, deren Ligen nicht spielbar sind
+const EXTRA_OPPONENTS = {
+  AFC: [['Al-Sadd', 70], ['Ulsan HD', 70], ['Urawa Red Diamonds', 70], ['Vissel Kobe', 71], ['Kawasaki Frontale', 70],
+    ['Shanghai Port', 68], ['Buriram United', 66], ['Al-Wahda', 67], ['Al-Ain', 70], ['Persepolis', 66]],
+  CONCACAF: [['Club América', 74], ['CF Monterrey', 74], ['Tigres UANL', 73], ['Cruz Azul', 72], ['CD Guadalajara', 70],
+    ['CF Pachuca', 71], ['Deportivo Toluca', 71], ['LD Alajuelense', 64], ['CS Herediano', 63]],
+  CONMEBOL: [['Club Nacional', 70], ['Peñarol', 70], ['Club Olimpia', 67], ['LDU Quito', 70], ['Independiente del Valle', 71],
+    ['Atlético Nacional', 69], ['Colo-Colo', 68], ['Universitario', 66], ['Cerro Porteño', 67], ['Bolívar', 65]],
+};
 
 const CONTINENTAL = {
   UEFA: { name: 'Europameisterschaft', title: 'Europameister' },
@@ -186,3 +284,19 @@ const POSITION_SWITCH = {
   IV: ['ZDM', 'AV'], AV: ['FL', 'IV'], ZDM: ['IV', 'ZM'], ZM: ['ZOM', 'ZDM'],
   ZOM: ['ZM', 'FL'], FL: ['ST', 'AV'], ST: ['FL', 'ZOM'],
 };
+
+// Dinge, die du dir von deinem Vermögen kaufen kannst (Preise in Mio. €).
+// upkeep = jährliche Unterhaltskosten als Anteil vom Preis.
+const SHOP = [
+  { id: 'car1', cat: 'Auto', name: 'Kompaktwagen', price: 0.03, upkeep: 0.1, pop: 0 },
+  { id: 'car2', cat: 'Auto', name: 'Sportwagen', price: 0.25, upkeep: 0.08, pop: 2 },
+  { id: 'car3', cat: 'Auto', name: 'Hypercar', price: 2.5, upkeep: 0.06, pop: 4 },
+  { id: 'home1', cat: 'Wohnen', name: 'Eigentumswohnung', price: 0.5, upkeep: 0.02, pop: 0 },
+  { id: 'home2', cat: 'Wohnen', name: 'Villa mit Pool', price: 4, upkeep: 0.03, pop: 3 },
+  { id: 'home3', cat: 'Wohnen', name: 'Anwesen am Meer', price: 20, upkeep: 0.03, pop: 5 },
+  { id: 'watch', cat: 'Luxus', name: 'Luxusuhr', price: 0.15, upkeep: 0, pop: 1 },
+  { id: 'yacht', cat: 'Luxus', name: 'Yacht', price: 30, upkeep: 0.08, pop: 6 },
+  { id: 'jet', cat: 'Luxus', name: 'Privatjet', price: 65, upkeep: 0.1, pop: 6 },
+  { id: 'charity', cat: 'Soziales', name: 'Stiftung für Nachwuchsfußball', price: 2, upkeep: 0.05, pop: 10 },
+  { id: 'fund', cat: 'Geldanlage', name: 'Fondsanteil (1 Mio. €)', price: 1, upkeep: 0, pop: 0, repeat: true },
+];
