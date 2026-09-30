@@ -6,6 +6,14 @@ Ein Browser-Spiel, in dem du deine eigene Fußballkarriere simulierst – vom 17
 
 Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarriere.html` als einzelne Datei mit allem drin (neu bauen mit `python3 tools/build_single.py`). Es wird nichts installiert, der Spielstand wird automatisch im Browser gespeichert.
 
+## Übersicht für Einsteiger
+
+- **Hilfe-Button** oben rechts erklärt alle Werte und Abläufe in einfachen Worten.
+- **Tipps** in den ersten Saisons zeigen, was als Nächstes zu tun ist (ausblendbar).
+- **Reiter** vor der Saison und im Transferfenster: Saison/Transfers, Privat, Familie, Geld und Karriere.
+- **Saisonbilanz** zeigt zuerst das Wichtigste, alle Details sind einklappbar.
+- **Transferangebote** haben Hinweise wie „Mehr Spielzeit“, „Stärkerer Verein“ oder „Mehr Gehalt“.
+
 ## So funktioniert's
 
 - **Spieler erstellen:** Name, Nationalität, Position und Rückennummer wählen.
@@ -46,5 +54,6 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/business.js` – Firmen und Vereinskauf
 - `js/coach.js` – Trainerkarriere
 - `js/fame.js` – Meilensteine, Vereinslegenden, Ruhmeshalle, Elfmeterschießen
+- `js/ui.js` – Reiter, Hilfe und Tipps
 - `js/game.js` – Spiellogik und Oberfläche
 - `tools/build_single.py` – baut die Einzeldatei in `dist/`

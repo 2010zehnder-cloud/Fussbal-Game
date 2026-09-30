@@ -5,7 +5,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 css = (root / 'css/style.css').read_text(encoding='utf-8')
-js = '\n'.join((root / f).read_text(encoding='utf-8') for f in ['js/data.js', 'js/game.js', 'js/events.js', 'js/people.js', 'js/business.js', 'js/coach.js', 'js/fame.js'])
+js = '\n'.join((root / f).read_text(encoding='utf-8') for f in ['js/data.js', 'js/game.js', 'js/events.js', 'js/people.js', 'js/business.js', 'js/coach.js', 'js/fame.js', 'js/ui.js'])
 
 html = f"""<title>Fußballkarriere</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@ html = f"""<title>Fußballkarriere</title>
 <style>
 {css}
 </style>
-<header class="top">⚽ Fußballkarriere</header>
+<header class="top"><span>⚽ Fußballkarriere</span><button id="help-btn" class="helpbtn" type="button">? Hilfe</button></header>
 <main id="app"></main>
 <footer class="foot">Fanprojekt · Alle Vereinsnamen gehören ihren jeweiligen Inhabern · Stärkewerte sind Schätzungen</footer>
 <script>

@@ -1073,23 +1073,23 @@ function render(keepScroll = false) {
   handlers = [];
   const root = app();
   let html = '';
-  if (!S) html = renderStart();
+  if (uiHelp) html = renderHelp();
+  else if (!S) html = renderStart();
   else if (S.phase === 'create') html = renderCreate();
   else if (S.phase === 'academy') html = renderAcademy();
   else if (['coachOffers', 'coach', 'coachEnd'].includes(S.phase)) html = renderCoach();
   else if (S.phase === 'owner') html = renderOwner();
   else {
     html = renderPlayerCard();
-    if (S.phase === 'preseason') html += renderPreseason();
-    else if (S.phase === 'season') html += S.current.type === 'event' ? renderEvent() : renderMatch();
-    else if (S.phase === 'seasonEnd') html += renderSeasonEnd();
-    else if (S.phase === 'transfer') html += renderTransfer();
+    if (S.phase === 'preseason' || S.phase === 'transfer') html += renderHub();
+    else if (S.phase === 'season') html += tip(S.current.type) + (S.current.type === 'event' ? renderEvent() : renderMatch());
+    else if (S.phase === 'seasonEnd') html += tip('seasonEnd') + renderSeasonEnd();
     else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'shootout') html += renderShootout();
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
-  if (S && S.phase !== 'create') save();
+  if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
 }
 
@@ -1104,6 +1104,15 @@ function renderStart() {
       ${saved && saved.phase !== 'retired' ? btn(`Karriere fortsetzen (${esc(saved.player.name)}, ${saved.player.age} J.)`, () => { S = saved; render(); }, 'primary') : ''}
       ${btn('Neue Karriere starten', () => { S = { phase: 'create' }; render(); }, saved && saved.phase !== 'retired' ? '' : 'primary')}
     </div>
+  </section>
+  <section class="card howto">
+    <h2>So funktioniert's</h2>
+    <ol class="steps">
+      <li><b>Spieler erstellen</b><span>Name, Land und Position wählen.</span></li>
+      <li><b>Entscheiden und spielen</b><span>Jede Saison triffst du Entscheidungen und spielst Schlüsselszenen.</span></li>
+      <li><b>Karriere machen</b><span>Wechsle zu großen Vereinen, gewinne Titel, verdiene Geld und lebe dein Leben.</span></li>
+    </ol>
+    <div class="actions">${btn('Ausführliche Hilfe', () => { uiHelp = true; render(); })}</div>
   </section>
   ${renderHallOfFame()}`;
 }
@@ -1149,14 +1158,15 @@ function renderAcademy() {
     <h2>Willkommen, ${esc(p.name)}!</h2>
     <p>Du bist 17 Jahre alt, ${esc(POSITIONS[p.pos].name)} aus ${esc(p.nation)} mit der Nummer ${p.number}. Deine aktuelle Stärke: <b>${Math.round(p.rating)}</b>.</p>
     <p>Die Scouts schätzen dein Talent auf <span class="stars">${'★'.repeat(clamp(stars, 1, 5))}${'☆'.repeat(5 - clamp(stars, 1, 5))}</span>.</p>
+    ${tip('academy')}
     <p>Drei Nachwuchsleistungszentren wollen dich für ihre U19 verpflichten:</p>
     <div class="offers">${cards}</div>
   </section>`;
 }
 
-function bar(label, v, max, cls = '') {
+function bar(label, v, max, cls = '', hint = '') {
   const pct = clamp((v / max) * 100, 0, 100);
-  return `<div class="bar ${cls}"><span>${label}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`;
+  return `<div class="bar ${cls}"${hint ? ` title="${esc(hint)}"` : ''}><span>${label}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`;
 }
 
 function renderPlayerCard() {
@@ -1171,10 +1181,7 @@ function renderPlayerCard() {
       <h2>${esc(p.name)} <span class="num">#${p.number}</span></h2>
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
-      <p class="mv">Saison ${seasonLabel(S.year)} · Marktwert ${money(marketValue())}</p>
-      <p class="mv">Privat: ${esc(lifeText())}${S.agent ? ' · mit Topberater' : ''}</p>
-      ${S.gen > 1 ? `<p class="mv">Generation ${S.gen} · Kind von ${esc(S.parentName)}</p>` : ''}
-      ${rivalActive() ? `<p class="mv">🆚 Rivale: ${esc(S.rival.name)} · Stärke ${Math.round(S.rival.rating)}</p>` : ''}
+      <p class="mv">Saison ${seasonLabel(S.year)}${S.season && S.season.role && S.phase !== 'transfer' ? ` · <span class="rolechip">${esc(S.season.role)}</span>` : ''}${S.gen > 1 ? ` · Generation ${S.gen}` : ''}</p>
     </div>
     <div class="wallet">
       <div><span>Vermögen</span><b class="${S.money < 0 ? 'down' : ''}">${money(S.money)}</b></div>
@@ -1182,9 +1189,9 @@ function renderPlayerCard() {
       <div><span>Vertrag</span><b>${S.contract.years > 0 ? `bis ${S.year + S.contract.years + (S.phase === 'transfer' || S.phase === 'seasonEnd' ? 1 : 0)}` : 'läuft aus'}</b></div>
     </div>
     <div class="bars">
-      ${bar('Form', p.form + 10, 20, 'form')}
-      ${bar('Vertrauen', p.trust, 100)}
-      ${bar('Beliebtheit', p.popularity, 100)}
+      ${bar('Form', p.form + 10, 20, 'form', 'Wie gut du gerade drauf bist')}
+      ${bar('Vertrauen', p.trust, 100, '', 'Wie sehr der Trainer auf dich setzt')}
+      ${bar('Beliebtheit', p.popularity, 100, '', 'Wie sehr dich Fans und Medien mögen')}
     </div>
   </section>`;
 }
@@ -1220,12 +1227,7 @@ function renderPreseason() {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
       nextStep(); render();
     }, 'primary')}</div>
-  </section>
-  ${renderLife()}
-  ${renderPeople()}
-  ${renderBusiness()}
-  ${renderShop()}
-  ${renderHistory()}`;
+  </section>`;
 }
 
 function stepHeader() {
@@ -1288,6 +1290,9 @@ function renderSeasonEnd() {
       <ol>${r.table.map(t => `<li class="${t.name === r.club ? 'me' : ''}">${crest(t.name)}<span>${esc(t.name)}</span><b>${t.pts}</b></li>`).join('')}</ol>
     </details>`;
   const t = r.tournament;
+  const key = /^(🏆|🏅|👟|⭐|⬆️|⬇️|🚨|❌|😤|💔|🕊️|🧤|💉)/u;
+  const highlights = r.lines.filter((l, i) => i === 0 || key.test(l));
+  const others = r.lines.filter((l, i) => !(i === 0 || key.test(l)));
   return `
   <section class="card">
     <h2>Saisonbilanz ${seasonLabel(r.year)}</h2>
@@ -1299,27 +1304,42 @@ function renderSeasonEnd() {
       <div><b>${r.note === null ? '–' : fmt2(r.note)}</b><span>Ø Note</span></div>
       <div><b>${r.ratingAfter}</b><span>Stärke <em class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</em></span></div>
     </div>
-    ${r.scenes.length ? `<h3>Deine Schlüsselszenen</h3><ul class="lines">${r.scenes.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-    <h3>Wettbewerbe &amp; Auszeichnungen</h3>
-    <ul class="lines">${r.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
-    ${table}
+    <h3>Das Wichtigste</h3>
+    <ul class="lines big">${highlights.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+    ${r.milestones && r.milestones.length ? `<ul class="lines big">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
     ${t ? `<h3>Sommer ${t.summer}: ${esc(t.name)}</h3><ul class="lines">${t.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
-    ${r.milestones && r.milestones.length ? `<h3>Meilensteine</h3><ul class="lines">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
-    ${renderFinance(r.finance)}
+    <p class="moneyline">💰 Vermögen jetzt: <b>${money(S.money)}</b>${r.finance ? ` (${r.finance.total >= 0 ? '+' : ''}${money(r.finance.total)} diese Saison)` : ''}</p>
+    <details class="more"><summary>Alle Details anzeigen</summary>
+      ${others.length ? `<h3>Weitere Nachrichten</h3><ul class="lines">${others.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+      ${r.scenes.length ? `<h3>Deine Schlüsselszenen</h3><ul class="lines">${r.scenes.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+      ${table}
+      ${renderFinance(r.finance)}
+    </details>
     <div class="actions">${btn('Weiter zum Transferfenster', () => { openTransfer(); render(); }, 'primary')}</div>
   </section>`;
 }
 
 function renderTransfer() {
   const o = S.offers, p = S.player;
+  const rank = { 'Stammspieler': 3, 'Rotation': 2, 'Ergänzungsspieler': 1 };
+  const curStr = clubStr(S.clubId);
+  const curRole = roleFor(p.rating, curStr, p.trust);
   const list = o.list.map(of => {
     const str = clubStr(of.club);
     const role = roleFor(p.rating, str, 45);
+    const tags = [];
+    if (of.loan) tags.push(['good', '🔁 Leihe: Spielpraxis sammeln']);
+    if (!o.released && rank[role] > rank[curRole]) tags.push(['good', '⏱️ Mehr Spielzeit']);
+    if (!o.released && rank[role] < rank[curRole]) tags.push(['bad', '⚠️ Weniger Spielzeit']);
+    if (str >= curStr + 3) tags.push(['good', '📈 Stärkerer Verein']);
+    if (str <= curStr - 3) tags.push(['bad', '📉 Schwächerer Verein']);
+    if (!of.loan && of.salary > S.contract.salary * 1.1) tags.push(['good', '💶 Mehr Gehalt']);
     return `
     <div class="offer">
       ${crest(of.club)}
       <div class="offer-info"><strong>${esc(of.club)}</strong>
-        <small>${esc(clubLeague(of.club).name)} · Stärke ${str} · voraussichtlich ${role}</small>
+        <small>${esc(clubLeague(of.club).name)} · Stärke ${str} · Rolle: ${role}</small>
+        ${tags.length ? `<div class="tags">${tags.map(([c, t]) => `<span class="tag ${c}">${t}</span>`).join('')}</div>` : ''}
         ${of.loan ? '<small>Leihe für 1 Saison · dein Gehalt bleibt gleich</small>'
           : `<small><b>${money(of.salary)}/Jahr</b> · ${of.years} ${of.years === 1 ? 'Jahr' : 'Jahre'} · Handgeld ${money(of.signing)}</small>
              <small>${of.fee ? `Ablöse: ${money(of.fee)}` : 'Ablösefrei'}</small>`}
@@ -1332,8 +1352,8 @@ function renderTransfer() {
   let stay = '';
   if (!o.released) {
     stay = ext
-      ? btn(`Vertrag bei ${esc(S.clubId)} verlängern<small>${money(ext.salary)}/Jahr · ${ext.years} ${ext.years === 1 ? 'Jahr' : 'Jahre'} · ${stayRole}</small>`, () => acceptOffer(null) || render(), o.list.length ? '' : 'primary')
-      : btn(`Bei ${esc(S.clubId)} bleiben<small>${stayRole} · Vertrag noch ${c.years} ${c.years === 1 ? 'Jahr' : 'Jahre'}</small>`, () => acceptOffer(null) || render(), o.list.length ? '' : 'primary');
+      ? btn(`Vertrag bei ${esc(S.clubId)} verlängern<small>${money(ext.salary)}/Jahr · ${ext.years} ${ext.years === 1 ? 'Jahr' : 'Jahre'} · Rolle: ${stayRole}</small>`, () => acceptOffer(null) || render(), 'primary')
+      : btn(`Bei ${esc(S.clubId)} bleiben<small>Rolle: ${stayRole} · Vertrag noch ${c.years} ${c.years === 1 ? 'Jahr' : 'Jahre'}</small>`, () => acceptOffer(null) || render(), 'primary');
   }
   const fair = salaryFor(p.rating, S.clubId, stayRole);
   const raise = !o.released && !ext && !o.raiseTried && fair > c.salary * 1.35
@@ -1346,19 +1366,17 @@ function renderTransfer() {
   <section class="card">
     <h2>Transferfenster – Sommer ${S.year + 1}</h2>
     ${o.msgs.map(m => `<p class="note">${esc(m)}</p>`).join('')}
-    ${o.list.length ? `<p>Diese Vereine wollen dich verpflichten:</p><div class="offers">${list}</div>` : '<p>Diesmal gibt es keine Angebote für dich.</p>'}
-    <div class="actions">
-      ${stay}
-      ${raise}
-      ${agentBtn}
-      ${p.age >= 33 ? btn('Karriere beenden', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
-    </div>
-  </section>
-  ${renderLife()}
-  ${renderPeople()}
-  ${renderBusiness()}
-  ${renderShop()}
-  ${renderHistory()}`;
+    ${stay ? `<h3>1. Bei deinem Verein bleiben</h3><div class="choices">${stay}</div>` : ''}
+    <h3>${stay ? '2. ' : ''}Oder wechseln</h3>
+    ${o.list.length ? `<div class="offers">${list}</div>` : '<p class="muted">Diesmal gibt es keine Angebote für dich.</p>'}
+    <details class="more"><summary>Weitere Optionen</summary>
+      <div class="lifeacts">
+        ${raise}
+        ${agentBtn}
+        ${p.age >= 33 ? btn('Karriere beenden<small>Schuhe an den Nagel hängen</small>', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
+      </div>
+    </details>
+  </section>`;
 }
 
 function renderBanned() {
@@ -1652,6 +1670,8 @@ function renderRetired() {
 
 // ---------- Start ----------
 function init() {
+  const hb = document.getElementById('help-btn');
+  if (hb) hb.addEventListener('click', toggleHelp);
   app().addEventListener('click', e => {
     const b = e.target.closest('[data-h]');
     if (!b) return;
