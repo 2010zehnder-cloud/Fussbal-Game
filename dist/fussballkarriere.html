@@ -1383,7 +1383,7 @@ function awards(res, L, leagueGoals) {
     res.lines.push(`😤 Der Ballon d'Or geht an deinen Rivalen ${S.rival.name}. Du wirst Zweiter!`);
   } else if (wins) { res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
   else {
-    if (rivalScore >= 99.5 && chance(0.5)) { S.rival.ballon++; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    if (rivalScore >= 97.5 && chance(0.5)) { S.rival.ballon++; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
     if (score >= 95.5) res.lines.push(`Ballon d'Or: Platz ${clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20)}.`);
   }
 }
