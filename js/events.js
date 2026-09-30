@@ -480,7 +480,89 @@ const EVENTS = [
       { label: 'Durch die Hintertür verschwinden', run: () => 'Du entkommst unbemerkt.' + mod({}) },
     ],
   },
+  {
+    id: 'rivalTrash', title: 'Dein Rivale lästert',
+    cond: () => !S.youth && rivalActive(),
+    text: () => `${S.rival.name} sagt in einem Interview: „Gegen mich hat ${S.player.name.split(' ')[0]} keine Chance.“`,
+    options: [
+      { label: 'Zurücklästern', run: () => 'Die Medien lieben das Duell. Der Trainer weniger.' + mod({ popularity: 5, trust: -2 }) },
+      { label: 'Mit Leistung antworten', run: () => 'Du beißt dich im Training fest.' + mod({ form: 2, devBonus: 0.3 }) },
+      { label: 'Ignorieren', run: () => 'Du gibst ihm keine Bühne.' + mod({}) },
+    ],
+  },
+  {
+    id: 'rivalAd', title: 'Gemeinsamer Werbespot',
+    cond: () => !S.youth && rivalActive() && S.player.popularity >= 40,
+    text: () => `Ein Sportartikel-Hersteller will dich und ${S.rival.name} für einen gemeinsamen Werbespot.`,
+    options: [
+      { label: 'Zusagen', run: () => 'Am Set versteht ihr euch überraschend gut. Die Fans feiern den Clip.' + mod({ popularity: 5, money: dealSize() }) },
+      { label: 'Niemals mit dem!', run: () => 'Die Rivalität bleibt eiskalt.' + mod({ form: 1 }) },
+    ],
+  },
+  {
+    id: 'parentsMoney', title: 'Deine Eltern fragen nach Geld',
+    cond: () => family().parents.some(x => x.alive && x.role !== 'Elternteil') && S.money >= 0.1,
+    text: () => `Deine Eltern wollen ihr Haus renovieren und fragen, ob du mit ${money(stake())} helfen kannst.`,
+    options: [
+      { label: 'Klar, gerne', run: () => { family().parents.forEach(x => { x.rel = clamp(x.rel + 15, 0, 100); }); return 'Deine Eltern sind unendlich dankbar.' + mod({ money: -stake(), form: 1 }); } },
+      { label: 'Diesmal nicht', run: () => { family().parents.forEach(x => { x.rel = clamp(x.rel - 10, 0, 100); }); return 'Die Stimmung beim nächsten Familienessen ist frostig.' + mod({}); } },
+    ],
+  },
+  {
+    id: 'siblingDebt', title: 'Ärger in der Familie',
+    cond: () => family().siblings.length > 0 && S.money >= 0.05,
+    text: () => { const sb = sibling(); return `${sibPossessive(sb)} ${sb.name} hat Schulden bei den falschen Leuten und bittet dich um ${money(stake())}.`; },
+    options: [
+      { label: 'Schulden bezahlen', run: () => { sibling().rel = clamp(sibling().rel + 20, 0, 100); return 'Das Problem ist gelöst.' + mod({ money: -stake() }); } },
+      { label: 'Eine Lektion erteilen', run: () => { sibling().rel = clamp(sibling().rel - 20, 0, 100); return 'Ihr redet eine Weile nicht miteinander.' + mod({ form: -1 }); } },
+    ],
+  },
+  {
+    id: 'siblingDuel', title: 'Familienduell',
+    cond: () => !S.youth && family().siblings.some(sb => sb.brother && sb.footballer && sb.club && sb.club !== S.clubId && S.clubs[sb.club].league === S.clubs[S.clubId].league),
+    text: () => { const sb = family().siblings.find(x => x.brother && x.footballer && x.club && S.clubs[x.club].league === S.clubs[S.clubId].league); return `Am Wochenende spielst du gegen deinen Bruder ${sb.name} und ${sb.club}. Die ganze Familie sitzt im Stadion.`; },
+    options: [
+      { label: 'Keine Gnade!', run: () => chance(0.6) ? 'Ihr gewinnt, und du triffst sogar. Beim Familienessen gibt es Sticheleien.' + mod({ goals: 1, form: 2 }) : 'Dein Bruder behält die Oberhand. Das hörst du jetzt jahrelang.' + mod({ form: -1 }) },
+      { label: 'Trikottausch nach dem Spiel', run: () => 'Das Foto von euch beiden geht um die Welt.' + mod({ popularity: 6 }) },
+    ],
+  },
+  {
+    id: 'mateLoan', title: 'Ein Mitspieler braucht Geld',
+    cond: () => !S.youth && S.team && S.team.club === S.clubId && S.money >= 0.02,
+    text: () => `${mate().name} bittet dich, ihm ${money(0.01)} zu leihen. Er schwört, es zurückzuzahlen.`,
+    options: [
+      { label: 'Geld leihen', run: () => chance(0.7) ? `${mate().name} zahlt alles pünktlich zurück und ist dir ewig dankbar.` + relChip(mate(), 20) : `${mate().name} meldet sich nie wieder wegen des Geldes.` + mod({ money: -0.01 }) + relChip(mate(), -10) },
+      { label: 'Ablehnen', run: () => `${mate().name} ist enttäuscht.` + relChip(mate(), -10) },
+    ],
+  },
+  {
+    id: 'mateGossip', title: 'Gerüchte in der Kabine',
+    cond: () => !S.youth && S.team && S.team.club === S.clubId,
+    text: () => `Du erfährst, dass ${enemyMate().name} beim Trainer schlecht über dich redet.`,
+    options: [
+      { label: 'Zur Rede stellen', run: () => chance(0.5) ? 'Ihr sprecht euch aus – es war ein Missverständnis.' + relChip(enemyMate(), 25) : 'Das Gespräch eskaliert.' + relChip(enemyMate(), -20) + mod({ trust: -2 }) },
+      { label: 'Selbst mit dem Trainer reden', run: () => 'Der Trainer schätzt deine Offenheit.' + mod({ trust: 4 }) + relChip(enemyMate(), -10) },
+      { label: 'Ignorieren', run: () => 'Du lässt es an dir abprallen.' + mod({}) },
+    ],
+  },
 ];
+
+// Beteiligte Personen einmal pro Ereignis festlegen
+function sibling() {
+  if (ctx().sib === undefined) ctx().sib = randInt(0, family().siblings.length - 1);
+  return family().siblings[ctx().sib];
+}
+function mate() {
+  if (ctx().mate === undefined) ctx().mate = randInt(0, S.team.mates.length - 1);
+  return S.team.mates[ctx().mate];
+}
+function enemyMate() {
+  if (ctx().enemy === undefined) {
+    const m = S.team.mates;
+    ctx().enemy = m.indexOf(m.slice().sort((x, y) => x.rel - y.rel)[0]);
+  }
+  return S.team.mates[ctx().enemy];
+}
 
 // Name eines großen Vereins aus einer anderen Liga (einmal pro Ereignis festgelegt)
 function bigClub() {

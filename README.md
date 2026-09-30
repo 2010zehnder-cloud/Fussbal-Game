@@ -20,7 +20,14 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Privatleben wie in BitLife:** Auf Partnersuche gehen, Dates, Geschenke, Heiratsantrag, Familie planen, Trennung und Scheidung. Die Beziehung kühlt ohne Pflege ab.
 - **Aktivitäten:** Urlaub, Party-Nacht – oder der dubiose Arzt: Doping bringt sofort mehr Stärke, aber bei einem positiven Test drohen Sperre oder Gefängnis, Aberkennung der Titel und hohe Strafen.
 - **Familiendynastie:** Am Karriereende kannst du als eines deiner Kinder weiterspielen. Es erbt Vermögen, Besitz, Bekanntheit und einen Teil deines Talents.
-- **Nach der Karriere:** Trainer, TV-Experte, Sportdirektor oder Ruhestand.
+- **Rivale:** Ein Spieler aus deinem Jahrgang begleitet dich die ganze Karriere – direkte Duelle, Kampf um den Stammplatz in der Nationalmannschaft und um den Ballon d'Or.
+- **Elfmeterschießen:** Finals in Pokal, Europapokal und bei Turnieren können ins Elfmeterschießen gehen – du schießt oder hältst den entscheidenden Elfmeter.
+- **Meilensteine und Vereinslegende:** 100 Tore, 500 Spiele, 100 Länderspiele … und nach vielen Jahren bei einem Verein Abschiedsspiel, Statue oder gesperrte Rückennummer.
+- **Familie und Mannschaft:** Eltern und Geschwister (die selbst Fußballprofis werden können), Freundschaften und Feindschaften mit Mitspielern.
+- **Gefängnis:** Zellengenosse, Berufung einlegen oder ein Ausbruchsversuch.
+- **Firmen:** Fußballschule, Restaurant, Modemarke, E-Sport-Team, Fitnessstudios oder ein Hotel – mit Gewinnen, Verlusten und Pleiten.
+- **Nach der Karriere:** Spielbare Trainerkarriere (Taktik, Transferpolitik, Kabinen-Entscheidungen, Entlassungen), einen eigenen Verein als Präsident kaufen, TV-Experte, Sportdirektor oder Ruhestand.
+- **Ruhmeshalle:** Deine besten beendeten Karrieren werden auf dem Startbildschirm gespeichert.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen
@@ -35,5 +42,9 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `css/style.css` – Aussehen
 - `js/data.js` – Ligen, Vereine, Nationen, Positionen
 - `js/events.js` – Ereignisse während der Saison
+- `js/people.js` – Rivale, Familie, Mitspieler
+- `js/business.js` – Firmen und Vereinskauf
+- `js/coach.js` – Trainerkarriere
+- `js/fame.js` – Meilensteine, Vereinslegenden, Ruhmeshalle, Elfmeterschießen
 - `js/game.js` – Spiellogik und Oberfläche
 - `tools/build_single.py` – baut die Einzeldatei in `dist/`

@@ -144,6 +144,8 @@ function newGame(name, nationName, pos, number, heir = null) {
   }
   S.peak = S.player.rating;
   S.academyOffers = academyOffers();
+  initRival();
+  initFamily(heir);
 }
 
 function startHeir(child) {
@@ -160,6 +162,16 @@ function startHeir(child) {
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
     parentState: S,
+    family: {
+      parents: [
+        { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
+        ...(life().partner ? [{ role: 'Elternteil', name: life().partner.name, age: S.player.age + randInt(-3, 3), alive: true, rel: 80 }] : []),
+      ],
+      siblings: life().children.filter(c => c !== child).map(c => ({
+        name: c.name, brother: BROTHER_NAMES.includes(c.name) || !SISTER_NAMES.includes(c.name),
+        age: Math.max(S.year + 1, child.born + 17) - c.born, footballer: chance(0.3), rating: randInt(45, 56), club: null, rel: 70,
+      })),
+    },
   };
   S = { phase: 'create', heir };
 }
@@ -268,8 +280,9 @@ function startSeason() {
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
-  S.lifeMsg = null;
+  S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   if (!S.clubsPlayed.includes(S.clubId)) S.clubsPlayed.push(S.clubId);
+  if (!S.youth) ensureTeam();
 }
 
 function europeFor(club) {
@@ -445,13 +458,19 @@ function setupMatch() {
     const others = clubsIn(L.id).filter(n => n !== own).sort((a, b) => clubStr(b) - clubStr(a));
     opp = pick(others.slice(0, 6));
   }
+  let rivalMatch = false;
+  if (!S.youth && rivalActive() && S.rival.club !== own && clubLeague(S.rival.club).id === L.id && comp === L.name && chance(0.4)) {
+    opp = S.rival.club;
+    rivalMatch = true;
+  }
   const home = chance(0.5);
   const minute = randInt(62, 89);
   const a = randInt(0, 2);
   const b = clamp(a + randInt(-1, 1), 0, 3);
   const scene = pick(SCENES[POSITIONS[p.pos].group])(quality());
   S.current = {
-    type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, situation: scene.situation,
+    type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
+    situation: (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
 }
@@ -498,6 +517,10 @@ function resolveMatch(i) {
   S.season.scenes.push(`${c.comp}: ${resultWord} gegen ${c.opp} (${us}:${them})`);
   c.final = c.home ? `${us}:${them}` : `${them}:${us}`;
   c.chosen = i;
+  if (c.rivalMatch) {
+    if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
+    else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
+  }
   c.result = `<p>${text}</p>` + mod(eff);
 }
 
@@ -560,6 +583,8 @@ function endSeason() {
     euroGames = Math.round(matches * (se.role === 'Stammspieler' ? 0.85 : se.role === 'Rotation' ? 0.55 : 0.2));
   }
   const games = leagueGames + cupGames + euroGames;
+  if (cupRes) maybeShootout(cupRes, 'cup', `${L.cup}-Sieger`);
+  if (euroRes) maybeShootout(euroRes, 'euro', `${euroName()}-Sieger`);
 
   // Tore, Vorlagen, Note
   const P = POSITIONS[p.pos];
@@ -591,16 +616,19 @@ function endSeason() {
   }
   if (cupRes) {
     if (cupRes.won) { res.titles.push(`${L.cup}-Sieger`); res.lines.push(`🏆 ${L.cup}-Sieger! Finale gegen ${cupRes.beat} gewonnen.`); }
+    else if (cupRes.pending) res.lines.push(`${L.cup}-Finale gegen ${cupRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
     else res.lines.push(`${L.cup}: Aus in der Runde „${cupRes.reached}“ gegen ${cupRes.lostTo}.`);
   }
   if (euroRes) {
     const name = euroName();
     if (euroRes.won) { res.titles.push(`${name}-Sieger`); res.lines.push(`🏆 ${name}-Sieger! Finale gegen ${euroRes.beat} gewonnen.`); }
+    else if (euroRes.pending) res.lines.push(`${name}-Finale gegen ${euroRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
     else res.lines.push(`${name}: Aus in der Runde „${euroRes.reached}“${euroRes.lostTo ? ` gegen ${euroRes.lostTo}` : ''}.`);
   }
   res.cupRes = cupRes; res.euroRes = euroRes;
 
   // Auszeichnungen
+  rivalSeason(res);
   awards(res, L, leagueGoals);
 
   // Dopingkontrolle
@@ -697,9 +725,15 @@ function endSeason() {
   c.years -= 1;
   res.finance = { gross, bonusPay, sponsor, agentFee, net, upkeep, fund, total: net - upkeep + fund };
 
+  // Familie, Mannschaft, Firmen, Meilensteine
+  familySeason(res);
+  teamSeason(res);
+  if (businesses().length) res.finance.business = businessSeason(res);
+  checkMilestones(res);
+
   p.age++;
   S.seasonEnd = res;
-  S.phase = 'seasonEnd';
+  S.phase = S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
   S.current = null;
 }
 
@@ -763,8 +797,16 @@ function awards(res, L, leagueGoals) {
   if (res.titles.includes(L.champion)) score += 1.5;
   if (!stamm) score -= 6;
   res.bdScore = score;
-  if (score >= 101 && chance(0.85) || score >= 99 && chance(0.45)) { res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
-  else if (score >= 95.5) res.lines.push(`Ballon d'Or: Platz ${clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20)}.`);
+  const rivalScore = rivalBallonScore();
+  const wins = score >= 101 && chance(0.85) || score >= 99 && chance(0.45);
+  if (wins && rivalScore > score) {
+    S.rival.ballon++;
+    res.lines.push(`😤 Der Ballon d'Or geht an deinen Rivalen ${S.rival.name}. Du wirst Zweiter!`);
+  } else if (wins) { res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
+  else {
+    if (rivalScore >= 99.5 && chance(0.5)) { S.rival.ballon++; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    if (score >= 95.5) res.lines.push(`Ballon d'Or: Platz ${clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20)}.`);
+  }
 }
 
 function tournament(res) {
@@ -776,13 +818,17 @@ function tournament(res) {
   const title = wm ? 'Weltmeister' : CONTINENTAL[nat.conf].title;
   const p = S.player;
   const out = { name, summer, lines: [] };
-  if (p.age < 18 || S.youth || p.rating < nat.str - 8 || (res.games < 8 && p.rating < nat.str)) {
+  if (p.age < 18 || S.youth || S.fugitive || p.rating < nat.str - 8 || (res.games < 8 && p.rating < nat.str)) {
     out.lines.push(`Du wirst für die ${name} ${summer} nicht nominiert.`);
     out.nominated = false;
     return out;
   }
   out.nominated = true;
-  const starter = p.rating >= nat.str - 2;
+  let starter = p.rating >= nat.str - 2;
+  if (starter && rivalActive() && S.rival.nation === nat.name && S.rival.pos === p.pos && S.rival.rating > p.rating + 1) {
+    starter = false;
+    out.lines.push(`🆚 Dein Rivale ${S.rival.name} bekommt den Stammplatz auf deiner Position.`);
+  }
   out.lines.push(`Du stehst im Kader von ${nat.name} für die ${name} ${summer}${starter ? ' – als Stammspieler!' : '.'}`);
   if (wm && !chance(clamp(sigmoid((nat.str - 72) / 3), 0.1, 0.99))) {
     out.lines.push(`${nat.name} verpasst leider die Qualifikation.`);
@@ -796,7 +842,9 @@ function tournament(res) {
   const goals = Math.round(games * rate * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   out.lines.push(`Du machst ${games} Spiele${goals ? ` und schießt ${goals} Tor${goals > 1 ? 'e' : ''}` : ''}.`);
-  if (r.won) {
+  if (maybeShootout(r, 'nation', `${title} ${summer}`)) {
+    out.lines.push(`Das Finale gegen ${r.lostTo} geht ins Elfmeterschießen!`);
+  } else if (r.won) {
     out.lines.push(`🏆 ${nat.name} ist ${title}! Finale gegen ${r.beat} gewonnen!`);
     S.titles.push(`${title} ${summer}`);
     p.popularity = clamp(p.popularity + 12, 0, 100);
@@ -832,7 +880,8 @@ function openTransfer() {
   const perf = res.note === null ? 0 : (3.2 - res.note);
   const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0);
   const lo = p.rating - (released ? 22 : 12);
-  const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi)
+  const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi
+    && (!S.fugitive || clubLeague(n).country !== nation().country))
     .sort((a, b) => clubStr(b) - clubStr(a));
   let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) - (p.age >= 33 ? 1 : 0);
   if (released) k = Math.max(k, 2);
@@ -881,7 +930,7 @@ function openTransfer() {
   const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
   const spare = spareClub ? newOffer(spareClub) : null;
   S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
-  S.lifeMsg = null;
+  S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   S.phase = 'transfer';
 }
 
@@ -949,6 +998,41 @@ const BAN_CHOICES = {
   ],
 };
 
+const CELLMATES = [
+  { who: 'ein ehemaliger Profiboxer', choice: { label: 'Mit dem Ex-Boxer trainieren', loss: 1.5, text: 'Der Ex-Boxer macht dich härter als jeder Fitnesstrainer.' } },
+  { who: 'ein verurteilter Bankmanager', choice: { label: 'Finanztipps vom Bankmanager holen', loss: 4, text: 'Seine Tipps sind überraschend gut.', money: 0.3 } },
+  { who: 'ein bekannter Rapper', choice: { label: 'Mit dem Rapper einen Song aufnehmen', loss: 4, text: 'Euer Knast-Song geht auf Platz 1 der Charts!', pop: 15 } },
+  { who: 'ein alter Fußballtrainer', choice: { label: 'Taktik lernen beim alten Trainer', loss: 3, text: 'Du verstehst das Spiel jetzt viel besser.', trust: 15 } },
+];
+
+function banAppeal() {
+  const b = S.ban;
+  const cost = 0.1 + Math.max(0, S.money) * 0.05;
+  S.money -= cost;
+  b.appealed = true;
+  if (chance(0.35)) {
+    b.years--;
+    b.msg = b.years <= 0
+      ? `Die Berufung hat Erfolg! Das Urteil wird aufgehoben. Die Anwälte kosten ${money(cost)}.`
+      : `Die Berufung hat teilweise Erfolg: ein Jahr weniger. Die Anwälte kosten ${money(cost)}.`;
+  } else b.msg = `Die Berufung wird abgelehnt. Die Anwälte kosten trotzdem ${money(cost)}.`;
+}
+
+function banEscape() {
+  const b = S.ban;
+  b.escaped = true;
+  if (chance(0.12)) {
+    S.fugitive = true;
+    S.player.popularity = clamp(S.player.popularity - 15, 0, 100);
+    b.years = 0;
+    b.msg = `Du kletterst nachts über die Mauer und fliehst ins Ausland! In ${S.player.nation} wirst du ab jetzt gesucht – dort und in der Nationalmannschaft kannst du nie wieder spielen.`;
+  } else {
+    b.years += 2;
+    S.player.popularity = clamp(S.player.popularity - 5, 0, 100);
+    b.msg = 'Die Wärter erwischen dich am Zaun. Zwei Jahre zusätzlich!';
+  }
+}
+
 function serveBan(choice) {
   const p = S.player, b = S.ban;
   const upkeep = SHOP.reduce((sum, it) => sum + ownedCount(it.id) * it.price * it.upkeep, 0);
@@ -963,12 +1047,14 @@ function serveBan(choice) {
   }
   S.year += b.years;
   if (choice.book) { S.money += 0.2 + p.popularity / 100; p.popularity = clamp(p.popularity + 10, 0, 100); }
-  S.banResult = `${choice.text} Nach ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahren'} bist du wieder frei.`;
+  if (choice.money) S.money += choice.money * b.years;
+  if (choice.pop) p.popularity = clamp(p.popularity + choice.pop, 0, 100);
+  S.banResult = b.years ? `${choice.text} Nach ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahren'} bist du wieder frei.` : 'Du bist frei!';
   S.ban = null;
   S.loan = null;
   S.forceRelease = true;
   S.contract = { salary: S.contract.salary, years: 0 };
-  p.trust = 40;
+  p.trust = 40 + (choice.trust || 0);
   p.form = 0;
   openTransfer();
   if (S.offers) S.offers.msgs.unshift(S.banResult);
@@ -977,7 +1063,9 @@ function serveBan(choice) {
 function retire(reason) {
   S.phase = 'retired';
   S.retireReason = reason;
+  S.retireAge = S.player.age;
   S.offers = null;
+  saveHallOfFame();
 }
 
 // ---------- Rendering ----------
@@ -988,6 +1076,8 @@ function render(keepScroll = false) {
   if (!S) html = renderStart();
   else if (S.phase === 'create') html = renderCreate();
   else if (S.phase === 'academy') html = renderAcademy();
+  else if (['coachOffers', 'coach', 'coachEnd'].includes(S.phase)) html = renderCoach();
+  else if (S.phase === 'owner') html = renderOwner();
   else {
     html = renderPlayerCard();
     if (S.phase === 'preseason') html += renderPreseason();
@@ -995,6 +1085,7 @@ function render(keepScroll = false) {
     else if (S.phase === 'seasonEnd') html += renderSeasonEnd();
     else if (S.phase === 'transfer') html += renderTransfer();
     else if (S.phase === 'banned') html += renderBanned();
+    else if (S.phase === 'shootout') html += renderShootout();
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
@@ -1013,7 +1104,8 @@ function renderStart() {
       ${saved && saved.phase !== 'retired' ? btn(`Karriere fortsetzen (${esc(saved.player.name)}, ${saved.player.age} J.)`, () => { S = saved; render(); }, 'primary') : ''}
       ${btn('Neue Karriere starten', () => { S = { phase: 'create' }; render(); }, saved && saved.phase !== 'retired' ? '' : 'primary')}
     </div>
-  </section>`;
+  </section>
+  ${renderHallOfFame()}`;
 }
 
 function renderCreate() {
@@ -1082,6 +1174,7 @@ function renderPlayerCard() {
       <p class="mv">Saison ${seasonLabel(S.year)} · Marktwert ${money(marketValue())}</p>
       <p class="mv">Privat: ${esc(lifeText())}${S.agent ? ' · mit Topberater' : ''}</p>
       ${S.gen > 1 ? `<p class="mv">Generation ${S.gen} · Kind von ${esc(S.parentName)}</p>` : ''}
+      ${rivalActive() ? `<p class="mv">🆚 Rivale: ${esc(S.rival.name)} · Stärke ${Math.round(S.rival.rating)}</p>` : ''}
     </div>
     <div class="wallet">
       <div><span>Vermögen</span><b class="${S.money < 0 ? 'down' : ''}">${money(S.money)}</b></div>
@@ -1129,6 +1222,8 @@ function renderPreseason() {
     }, 'primary')}</div>
   </section>
   ${renderLife()}
+  ${renderPeople()}
+  ${renderBusiness()}
   ${renderShop()}
   ${renderHistory()}`;
 }
@@ -1209,6 +1304,7 @@ function renderSeasonEnd() {
     <ul class="lines">${r.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${table}
     ${t ? `<h3>Sommer ${t.summer}: ${esc(t.name)}</h3><ul class="lines">${t.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+    ${r.milestones && r.milestones.length ? `<h3>Meilensteine</h3><ul class="lines">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
     ${renderFinance(r.finance)}
     <div class="actions">${btn('Weiter zum Transferfenster', () => { openTransfer(); render(); }, 'primary')}</div>
   </section>`;
@@ -1259,6 +1355,8 @@ function renderTransfer() {
     </div>
   </section>
   ${renderLife()}
+  ${renderPeople()}
+  ${renderBusiness()}
   ${renderShop()}
   ${renderHistory()}`;
 }
@@ -1266,14 +1364,26 @@ function renderTransfer() {
 function renderBanned() {
   const b = S.ban;
   const prison = b.type === 'prison';
+  if (prison && b.cellmate === undefined) b.cellmate = randInt(0, CELLMATES.length - 1);
+  const mate = prison ? CELLMATES[b.cellmate] : null;
+  const choices = [...BAN_CHOICES[b.type], ...(mate ? [mate.choice] : [])];
+  const appealCost = 0.1 + Math.max(0, S.money) * 0.05;
+  const free = b.years <= 0;
   return `
   <section class="card banned">
     <h2>${prison ? 'Hinter Gittern' : 'Gesperrt'}</h2>
-    <p>${prison
+    <p>${free ? 'Du bist frei!' : prison
     ? `Du musst ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahre'} ins Gefängnis. Deine Karriere steht still, dein Vertrag ist aufgelöst.`
-    : `Du darfst ${b.years} Jahre lang kein Pflichtspiel bestreiten. Dein Vertrag ist aufgelöst.`}</p>
+    : `Du darfst ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahre'} lang kein Pflichtspiel bestreiten. Dein Vertrag ist aufgelöst.`}</p>
+    ${mate && !free ? `<p>Dein Zellengenosse ist ${esc(mate.who)}.</p>` : ''}
+    ${b.msg ? `<div class="result"><p>${esc(b.msg)}</p></div>` : ''}
+    ${free ? `<div class="actions">${btn('In die Freiheit', () => { serveBan({ text: '', loss: 0 }); render(); }, 'primary')}</div>` : `
+    <div class="lifeacts">
+      ${b.appealed ? '' : btn(`${prison ? 'Berufung einlegen' : 'Einspruch beim Sportgericht'}<small>Anwälte: ${money(appealCost)} · Chance 35 %</small>`, () => { banAppeal(); render(true); }, 'small')}
+      ${prison && !b.escaped ? btn('Ausbruch versuchen<small>Sehr riskant!</small>', () => { banEscape(); render(true); }, 'small risky') : ''}
+    </div>
     <p>Wie nutzt du die Zeit?</p>
-    <div class="choices">${BAN_CHOICES[b.type].map(c => btn(esc(c.label), () => { serveBan(c); render(); })).join('')}</div>
+    <div class="choices">${choices.map(c => btn(esc(c.label), () => { serveBan(c); render(); })).join('')}</div>`}
   </section>`;
 }
 
@@ -1281,7 +1391,7 @@ function renderBanned() {
 const actUsed = k => !!(S.season && S.season.acts && S.season.acts[k]);
 function useAct(k) { S.season.acts = S.season.acts || {}; S.season.acts[k] = true; }
 function lifeAction(k, fn) {
-  return () => { useAct(k); S.lifeMsg = fn(); render(true); };
+  return () => { useAct(k); S.lifeMsg = fn(); S.peopleMsg = null; render(true); };
 }
 function actBtn(k, label, sub, fn, extraCls = '') {
   const used = actUsed(k);
@@ -1368,6 +1478,7 @@ function renderFinance(f) {
       ${row('Nach Steuern (45 %)', f.net, 'up')}
       ${f.upkeep ? row('Unterhalt für Besitz', -f.upkeep, 'down') : ''}
       ${f.fund ? row('Rendite Fonds', f.fund, f.fund >= 0 ? 'up' : 'down') : ''}
+      ${f.business !== undefined ? row('Gewinn deiner Firmen', f.business, f.business >= 0 ? 'up' : 'down') : ''}
       <li class="sum"><span>Vermögen jetzt</span><b>${money(S.money)}</b></li>
     </ul>`;
 }
@@ -1420,14 +1531,19 @@ function renderHistory() {
       </table></div>
       ${S.titles.length ? `<h3>Titel (${S.titles.length})</h3><ul class="lines">${S.titles.map(x => `<li>🏆 ${esc(x)}</li>`).join('')}</ul>` : ''}
       ${S.awards.length ? `<h3>Auszeichnungen (${S.awards.length})</h3><ul class="lines">${S.awards.map(x => `<li>⭐ ${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${S.milestones && S.milestones.length ? `<h3>Meilensteine (${S.milestones.length})</h3><ul class="lines">${S.milestones.map(m => `<li>🎖️ ${esc(m.text)} (${seasonLabel(m.year)})</li>`).join('')}</ul>` : ''}
     </details>
   </section>`;
 }
 
-function legacy() {
+function legacyScore() {
   const t = totals();
   const bd = S.awards.filter(a => a.startsWith("Ballon d'Or")).length;
-  const score = S.peak * 1.2 + S.titles.length * 3 + S.awards.length * 4 + bd * 15 + t.goals * 0.05 + S.player.caps * 0.1;
+  return Math.round(S.peak * 1.2 + S.titles.length * 3 + S.awards.length * 4 + bd * 15 + t.goals * 0.05 + S.player.caps * 0.1
+    + (S.coachDone ? S.coachDone.titles.length * 2 : 0) + (S.ownerDone ? S.ownerDone.titles.length : 0));
+}
+function legacy() {
+  const score = legacyScore();
   if (score >= 190) return ['🐐', 'G.O.A.T.', 'Du bist einer der größten Spieler aller Zeiten.'];
   if (score >= 150) return ['👑', 'Weltstar', 'Deine Karriere wird noch Jahrzehnte später erzählt.'];
   if (score >= 125) return ['⭐', 'Nationalheld', 'Du hast Fußballgeschichte in deinem Land geschrieben.'];
@@ -1471,7 +1587,10 @@ function renderAfterCareer() {
   <section class="card">
     <h2>Wie geht es weiter?</h2>
     <p>Die Schuhe hängen am Nagel. Was machst du jetzt?</p>
-    <div class="choices">${Object.values(AFTER_CAREER).map(a => btn(esc(a.label), () => { S.after = a.run(); render(); })).join('')}</div>
+    <div class="choices">${Object.entries(AFTER_CAREER).map(([k, a]) => btn(esc(a.label), () => {
+      if (k === 'coach') { startCoach(); render(); return; }
+      S.after = a.run(); saveHallOfFame(); render();
+    })).join('')}</div>
   </section>`;
 }
 
@@ -1504,10 +1623,13 @@ function renderRetired() {
   <section class="hero small">
     <div class="ball">${icon}</div>
     <h1>${esc(title)}</h1>
-    <p class="lead">${esc(p.name)} beendet die Karriere mit ${p.age} Jahren. ${esc(S.retireReason || '')}</p>
+    <p class="lead">${esc(p.name)} beendet die Karriere mit ${S.retireAge || p.age} Jahren. ${esc(S.retireReason || '')}</p>
     <p>${esc(text)}</p>
   </section>
   ${renderAfterCareer()}
+  ${renderLegends()}
+  ${S.after && !S.ownerDone ? renderClubPurchase() : ''}
+  ${renderCoachHistory()}
   ${renderDynasty()}
   <section class="card">
     <div class="stats">
