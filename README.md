@@ -17,7 +17,9 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Saisonbilanz:** Spiele, Tore, Vorlagen, Durchschnittsnote, Tabelle, Pokal, Champions League / Europa League und Auszeichnungen (Torjägerkanone, Goldener Schuh, Golden Boy, Ballon d'Or …).
 - **Nationalmannschaft:** WM und EM (bzw. Copa América, Afrika-Cup …) alle zwei Jahre.
 - **Transferfenster:** Wechsel, Leihen, Vertragsverlängerung, Gehaltserhöhung fordern oder einen Topberater engagieren. Ab 33 kannst du deine Karriere beenden.
-- **Privatleben:** Partner, Hochzeit und Kinder.
+- **Privatleben wie in BitLife:** Auf Partnersuche gehen, Dates, Geschenke, Heiratsantrag, Familie planen, Trennung und Scheidung. Die Beziehung kühlt ohne Pflege ab.
+- **Aktivitäten:** Urlaub, Party-Nacht – oder der dubiose Arzt: Doping bringt sofort mehr Stärke, aber bei einem positiven Test drohen Sperre oder Gefängnis, Aberkennung der Titel und hohe Strafen.
+- **Familiendynastie:** Am Karriereende kannst du als eines deiner Kinder weiterspielen. Es erbt Vermögen, Besitz, Bekanntheit und einen Teil deines Talents.
 - **Nach der Karriere:** Trainer, TV-Experte, Sportdirektor oder Ruhestand.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 

@@ -74,7 +74,7 @@ function crest(name) {
 // ---------- Werteänderungen ----------
 const STAT_LABELS = {
   form: 'Form', trust: 'Vertrauen', popularity: 'Beliebtheit', injuryProne: 'Verletzungsrisiko',
-  devBonus: 'Entwicklung', injuredGames: 'Ausfall (Spiele)', goals: 'Tore', assists: 'Vorlagen', money: 'Vermögen',
+  devBonus: 'Entwicklung', injuredGames: 'Ausfall (Spiele)', goals: 'Tore', assists: 'Vorlagen', money: 'Vermögen', rel: 'Beziehung',
 };
 function mod(changes) {
   const p = S.player, se = S.season;
@@ -90,6 +90,7 @@ function mod(changes) {
     else if (k === 'goals') se.extraGoals += v;
     else if (k === 'assists') se.extraAssists += v;
     else if (k === 'money') S.money += v;
+    else if (k === 'rel') { if (!life().partner) continue; life().partner.rel = clamp(life().partner.rel + v, 0, 100); }
     const good = k === 'injuryProne' || k === 'injuredGames' ? v < 0 : v > 0;
     const shown = k === 'devBonus' ? (v > 0 ? '▲' : '▼') : k === 'money' ? (v > 0 ? '+' : '−') + money(Math.abs(v)) : (v > 0 ? '+' : '−') + Math.abs(v);
     parts.push(`<span class="chip ${good ? 'up' : 'down'}">${STAT_LABELS[k]} ${shown}</span>`);
@@ -116,10 +117,11 @@ function loadSave() { try { const r = localStorage.getItem(SAVE_KEY); return r ?
 function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignorieren */ } }
 
 // ---------- Neues Spiel ----------
-function newGame(name, nationName, pos, number) {
-  const clubs = {};
-  for (const L of LEAGUES) for (const [n, str] of L.clubs) clubs[n] = { league: L.id, base: str, drift: 0 };
-  const potential = clamp(Math.round(72 + Math.pow(Math.random(), 0.8) * 26), 72, 99);
+function newGame(name, nationName, pos, number, heir = null) {
+  let clubs = {};
+  if (heir) clubs = heir.clubs;
+  else for (const L of LEAGUES) for (const [n, str] of L.clubs) clubs[n] = { league: L.id, base: str, drift: 0 };
+  const potential = clamp(Math.round(72 + Math.pow(Math.random(), 0.8) * 26) + (heir ? heir.talent : 0), 70, 99);
   S = {
     player: {
       name, nation: nationName, pos, number, age: 17,
@@ -131,8 +133,35 @@ function newGame(name, nationName, pos, number) {
     scoutGuess: clamp(potential + randInt(-5, 5), 60, 99),
     money: 0.005, earned: 0, contract: { salary: 0.015, years: 1 }, owned: {},
   };
+  if (heir) {
+    // Die nächste Generation erbt Vermögen, Besitz, Bekanntheit und etwas Talent
+    Object.assign(S, {
+      year: heir.year, lastTables: heir.lastTables, money: heir.money, owned: heir.owned,
+      dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName,
+    });
+    S.player.popularity = clamp(20 + heir.fame, 0, 100);
+    if (heir.talent >= 3) S.player.rating += 2;
+  }
   S.peak = S.player.rating;
   S.academyOffers = academyOffers();
+}
+
+function startHeir(child) {
+  const t = totals();
+  const record = {
+    name: S.player.name, gen: S.gen || 1, peak: S.peak, titles: S.titles.length, games: t.games, goals: t.goals,
+    ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money,
+  };
+  const surname = S.player.name.trim().split(/\s+/).slice(-1)[0];
+  const heir = {
+    childName: child.name, surname, nation: S.player.nation, parentName: S.player.name,
+    year: Math.max(S.year + 1, child.born + 17), clubs: S.clubs, lastTables: S.lastTables,
+    money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
+    fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
+    talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
+    parentState: S,
+  };
+  S = { phase: 'create', heir };
 }
 
 function academyOffers() {
@@ -164,17 +193,61 @@ const FOCUS = {
 const focusOf = () => (S.season && S.season.focus) || 'balanced';
 
 // ---------- Privatleben ----------
-const PARTNER_NAMES = ['Lena', 'Sophie', 'Mia', 'Laura', 'Emma', 'Anna', 'Lea', 'Julia', 'Jonas', 'Luca', 'Noah', 'Elias'];
+const PARTNER_NAMES = ['Lena', 'Sophie', 'Mia', 'Laura', 'Emma', 'Anna', 'Lea', 'Julia', 'Clara', 'Nina', 'Jonas', 'Luca', 'Noah', 'Elias', 'Ben', 'Tim'];
+const CHILD_NAMES = ['Leon', 'Mia', 'Noah', 'Emma', 'Paul', 'Lina', 'Ben', 'Ella', 'Finn', 'Mila', 'Luca', 'Sofia', 'Elias', 'Hanna', 'Matteo', 'Lia'];
+const JOBS = ['studiert Medizin', 'arbeitet in der Modebranche', 'dreht Videos für Social Media', 'macht Musik', 'studiert Jura',
+  'spielt Tennis auf Profi-Niveau', 'plant Häuser in einem Architekturbüro', 'schreibt für eine Zeitung', 'führt ein Restaurant', 'steht auf der Theaterbühne'];
+
 function life() {
-  if (!S.life) S.life = { partner: null, married: false, kids: 0 };
-  return S.life;
+  if (!S.life) S.life = { partner: null, married: false, children: [], exes: 0 };
+  const l = S.life;
+  // Spielstände aus älteren Versionen umwandeln
+  if (typeof l.partner === 'string') l.partner = { name: l.partner, rel: 60, job: pick(JOBS) };
+  if (!l.children) {
+    l.children = [];
+    for (let i = 0; i < (l.kids || 0); i++) l.children.push({ name: pick(CHILD_NAMES), born: S.year - i });
+    delete l.kids;
+  }
+  if (l.exes === undefined) l.exes = 0;
+  return l;
 }
 function lifeText() {
   const l = life();
-  if (!l.partner) return 'Single';
-  let t = l.married ? `Verheiratet mit ${l.partner}` : `In einer Beziehung mit ${l.partner}`;
-  if (l.kids) t += `, ${l.kids} ${l.kids === 1 ? 'Kind' : 'Kinder'}`;
+  let t = !l.partner ? 'Single' : l.married ? `Verheiratet mit ${l.partner.name}` : `In einer Beziehung mit ${l.partner.name}`;
+  if (l.children.length) t += `, ${l.children.length} ${l.children.length === 1 ? 'Kind' : 'Kinder'}`;
   return t;
+}
+function haveChild() {
+  const l = life();
+  const used = l.children.map(c => c.name);
+  const name = pick(CHILD_NAMES.filter(n => !used.includes(n)));
+  l.children.push({ name, born: S.year + (S.phase === 'transfer' ? 1 : 0) });
+  return name;
+}
+// Trennung; bei einer Scheidung geht ein Teil des Vermögens verloren
+function breakUp() {
+  const l = life();
+  const name = l.partner.name;
+  let text = `Du und ${name} geht ab jetzt getrennte Wege.`;
+  if (l.married) {
+    const loss = Math.max(0, S.money * 0.3);
+    S.money -= loss;
+    text = `Scheidung von ${name}. Die Anwälte und der Unterhalt kosten dich ${money(loss)}.`;
+  }
+  l.partner = null; l.married = false; l.exes++;
+  return text;
+}
+
+// ---------- Doping ----------
+function doDope() {
+  const p = S.player;
+  S.season.doped = true;
+  S.dopeCount = (S.dopeCount || 0) + 1;
+  const boost = randInt(4, 6);
+  S.season.dopeBoost = boost;
+  p.rating = clamp(p.rating + boost, 35, 99);
+  return 'Du spürst die Wirkung sofort: mehr Kraft, mehr Ausdauer, schnellere Erholung. Aber jeder Dopingtest ist jetzt ein Risiko.'
+    + mod({ form: 4, injuryProne: 3 }) + `<div class="chips"><span class="chip up">Stärke +${boost}</span></div>`;
 }
 
 // ---------- Saisonablauf ----------
@@ -195,6 +268,7 @@ function startSeason() {
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
+  S.lifeMsg = null;
   if (!S.clubsPlayed.includes(S.clubId)) S.clubsPlayed.push(S.clubId);
 }
 
@@ -529,6 +603,36 @@ function endSeason() {
   // Auszeichnungen
   awards(res, L, leagueGoals);
 
+  // Dopingkontrolle
+  if (se.doped) {
+    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0);
+    if (chance(caughtP)) {
+      const prison = chance(0.35);
+      const years = prison ? randInt(1, 3) : (S.dopeCaught ? 4 : 2);
+      S.dopeCaught = (S.dopeCaught || 0) + 1;
+      if (res.titles.length || res.awards.length) res.lines.push('❌ Alle Titel und Auszeichnungen dieser Saison werden dir aberkannt.');
+      res.titles = []; res.awards = [];
+      const fine = Math.max(0, 0.1 + S.money * 0.2);
+      S.money -= fine;
+      p.rating = clamp(p.rating - (se.dopeBoost || 4), 35, 99);
+      p.popularity = clamp(p.popularity - 35, 0, 100);
+      p.trust = 10;
+      res.lines.push(prison
+        ? `🚨 Positiver Dopingtest! Die Ermittler finden bei dir verbotene Mittel. Das Gericht verurteilt dich zu ${years} ${years === 1 ? 'Jahr' : 'Jahren'} Gefängnis und ${money(fine)} Strafe.`
+        : `🚨 Positiver Dopingtest! Du wirst für ${years} Jahre gesperrt und musst ${money(fine)} Strafe zahlen.`);
+      S.ban = { type: prison ? 'prison' : 'ban', years };
+    } else {
+      res.lines.push('💉 Die Dopingkontrollen schlagen nicht an. Du bist noch mal davongekommen.');
+    }
+  }
+
+  // Beziehung kühlt ohne Pflege ab
+  const l = life();
+  if (l.partner) {
+    l.partner.rel = clamp(l.partner.rel - randInt(4, 12) - (S.ban ? 25 : 0), 0, 100);
+    if (l.partner.rel < 15) res.lines.push(`💔 ${l.partner.name} hat genug und trennt sich von dir. ${breakUp()}`);
+  }
+
   S.titles.push(...res.titles.map(t => `${t} (${seasonLabel(S.year)})`));
   S.awards.push(...res.awards.map(a => `${a} (${seasonLabel(S.year)})`));
 
@@ -707,6 +811,7 @@ function tournament(res) {
 function openTransfer() {
   const p = S.player, res = S.seasonEnd;
   const msgs = [];
+  if (S.ban) { S.phase = 'banned'; return; }
   if (p.age >= 41) { retire('Mit 41 Jahren ist Schluss – dein Körper macht nicht mehr mit.'); return; }
   if (S.loan) {
     msgs.push(`Deine Leihe ist beendet. Du kehrst zu ${S.loan.parent} zurück.`);
@@ -719,8 +824,10 @@ function openTransfer() {
     msgs.push(`Du wirst in den Profikader von ${S.clubId} befördert und bekommst deinen ersten Profivertrag: ${money(S.contract.salary)} pro Jahr, 3 Jahre.`);
   }
   const str = clubStr(S.clubId);
-  const released = !res.loan && p.rating < str - 14 && p.age >= 19;
-  if (released) msgs.push(`${S.clubId} verlängert deinen Vertrag nicht. Du musst dir einen neuen Verein suchen.`);
+  const released = S.forceRelease || (!res.loan && p.rating < str - 14 && p.age >= 19);
+  if (S.forceRelease) msgs.push('Nach deiner Sperre will dich dein alter Verein nicht mehr. Du musst dir einen neuen Klub suchen.');
+  S.forceRelease = false;
+  if (released && !msgs.length) msgs.push(`${S.clubId} verlängert deinen Vertrag nicht. Du musst dir einen neuen Verein suchen.`);
 
   const perf = res.note === null ? 0 : (3.2 - res.note);
   const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0);
@@ -774,6 +881,7 @@ function openTransfer() {
   const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
   const spare = spareClub ? newOffer(spareClub) : null;
   S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
+  S.lifeMsg = null;
   S.phase = 'transfer';
 }
 
@@ -828,6 +936,44 @@ function sellFund() {
   S.money += 1;
 }
 
+const BAN_CHOICES = {
+  prison: [
+    { label: 'Jeden Tag im Gefängnishof trainieren', loss: 2.5, text: 'Liegestütze, Sprints, Kraftübungen. Du hältst dich so gut es geht fit.' },
+    { label: 'Ein Buch über dein Leben schreiben', loss: 4, text: 'Dein Buch wird ein Bestseller.', book: true },
+    { label: 'Die Zeit einfach absitzen', loss: 4.5, text: 'Die Tage ziehen sich endlos. Dein Körper baut ab.' },
+  ],
+  ban: [
+    { label: 'Alleine mit einem Personal Trainer weiterarbeiten', loss: 2, text: 'Du trainierst jeden Tag, als würdest du morgen wieder spielen.', cost: 0.1 },
+    { label: 'Ein Buch über dein Leben schreiben', loss: 3.5, text: 'Dein Buch wird ein Bestseller.', book: true },
+    { label: 'Urlaub machen und abschalten', loss: 4, text: 'Strand, Sonne, keine Fußballschuhe.' },
+  ],
+};
+
+function serveBan(choice) {
+  const p = S.player, b = S.ban;
+  const upkeep = SHOP.reduce((sum, it) => sum + ownedCount(it.id) * it.price * it.upkeep, 0);
+  for (let i = 0; i < b.years; i++) {
+    S.history.push({
+      year: S.year + 1 + i, age: p.age, club: b.type === 'prison' ? 'Gefängnis' : 'Dopingsperre', role: '—',
+      games: 0, goals: 0, assists: 0, cleanSheets: 0, note: null, rating: Math.round(p.rating), titles: 0, youth: false, loan: false, banned: true,
+    });
+    p.age++;
+    p.rating = clamp(p.rating - choice.loss - (p.age >= 30 ? 1.5 : 0), 35, 99);
+    S.money -= upkeep + (choice.cost || 0);
+  }
+  S.year += b.years;
+  if (choice.book) { S.money += 0.2 + p.popularity / 100; p.popularity = clamp(p.popularity + 10, 0, 100); }
+  S.banResult = `${choice.text} Nach ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahren'} bist du wieder frei.`;
+  S.ban = null;
+  S.loan = null;
+  S.forceRelease = true;
+  S.contract = { salary: S.contract.salary, years: 0 };
+  p.trust = 40;
+  p.form = 0;
+  openTransfer();
+  if (S.offers) S.offers.msgs.unshift(S.banResult);
+}
+
 function retire(reason) {
   S.phase = 'retired';
   S.retireReason = reason;
@@ -835,7 +981,7 @@ function retire(reason) {
 }
 
 // ---------- Rendering ----------
-function render() {
+function render(keepScroll = false) {
   handlers = [];
   const root = app();
   let html = '';
@@ -848,11 +994,12 @@ function render() {
     else if (S.phase === 'season') html += S.current.type === 'event' ? renderEvent() : renderMatch();
     else if (S.phase === 'seasonEnd') html += renderSeasonEnd();
     else if (S.phase === 'transfer') html += renderTransfer();
+    else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
   if (S && S.phase !== 'create') save();
-  window.scrollTo({ top: 0 });
+  if (!keepScroll) window.scrollTo({ top: 0 });
 }
 
 function renderStart() {
@@ -870,12 +1017,14 @@ function renderStart() {
 }
 
 function renderCreate() {
-  const natOpts = NATIONS.map(n => `<option${n.name === 'Deutschland' ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
+  const h = S.heir;
+  const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
   const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === 'ST' ? ' selected' : ''}>${v.name}</option>`).join('');
   return `
   <section class="card">
-    <h2>Dein Spieler</h2>
-    <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller"></label>
+    <h2>${h ? 'Die nächste Generation' : 'Dein Spieler'}</h2>
+    ${h ? `<p>Du spielst jetzt als Kind von ${esc(h.parentName)}. Es ist das Jahr ${h.year}, du bist 17 und hast das Talent geerbt${h.talent > 0 ? ' – die Scouts sind begeistert' : ''}. Dazu erbst du ${money(h.money)} und den berühmten Nachnamen.</p>` : ''}
+    <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller" value="${h ? esc(`${h.childName} ${h.surname}`) : ''}"></label>
     <label>Nationalität<select id="f-nation">${natOpts}</select></label>
     <label>Position<select id="f-pos">${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
@@ -886,10 +1035,10 @@ function renderCreate() {
         const num = parseInt(document.getElementById('f-num').value, 10);
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
-        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num);
+        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null);
         render();
       }, 'primary')}
-      ${btn('Zurück', () => { S = null; render(); })}
+      ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
     </div>
   </section>`;
 }
@@ -932,6 +1081,7 @@ function renderPlayerCard() {
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
       <p class="mv">Saison ${seasonLabel(S.year)} · Marktwert ${money(marketValue())}</p>
       <p class="mv">Privat: ${esc(lifeText())}${S.agent ? ' · mit Topberater' : ''}</p>
+      ${S.gen > 1 ? `<p class="mv">Generation ${S.gen} · Kind von ${esc(S.parentName)}</p>` : ''}
     </div>
     <div class="wallet">
       <div><span>Vermögen</span><b class="${S.money < 0 ? 'down' : ''}">${money(S.money)}</b></div>
@@ -978,6 +1128,7 @@ function renderPreseason() {
       nextStep(); render();
     }, 'primary')}</div>
   </section>
+  ${renderLife()}
   ${renderShop()}
   ${renderHistory()}`;
 }
@@ -1107,8 +1258,101 @@ function renderTransfer() {
       ${p.age >= 33 ? btn('Karriere beenden', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
     </div>
   </section>
+  ${renderLife()}
   ${renderShop()}
   ${renderHistory()}`;
+}
+
+function renderBanned() {
+  const b = S.ban;
+  const prison = b.type === 'prison';
+  return `
+  <section class="card banned">
+    <h2>${prison ? 'Hinter Gittern' : 'Gesperrt'}</h2>
+    <p>${prison
+    ? `Du musst ${b.years} ${b.years === 1 ? 'Jahr' : 'Jahre'} ins Gefängnis. Deine Karriere steht still, dein Vertrag ist aufgelöst.`
+    : `Du darfst ${b.years} Jahre lang kein Pflichtspiel bestreiten. Dein Vertrag ist aufgelöst.`}</p>
+    <p>Wie nutzt du die Zeit?</p>
+    <div class="choices">${BAN_CHOICES[b.type].map(c => btn(esc(c.label), () => { serveBan(c); render(); })).join('')}</div>
+  </section>`;
+}
+
+// Aktionen, die jeweils einmal pro Saison möglich sind
+const actUsed = k => !!(S.season && S.season.acts && S.season.acts[k]);
+function useAct(k) { S.season.acts = S.season.acts || {}; S.season.acts[k] = true; }
+function lifeAction(k, fn) {
+  return () => { useAct(k); S.lifeMsg = fn(); render(true); };
+}
+function actBtn(k, label, sub, fn, extraCls = '') {
+  const used = actUsed(k);
+  return btn(`${label}<small>${used ? 'diese Saison schon gemacht' : sub}</small>`, used ? () => {} : lifeAction(k, fn), used ? `small disabled ${extraCls}` : `small ${extraCls}`);
+}
+
+function renderLife() {
+  const l = life(), p = S.player;
+  const pre = S.phase === 'preseason';
+  let rel = '';
+  if (l.partner) {
+    const pa = l.partner;
+    const dateCost = Math.max(0.002, S.money * 0.01), giftCost = Math.max(0.01, S.money * 0.04);
+    rel = `
+      <div class="partner">
+        <div><strong>${esc(pa.name)}</strong><small>${esc(pa.job)} · ${l.married ? 'verheiratet' : 'Beziehung'}</small></div>
+        ${bar('Beziehung', pa.rel, 100)}
+      </div>
+      <div class="lifeacts">
+        ${actBtn('date', 'Date ausgehen', money(dateCost), () => 'Ein schöner Abend zu zweit.' + mod({ rel: randInt(8, 15), money: -dateCost, form: 1 }))}
+        ${actBtn('gift', 'Teures Geschenk', money(giftCost), () => `${pa.name} freut sich riesig.` + mod({ rel: randInt(14, 20), money: -giftCost }))}
+        ${l.married ? '' : actBtn('propose', 'Heiratsantrag', `Chance ca. ${Math.round(clamp(pa.rel / 110, 0.05, 0.9) * 100)} %`, () => {
+          if (chance(clamp(pa.rel / 110, 0.05, 0.9))) { l.married = true; return `${pa.name} sagt JA! 💍 Ihr seid jetzt verheiratet.` + mod({ rel: 15, popularity: 4, money: -Math.max(0.02, Math.min(1, S.money * 0.05)) }); }
+          return `${pa.name} ist noch nicht so weit. Die Stimmung ist gedrückt.` + mod({ rel: -15 });
+        })}
+        ${l.children.length < 6 ? actBtn('family', 'Familie planen', pa.rel >= 40 ? 'Kinderwunsch' : 'Beziehung zu schwach', () => {
+          if (pa.rel < 40) return `${pa.name} findet, dass eure Beziehung dafür noch nicht stabil genug ist.` + mod({ rel: -5 });
+          if (chance(0.65)) { const c = haveChild(); return `👶 Ihr bekommt ein Baby! Ihr nennt es ${c}.` + mod({ rel: 10, popularity: 3, form: 1 }); }
+          return 'Es klappt diesmal noch nicht. Vielleicht nächste Saison.' + mod({});
+        }) : ''}
+        ${btn(`${l.married ? 'Scheidung einreichen' : 'Schluss machen'}<small>${l.married ? 'kostet 30 % Vermögen' : 'Beziehung beenden'}</small>`, () => { S.lifeMsg = breakUp(); render(true); }, 'small danger')}
+      </div>`;
+  } else {
+    const cands = l.candidates || [];
+    rel = `
+      <p class="muted">Du bist Single.${l.exes ? ` Ex-Partner: ${l.exes}.` : ''}</p>
+      ${cands.length ? `<div class="offers">${cands.map((c, i) => `
+        <div class="offer"><div class="offer-info"><strong>${esc(c.name)}, ${c.age}</strong><small>${esc(c.job)} · Chemie ${'♥'.repeat(c.chem)}${'♡'.repeat(5 - c.chem)}</small></div>
+        ${btn('Ansprechen', () => {
+          l.candidates.splice(i, 1);
+          const pChance = clamp(0.2 + c.chem * 0.1 + p.popularity / 250 + (S.money > 1 ? 0.08 : 0), 0.1, 0.9);
+          if (chance(pChance)) { l.partner = { name: c.name, rel: 45 + c.chem * 6, job: c.job }; l.candidates = []; S.lifeMsg = `${c.name} sagt Ja! Ihr seid jetzt ein Paar. ❤️` + mod({ form: 2 }); }
+          else S.lifeMsg = `${c.name} hat kein Interesse. Autsch.` + mod({ form: -1 });
+          render(true);
+        }, 'small')}</div>`).join('')}</div>` : ''}
+      <div class="lifeacts">
+        ${actBtn('search', 'Auf Partnersuche gehen', 'Leute kennenlernen', () => {
+          l.candidates = Array.from({ length: 3 }, () => ({ name: pick(PARTNER_NAMES), age: clamp(p.age + randInt(-3, 3), 18, 60), job: pick(JOBS), chem: randInt(1, 5) }));
+          return 'Du triffst ein paar interessante Menschen. Wen sprichst du an?';
+        })}
+      </div>`;
+  }
+  const vacCost = Math.max(0.003, S.money * 0.03);
+  const kids = l.children.length ? `<p class="muted">Kinder: ${l.children.map(c => `${esc(c.name)} (${Math.max(0, S.year - c.born)} J.)`).join(', ')}</p>` : '';
+  return `
+  <section class="card">
+    <details${S.lifeMsg ? ' open' : ''}><summary>Privatleben &amp; Aktivitäten · ${esc(lifeText())}</summary>
+      ${S.lifeMsg ? `<div class="result">${S.lifeMsg}</div>` : ''}
+      <h3>Beziehung</h3>
+      ${rel}
+      ${kids}
+      <h3>Aktivitäten</h3>
+      <div class="lifeacts">
+        ${actBtn('vacation', 'Urlaub machen', money(vacCost), () => 'Sonne tanken und abschalten.' + mod({ form: 3, injuryProne: -2, rel: 8, money: -vacCost }))}
+        ${actBtn('party', 'Party-Nacht', 'Beliebtheit, aber riskant', () => chance(0.8)
+          ? 'Legendäre Nacht! Die Fotos gehen viral.' + mod({ popularity: 4, form: -2, rel: -5 })
+          : 'Die Party endet mit einer Schlägerei. Der Verein ist stinksauer.' + mod({ popularity: -3, trust: -8, form: -2, rel: -10 }))}
+        ${pre && !S.youth ? actBtn('doping', '💉 Dubiosen Arzt besuchen', 'Stärke +4 bis +6 · Risiko: Sperre oder Gefängnis', () => doDope(), 'risky') : ''}
+      </div>
+    </details>
+  </section>`;
 }
 
 function renderFinance(f) {
@@ -1137,9 +1381,9 @@ function renderShop() {
       ${list.map(it => {
         const have = ownedCount(it.id);
         const can = S.money >= it.price && (it.repeat || !have);
-        const extra = it.id === 'fund' && have ? btn('Verkaufen', () => { sellFund(); render(); }, 'small') : '';
+        const extra = it.id === 'fund' && have ? btn('Verkaufen', () => { sellFund(); render(true); }, 'small') : '';
         return `<div class="shopitem"><div><strong>${esc(it.name)}</strong><small>${money(it.price)}${it.upkeep ? ` · Unterhalt ${money(it.price * it.upkeep)}/Jahr` : ''}${it.pop ? ` · Beliebtheit +${it.pop}` : ''}${it.id === 'fund' ? ' · Rendite schwankt jedes Jahr' : ''}</small></div>
-          <div class="shopbtns">${!it.repeat && have ? '<span class="owned">Gekauft</span>' : btn('Kaufen', () => { if (can) { buy(it); render(); } }, can ? 'small' : 'small disabled')}${extra}</div></div>`;
+          <div class="shopbtns">${!it.repeat && have ? '<span class="owned">Gekauft</span>' : btn('Kaufen', () => { if (can) { buy(it); render(true); } }, can ? 'small' : 'small disabled')}${extra}</div></div>`;
       }).join('')}
     </div>`).join('');
   return `
@@ -1152,7 +1396,7 @@ function renderShop() {
 }
 
 function totals() {
-  const pro = S.history.filter(h => !h.youth);
+  const pro = S.history.filter(h => !h.youth && !h.banned);
   return {
     seasons: pro.length,
     games: pro.reduce((s, h) => s + h.games, 0),
@@ -1231,6 +1475,28 @@ function renderAfterCareer() {
   </section>`;
 }
 
+function renderDynasty() {
+  const l = life();
+  const t = totals();
+  const me = { name: S.player.name, gen: S.gen || 1, peak: S.peak, titles: S.titles.length, games: t.games, goals: t.goals, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length };
+  const all = [...(S.dynasty || []), me];
+  const table = all.length > 1 ? `
+    <div class="scroll"><table>
+      <thead><tr><th>Gen.</th><th>Name</th><th>Spiele</th><th>Tore</th><th>Titel</th><th>Beste Stärke</th></tr></thead>
+      <tbody>${all.map(d => `<tr><td>${d.gen}</td><td class="club">${esc(d.name)}${d.ballon ? ` · ${d.ballon}× Ballon d'Or` : ''}</td><td>${d.games}</td><td>${d.goals}</td><td>${d.titles}</td><td>${d.peak}</td></tr>`).join('')}</tbody>
+    </table></div>` : '';
+  const kids = l.children.length
+    ? `<p>Führe die Familiendynastie fort und spiele als dein Kind weiter. Es erbt dein Vermögen (${money(S.money)}), deinen Besitz und einen Teil deines Talents.</p>
+       <div class="choices">${l.children.map(c => btn(`Als ${esc(c.name)} weiterspielen<small>geboren ${c.born}</small>`, () => { startHeir(c); render(); })).join('')}</div>`
+    : '<p class="muted">Du hast keine Kinder, die deine Karriere fortsetzen könnten.</p>';
+  return `
+  <section class="card">
+    <h2>Familiendynastie</h2>
+    ${table}
+    ${kids}
+  </section>`;
+}
+
 function renderRetired() {
   const p = S.player, t = totals();
   const [icon, title, text] = legacy();
@@ -1242,6 +1508,7 @@ function renderRetired() {
     <p>${esc(text)}</p>
   </section>
   ${renderAfterCareer()}
+  ${renderDynasty()}
   <section class="card">
     <div class="stats">
       <div><b>${t.seasons}</b><span>Profisaisons</span></div>
@@ -1255,6 +1522,7 @@ function renderRetired() {
     </div>
     <p>Vereine: ${S.clubsPlayed.map(esc).join(' → ')}</p>
     <p>Privat: ${esc(lifeText())}</p>
+    ${S.dopeCaught ? `<p class="down">Dopingsünder: ${S.dopeCaught}× erwischt.</p>` : ''}
     <div class="actions">${btn('Neue Karriere starten', () => { deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
   </section>
   ${renderHistory()}`;

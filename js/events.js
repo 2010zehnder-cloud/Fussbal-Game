@@ -294,14 +294,14 @@ const EVENTS = [
     cond: () => !life().partner && S.player.age >= 18,
     text: () => `Auf einer Charity-Gala lernst du ${partnerName()} kennen. Es funkt sofort.`,
     options: [
-      { label: 'Nach einem Date fragen', run: () => { life().partner = partnerName(); return `Ihr seid jetzt ein Paar! ${partnerName()} gibt dir Halt.` + mod({ form: 2, popularity: 2 }); } },
+      { label: 'Nach einem Date fragen', run: () => { life().partner = { name: partnerName(), rel: 60, job: pick(JOBS) }; return `Ihr seid jetzt ein Paar! ${partnerName()} gibt dir Halt.` + mod({ form: 2, popularity: 2 }); } },
       { label: 'Fokus auf die Karriere', run: () => 'Du bleibst Single und konzentrierst dich auf Fußball.' + mod({ devBonus: 0.3 }) },
     ],
   },
   {
     id: 'wedding', title: 'Hochzeit',
     cond: () => life().partner && !life().married && S.player.age >= 22,
-    text: () => `Du und ${life().partner} wollt heiraten. Wie groß soll die Feier werden?`,
+    text: () => `Du und ${life().partner.name} wollt heiraten. Wie groß soll die Feier werden?`,
     options: [
       { label: 'Riesige Party auf Mallorca', run: () => { life().married = true; return 'Die Bilder gehen um die Welt. Unvergesslich – und teuer.' + mod({ popularity: 5, money: -Math.max(0.03, Math.min(1.5, S.money * 0.1)) }); } },
       { label: 'Kleine Feier mit Familie', run: () => { life().married = true; return 'Ein wunderschöner Tag im kleinen Kreis.' + mod({ form: 2 }); } },
@@ -310,12 +310,12 @@ const EVENTS = [
   },
   {
     id: 'baby', title: 'Nachwuchs!',
-    cond: () => life().married && life().kids < 4,
+    cond: () => life().married && life().children.length < 4,
     weight: () => 0.7,
-    text: () => `${life().partner} ist schwanger – ihr bekommt ein Baby! Das Kind kommt mitten in der Saison.`,
+    text: () => `Große Neuigkeiten: Du und ${life().partner.name} bekommt ein Baby! Es kommt mitten in der Saison.`,
     options: [
-      { label: 'Zwei Wochen Elternzeit', run: () => { life().kids++; return 'Du bist bei der Geburt dabei und genießt die ersten Tage. Der Verein zeigt Verständnis.' + mod({ form: 2, injuredGames: 2, popularity: 3 }); } },
-      { label: 'Sofort zurück zum Training', run: () => { life().kids++; return 'Du trainierst weiter, aber schläfst kaum.' + mod({ form: -2, trust: 2 }); } },
+      { label: 'Zwei Wochen Elternzeit', run: () => `Du bist bei der Geburt von ${haveChild()} dabei und genießt die ersten Tage. Der Verein zeigt Verständnis.` + mod({ form: 2, injuredGames: 2, popularity: 3, rel: 12 }) },
+      { label: 'Sofort zurück zum Training', run: () => `${haveChild()} ist da! Du trainierst weiter, aber schläfst kaum.` + mod({ form: -2, trust: 2, rel: -8 }) },
     ],
   },
   {
@@ -439,6 +439,45 @@ const EVENTS = [
       { label: 'Spiel von gestern analysieren', run: () => 'Du findest eine Schwäche im Gegner. Müde, aber gut vorbereitet.' + mod({ trust: 2, form: -1 }) },
       { label: 'Musik hören und entspannen', run: () => 'Irgendwann schläfst du doch ein.' + mod({ form: 1 }) },
       { label: 'Den Mannschaftsarzt anrufen', run: () => 'Ein Kräutertee und ein ruhiges Gespräch helfen.' + mod({ form: 2 }) },
+    ],
+  },
+  {
+    id: 'dopingOffer', title: 'Das Angebot im Hinterzimmer',
+    cond: () => !S.youth && !S.season.doped,
+    weight: () => 0.8,
+    text: () => 'Ein Fitnesscoach zieht dich zur Seite: „Ich hab da ein Mittel. Nicht nachweisbar, sagen sie. Du wärst eine Maschine.“',
+    options: [
+      { label: 'Nehmen', run: () => doDope() },
+      { label: 'Ablehnen und dem Verein melden', run: () => 'Der Coach fliegt raus. Der Verein ist dir dankbar.' + mod({ trust: 6, popularity: 3 }) },
+      { label: 'Ablehnen', run: () => 'Du gehst einfach weg. Sauber bleiben ist dir wichtiger.' + mod({}) },
+    ],
+  },
+  {
+    id: 'jealous', title: 'Eifersucht',
+    cond: () => !!life().partner,
+    text: () => `${life().partner.name} ist genervt: Du bist ständig unterwegs, und auf Social Media schreiben dir fremde Leute.`,
+    options: [
+      { label: 'Ein Wochenende nur für euch', run: () => 'Ihr fahrt in die Berge, Handys aus. Das tut euch gut.' + mod({ rel: 15, form: 1, money: -0.005 }) },
+      { label: 'Das ist halt mein Job', run: () => 'Die Stimmung bleibt angespannt.' + mod({ rel: -12 }) },
+    ],
+  },
+  {
+    id: 'partnerCareer', title: 'Ein Angebot für deinen Partner',
+    cond: () => !!life().partner,
+    text: () => `${life().partner.name} bekommt ein tolles Jobangebot in einer anderen Stadt.`,
+    options: [
+      { label: 'Unterstützen – Fernbeziehung', run: () => 'Ihr seht euch seltener, aber du stehst hinter der Entscheidung.' + mod({ rel: 6, form: -1 }) },
+      { label: 'Bitten, das Angebot abzulehnen', run: () => chance(0.5) ? 'Das Angebot wird abgelehnt. Glücklich ist dein Partner damit aber nicht.' + mod({ rel: -10 }) : 'Riesiger Streit. Die Beziehung wackelt.' + mod({ rel: -25 }) },
+    ],
+  },
+  {
+    id: 'paparazzi', title: 'Paparazzi',
+    cond: () => S.player.popularity >= 50,
+    text: () => 'Paparazzi verfolgen dich seit Tagen. Heute stehen sie vor deiner Haustür.',
+    options: [
+      { label: 'Freundlich für Fotos posieren', run: () => 'Die Bilder sind sympathisch.' + mod({ popularity: 3 }) },
+      { label: 'Die Kamera wegschlagen', run: () => 'Anzeige wegen Sachbeschädigung. Das kostet Geld und Ansehen.' + mod({ popularity: -6, money: -0.02, trust: -3 }) },
+      { label: 'Durch die Hintertür verschwinden', run: () => 'Du entkommst unbemerkt.' + mod({}) },
     ],
   },
 ];
