@@ -89,7 +89,7 @@ const COACH_EVENTS = [
 function startCoach() {
   const fame = clamp((S.peak - 70) * 0.5 + S.titles.length * 0.5, 0, 25);
   S.coach = {
-    club: null, skill: Math.round(45 + fame), seasons: [], titles: [], fired: 0,
+    club: null, skill: Math.round(45 + fame + (hasFlag('coachPrep') ? 6 : 0)), seasons: [], titles: [], fired: 0,
     tactic: 'balanced', policy: 'normal', bonus: 0, board: 0, event: null, last: null,
   };
   S.coachOffers = coachOffersFor(56, 62 + fame * 0.4, 3);

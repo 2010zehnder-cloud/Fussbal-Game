@@ -113,6 +113,7 @@ const ACHIEVEMENTS = [
   { id: 'captain', name: 'Spielführer', desc: 'Werde Kapitän der Nationalmannschaft.', test: () => !!S.natCaptain },
   { id: 'coachTitle', name: 'Meistertrainer', desc: 'Gewinne einen Titel als Trainer.', test: () => S.coach && S.coach.titles.length >= 1 },
   { id: 'president', name: 'Boss', desc: 'Kaufe einen Verein.', test: () => !!(S.owner || S.ownerDone) },
+  { id: 'rare', name: 'Glückspilz', desc: 'Erlebe einen seltenen Moment.', test: () => (S.rareSeen || 0) >= 1 },
   { id: 'goals5', name: 'Musterschüler', desc: 'Erfülle 10 Saisonziele.', test: () => (S.goalsDone || 0) >= 10 },
 ];
 function unlockedAchievements() { try { return JSON.parse(localStorage.getItem(ACH_KEY) || '[]'); } catch (e) { return []; } }

@@ -282,6 +282,7 @@ function startSeason() {
   const role = S.youth ? 'U19' : roleFor(p.rating, str, p.trust);
   S.season = { role, focus: 'balanced', devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
   genSeasonGoals();
+  S.season.theme = pickTheme();
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
@@ -313,10 +314,11 @@ function nextStep() {
 function setupEvent() {
   if (maybeSeriousInjury()) return;
   const pool = EVENTS.filter(e => !S.season.usedEvents.includes(e.id) && (!e.cond || e.cond()));
-  const total = pool.reduce((s, e) => s + (e.weight ? e.weight() : 1), 0);
+  const total = pool.reduce((s, e) => s + eventWeight(e), 0);
   let r = Math.random() * total, ev = pool[0];
-  for (const e of pool) { r -= e.weight ? e.weight() : 1; if (r <= 0) { ev = e; break; } }
+  for (const e of pool) { r -= eventWeight(e); if (r <= 0) { ev = e; break; } }
   S.season.usedEvents.push(ev.id);
+  markSeen(ev);
   S.current = { type: 'event', id: ev.id, ctx: {}, result: null };
   S.current.text = ev.text(); // Text einmal festhalten (Zufallswerte stabil)
 }
@@ -327,9 +329,9 @@ const SCENES = {
     q => ({
       situation: 'Du bekommst den Ball 18 Meter vor dem Tor. Ein Verteidiger rückt heraus, links läuft ein Mitspieler frei.',
       options: [
-        { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal', okText: 'Dein Schuss aus 18 Metern schlägt flach im langen Eck ein!', failText: 'Der Schuss streicht knapp am Pfosten vorbei.' },
-        { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist', okText: 'Dein Querpass kommt perfekt – dein Mitspieler muss nur noch einschieben!', failText: 'Der Verteidiger spitzelt deinen Pass weg.' },
-        { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true, okText: 'Du lässt zwei Verteidiger stehen, umkurvst den Torwart und schiebst ein. Was für ein Solo!', failText: 'Du bleibst am dritten Gegenspieler hängen.' },
+        { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal', okText: ['Dein Schuss aus 18 Metern schlägt flach im langen Eck ein!', 'Vollspann aus 18 Metern – der Ball schlägt unter der Latte ein!', 'Du schlenzt den Ball mit Gefühl ins lange Eck!'], failText: 'Der Schuss streicht knapp am Pfosten vorbei.' },
+        { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist', okText: ['Dein Querpass kommt perfekt – dein Mitspieler muss nur noch einschieben!', 'Uneigennützig! Du legst quer, und dein Mitspieler bedankt sich mit dem Tor.', 'Ein Blick, ein Pass, ein Tor – perfekt zusammengespielt!'], failText: 'Der Verteidiger spitzelt deinen Pass weg.' },
+        { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true, okText: ['Du lässt zwei Verteidiger stehen, umkurvst den Torwart und schiebst ein. Was für ein Solo!', 'Übersteiger, Haken, Tor! Die Verteidiger schauen nur hinterher. Was für ein Solo!'], failText: 'Du bleibst am dritten Gegenspieler hängen.' },
       ],
     }),
     () => ({
@@ -352,7 +354,7 @@ const SCENES = {
       situation: 'Flanke von rechts! Du stehst am langen Pfosten, der Verteidiger klebt an dir.',
       options: [
         { label: 'Volley nehmen', p: 0.15 + q * 0.3, kind: 'goal', bonus: true, okText: 'Volley aus der Luft – der Ball zappelt im Netz! Das wird das Tor des Monats.', failText: 'Du triffst den Ball nicht richtig, er fliegt hoch übers Tor.' },
-        { label: 'Kopfball aufs Tor', p: 0.22 + q * 0.28, kind: 'goal', okText: 'Du steigst am höchsten und köpfst wuchtig ein!', failText: 'Dein Kopfball landet direkt in den Armen des Torwarts.' },
+        { label: 'Kopfball aufs Tor', p: 0.22 + q * 0.28, kind: 'goal', okText: ['Du steigst am höchsten und köpfst wuchtig ein!', 'Ein Kopfball wie ein Hammer – unhaltbar!', 'Du schraubst dich hoch und setzt den Ball punktgenau in den Winkel!'], failText: 'Dein Kopfball landet direkt in den Armen des Torwarts.' },
         { label: 'Quer auf den Mitspieler köpfen', p: 0.3 + q * 0.25, kind: 'assist', okText: 'Deine Kopfball-Ablage landet genau bei deinem Mitspieler – Tor!', failText: 'Der Ball springt ins Toraus.' },
       ],
     }),
@@ -361,7 +363,7 @@ const SCENES = {
     q => ({
       situation: 'Ballgewinn im Mittelfeld! Vor dir öffnet sich Raum für einen Konter.',
       options: [
-        { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist', okText: 'Dein Steilpass schneidet die Abwehr auf – dein Stürmer vollendet eiskalt!', failText: 'Der Pass ist einen Tick zu lang, der Torwart ist vorher da.' },
+        { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist', okText: ['Dein Steilpass schneidet die Abwehr auf – dein Stürmer vollendet eiskalt!', 'Ein Pass wie mit dem Lineal gezogen – Tor!', 'Du siehst die Lücke, die sonst niemand sieht. Dein Stürmer sagt Danke!'], failText: 'Der Pass ist einen Tick zu lang, der Torwart ist vorher da.' },
         { label: 'Selbst durchlaufen und schießen', p: 0.18 + q * 0.28, kind: 'goal', okText: 'Du sprintest übers halbe Feld und schließt selbst ab – drin!', failText: 'Dir geht die Puste aus, der Schuss ist zu schwach.' },
         { label: 'Tempo rausnehmen, Ballbesitz sichern', p: 0.85, kind: 'safe', okText: 'Clever gespielt. Ihr lasst den Ball laufen und kontrolliert das Spiel.', failText: 'Ballverlust im Mittelfeld – der Gegner kontert und trifft!' },
       ],
@@ -395,7 +397,7 @@ const SCENES = {
     q => ({
       situation: 'Der gegnerische Stürmer ist durch und läuft allein auf dich zu. Du bist der letzte Mann!',
       options: [
-        { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: 'Saubere Grätsche! Du spielst den Ball und rettest in letzter Sekunde.', failText: 'Der Stürmer springt über dein Bein und trifft.' },
+        { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: ['Saubere Grätsche! Du spielst den Ball und rettest in letzter Sekunde.', 'Mit vollem Risiko in den Zweikampf – und du triffst nur den Ball!', 'Eine Grätsche wie aus dem Lehrbuch. Die Kurve feiert dich.'], failText: 'Der Stürmer springt über dein Bein und trifft.' },
         { label: 'Stellung halten und abdrängen', p: 0.4 + q * 0.25, kind: 'stop', okText: 'Du drängst den Stürmer nach außen ab, sein Schuss geht ins Aus.', failText: 'Der Stürmer lässt dich mit einer Körpertäuschung stehen und trifft.' },
         { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
       ],
@@ -484,11 +486,13 @@ function setupMatch() {
   const minute = randInt(62, 89);
   const a = randInt(0, 2);
   const b = clamp(a + randInt(-1, 1), 0, 3);
-  const scene = pick(SCENES[POSITIONS[p.pos].group])(quality());
+  const wonder = !S.youth && POSITIONS[p.pos].group !== 'gk' && chance(0.03);
+  const scene = (wonder ? WONDER_SCENE : pick(SCENES[POSITIONS[p.pos].group]))(quality());
+  if (wonder) { S.rareSeen = (S.rareSeen || 0) + 1; }
   S.current = {
     type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
     drama: !!drama,
-    situation: (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
+    situation: sceneIntro(a, b) + (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
@@ -505,7 +509,7 @@ function resolveMatch(i) {
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
     const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
-    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
+    if (scored) { us++; text = `${goalCry()} ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
     else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
@@ -525,18 +529,18 @@ function resolveMatch(i) {
   } else {
     const ok = chance(o.p);
     if (o.kind === 'goal') {
-      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
-      else { text = `${o.failText || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
+      if (ok) { us++; text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${o.bonus ? crowdLine() : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
+      else { text = `${pickText(o.failText) || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
     } else if (o.kind === 'assist') {
-      if (ok) { us++; text = `${o.okText || 'Perfekter Pass – dein Mitspieler schiebt ein!'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
-      else { text = `${o.failText || 'Der Pass wird abgefangen.'} Endstand ${us}:${them}.`; eff = { form: -1 }; }
+      if (ok) { us++; text = `${pickText(o.okText) || 'Perfekter Pass – dein Mitspieler schiebt ein!'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
+      else { text = `${pickText(o.failText) || 'Der Pass wird abgefangen.'} Endstand ${us}:${them}.`; eff = { form: -1 }; }
     } else if (o.kind === 'safe') {
-      if (ok) { text = `${o.okText || 'Clever gespielt. Ihr kontrolliert das Spiel.'} Endstand ${us}:${them}.`; eff = { trust: 2 }; }
-      else { them++; text = `${o.failText || 'Ballverlust – Gegentor!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -3 }; }
+      if (ok) { text = `${pickText(o.okText) || 'Clever gespielt. Ihr kontrolliert das Spiel.'} Endstand ${us}:${them}.`; eff = { trust: 2 }; }
+      else { them++; text = `${pickText(o.failText) || 'Ballverlust – Gegentor!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -3 }; }
     } else if (o.kind === 'stop') {
-      if (ok) { text = `${o.okText || 'Ball erobert! Die Fans feiern deine Rettungstat.'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: o.risky ? 5 : 3 }; }
+      if (ok) { text = `${pickText(o.okText) || 'Ball erobert! Die Fans feiern deine Rettungstat.'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: o.risky ? 5 : 3 }; }
       else if (o.risky && chance(0.35)) { them++; text = `Zu spät! Rote Karte und Elfmeter – ${us}:${them}. Du bist für 3 Spiele gesperrt.`; eff = { form: -3, trust: -5, injuredGames: 3 }; }
-      else { them++; text = `${o.failText || 'Nicht zu verhindern – der Ball ist drin.'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
+      else { them++; text = `${pickText(o.failText) || 'Nicht zu verhindern – der Ball ist drin.'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
     } else {
       if (ok) { text = `Gelbe Karte – aber der Konter ist gestoppt. Endstand ${us}:${them}.`; eff = { trust: 1 }; }
       else { text = `Der Schiri zeigt Rot! Du fliegst vom Platz. Endstand ${us}:${them}.`; eff = { trust: -4, injuredGames: 2 }; }
@@ -786,6 +790,8 @@ function endSeason() {
     res.lines.push('🚨 Die Steuerfahndung durchsucht dein Haus! Es kommt zum Prozess.');
   }
   celebrationSeason(res);
+  themeSeasonEnd(res);
+  worldSeasonEvents(res);
   checkMilestones(res);
   S.headline = seasonHeadline(res);
   updateRecords(res);
@@ -979,6 +985,7 @@ function openTransfer() {
     shuffle(weakest).slice(0, 2).forEach(n => offers.push(newOffer(n)));
   }
   dreamOffer(offers, newOffer, p);
+  if (hasFlag('superOffer')) superOffer(offers, newOffer);
   offers.sort((a, b) => clubStr(b.club) - clubStr(a.club));
   if (released && !offers.length) {
     retire('Kein Verein will dich mehr verpflichten. Du beendest deine Karriere.');
@@ -1009,6 +1016,7 @@ function acceptOffer(o) {
     else if (!o.loan) setHeadline(`${lastName()} WECHSELT ZU ${o.club.toUpperCase()}`);
     S.clubId = o.club;
     S.player.trust = 45;
+    if (!o.loan && (S.player.trust < 35 || (S.offers && S.offers.released))) setFlag('exClub', { club: S.clubId });
     if (o.club === S.dreamClub) { S.player.popularity = clamp(S.player.popularity + 5, 0, 100); S.player.form = clamp(S.player.form + 3, -10, 10); toast(`⭐ Traum erfüllt: Du spielst für ${o.club}!`); queueFx('fanfare', 'confetti'); }
   } else if (S.offers.extension) {
     S.contract = { ...S.offers.extension };
@@ -1260,7 +1268,7 @@ function renderPlayerCard() {
       <h2>${esc(p.name)} <span class="num">#${p.number}</span></h2>
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
-      <p class="mv">Saison ${seasonLabel(S.year)}${S.season && S.season.role && S.phase !== 'transfer' ? ` · <span class="rolechip">${esc(S.season.role)}</span>` : ''}${S.gen > 1 ? ` · Generation ${S.gen}` : ''}</p>
+      <p class="mv">Saison ${seasonLabel(S.year)}${S.season && S.season.role && S.phase !== 'transfer' ? ` · <span class="rolechip">${esc(S.season.role)}</span>` : ''}${S.gen > 1 ? ` · Generation ${S.gen}` : ''}${S.youth ? '' : ` · ${renderPhaseTag()}`}</p>
     </div>
     <div class="wallet">
       <div><span>Vermögen</span><b class="${S.money < 0 ? 'down' : ''}">${money(S.money)}</b></div>
@@ -1290,6 +1298,8 @@ function renderPreseason() {
   ${renderHeadline()}
   <section class="card">
     <h2>Saisonvorschau ${seasonLabel(S.year)}</h2>
+    ${renderTheme()}
+    ${renderWorldNews()}
     <p>${roleText}</p>
     <ul class="facts">
       <li><span>Rolle</span><b>${se.role}</b></li>
@@ -1415,6 +1425,7 @@ function renderTransfer() {
     const str = clubStr(of.club);
     const role = roleFor(p.rating, str, 45);
     const tags = [];
+    if (of.superclub) tags.push(['good', '✨ Das Angebot deines Lebens']);
     if (of.dream) tags.push(['good', '⭐ Traumverein!']);
     if (of.loan) tags.push(['good', '🔁 Leihe: Spielpraxis sammeln']);
     if (!o.released && rank[role] > rank[curRole]) tags.push(['good', '⏱️ Mehr Spielzeit']);

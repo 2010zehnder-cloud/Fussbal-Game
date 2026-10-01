@@ -17,7 +17,7 @@ const EVENTS = [
     options: [
       {
         label: 'Hingehen', run: () => chance(0.5)
-          ? 'Ein lustiger Abend – der Teamgeist ist super, und niemand hat etwas mitbekommen.' + mod({ popularity: 2, form: 1 })
+          ? 'Ein lustiger Abend – der Teamgeist ist super, und niemand hat etwas mitbekommen. Zumindest glaubst du das …' + (setFlag('secretVideo') || '') + mod({ popularity: 2, form: 1 })
           : 'Fotos von dir um 3 Uhr morgens landen im Netz. Der Trainer ist stinksauer.' + mod({ form: -2, trust: -7, popularity: -3 }),
       },
       { label: 'Absagen und früh schlafen', run: () => 'Du bist topfit und hellwach im Training.' + mod({ form: 2, trust: 1 }) },
@@ -37,7 +37,12 @@ const EVENTS = [
     text: () => `Ein 18-jähriges Talent spielt im Training auf deiner Position (${POSITIONS[S.player.pos].name}) groß auf. Die Presse schreibt schon über einen Stammplatz für ihn.`,
     options: [
       { label: 'Noch härter arbeiten', run: () => 'Du nimmst die Herausforderung an und legst eine Schippe drauf.' + mod({ devBonus: 0.8, trust: 3, injuryProne: 2 }) },
-      { label: 'Ihn als Mentor unterstützen', run: () => 'Du nimmst den Jungen unter deine Fittiche. Kabine und Fans lieben es.' + mod({ trust: 6, popularity: 4, form: -1 }) },
+      {
+        label: 'Ihn als Mentor unterstützen', run: () => {
+          if (!hasFlag('mentee')) setFlag('mentee', { name: `${pick(FIRST_NAMES)} ${pick(SURNAMES)}` });
+          return `Du nimmst ${flags().mentee.name} unter deine Fittiche. Kabine und Fans lieben es.` + mod({ trust: 6, popularity: 4, form: -1 });
+        },
+      },
       {
         label: 'Beim Trainer beschweren', run: () => S.player.popularity > 60
           ? 'Dein Standing im Verein ist groß – der Trainer setzt weiter auf dich.' + mod({ trust: 2 })

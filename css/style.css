@@ -416,3 +416,10 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 @media (prefers-reduced-motion: reduce) {
   .rc-slide, .rc-big, .rc-stats div, .rc-list li, .rc-paper, .rc-rating b { animation: none; }
 }
+
+/* Saison-Thema und Weltnachrichten */
+.theme { display: flex; flex-direction: column; gap: 2px; background: rgba(232,197,71,.12); border: 1px solid rgba(232,197,71,.45); border-radius: 12px; padding: 10px 14px; margin: 8px 0; }
+.theme b { color: var(--gold); }
+.worldnews { background: var(--card2); border-radius: 12px; padding: 10px 14px; margin: 8px 0; }
+.worldnews ul { margin: 6px 0 0; padding-left: 18px; }
+.worldnews li { margin: 3px 0; font-size: 14px; }

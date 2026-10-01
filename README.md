@@ -54,6 +54,7 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Tagesherausforderung** mit festem Startspieler und Ziel.
 - **Schlagzeilen** im Boulevard-Stil, **Saison-Rückblick im Video-Stil** (bildschirmfüllende Folien wie Storys, mit Sound und Konfetti) und **Schnellmodus** (ganze Saison automatisch).
 - **Rekorde** über alle Karrieren auf dem Startbildschirm.
+- **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen
@@ -75,6 +76,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/ui.js` – Reiter, Hilfe und Tipps
 - `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
 - `js/extras.js` – Live-Finals, Drama am letzten Spieltag, Torjubel, Kindheitsfreund, Tagesherausforderung, Schlagzeilen, Rückblick, Schnellmodus, Rekorde
+- `js/variety.js` – Geschichten, Karrierephasen, Saison-Themen, Weltereignisse, seltene Momente, Szenen-Abwechslung
 - `js/career.js` – Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha, Gericht
 - `js/game.js` – Spiellogik und Oberfläche
 - `tools/build_single.py` – baut die Einzeldatei in `dist/`

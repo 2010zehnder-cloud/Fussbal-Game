@@ -68,17 +68,17 @@ function playFinalOption(i) {
   } else {
     const ok = chance(o.p);
     if (o.kind === 'goal') {
-      if (ok) { f.us++; finalStat(f, 'goals'); text = `TOOOR! ${o.okText || 'Du triffst!'}${celebrationText()}`; queueFx('goal'); }
-      else text = o.failText || 'Knapp vorbei!';
+      if (ok) { f.us++; finalStat(f, 'goals'); text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${celebrationText()}`; queueFx('goal'); }
+      else text = pickText(o.failText) || 'Knapp vorbei!';
     } else if (o.kind === 'assist') {
-      if (ok) { f.us++; finalStat(f, 'assists'); text = o.okText || 'Perfekter Pass – Tor!'; queueFx('goal'); }
-      else text = o.failText || 'Der Pass kommt nicht an.';
+      if (ok) { f.us++; finalStat(f, 'assists'); text = pickText(o.okText) || 'Perfekter Pass – Tor!'; queueFx('goal'); }
+      else text = pickText(o.failText) || 'Der Pass kommt nicht an.';
     } else if (o.kind === 'foul') {
       text = ok ? 'Gelbe Karte, aber der Konter ist gestoppt.' : 'Rote Karte! Ihr müsst in Unterzahl weiterspielen.';
       if (!ok) f.ownStr -= 4;
     } else {
-      if (ok) text = o.okText || 'Gefahr gebannt!';
-      else { f.them++; text = o.failText || 'Gegentor.'; }
+      if (ok) text = pickText(o.okText) || 'Gefahr gebannt!';
+      else { f.them++; text = pickText(o.failText) || 'Gegentor.'; }
     }
   }
   f.log.push(`${minute}'. ${o.label}: ${text.replace(/<[^>]+>/g, '')} (${f.us}:${f.them})`);
