@@ -116,14 +116,18 @@ function renderHallOfFame() {
 }
 
 // ---------- Elfmeterschießen ----------
-// Mit 30 % Wahrscheinlichkeit geht ein erreichtes Finale ins Elfmeterschießen
-function maybeShootout(r, kind, title) {
-  if (!r || r.reached !== 'Finale' || !chance(0.3)) return false;
-  const opp = r.won ? r.beat : r.lostTo;
-  r.won = false; r.pending = true; r.lostTo = opp;
-  S.shootouts = S.shootouts || [];
-  S.shootouts.push({ kind, title, opp, round: 0 });
-  return true;
+// Titel nach einem gewonnenen Finale vergeben
+function grantFinalTitle(so, how) {
+  const res = S.seasonEnd;
+  const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
+  S.titles.push(label);
+  res.titles.push(so.title);
+  res.lines.push(`🏆 ${so.title}! ${how}.`);
+  const h = S.history[S.history.length - 1];
+  if (h) h.titles++;
+  S.player.popularity = clamp(S.player.popularity + (so.title.startsWith('Champions') ? 12 : 8), 0, 100);
+  S.money += S.contract.salary * 0.15 * 0.55;
+  queueFx('fanfare', 'confetti');
 }
 
 function resolveShootout(dir) {
@@ -142,15 +146,8 @@ function resolveShootout(dir) {
         : 'Du springst in die falsche Ecke – aber der Ball knallt an die Latte! Ihr gewinnt das Elfmeterschießen!')
       : (other === dir ? `Der Torwart ahnt die Ecke, aber dein Schuss ist zu scharf – drin! Ihr gewinnt das Elfmeterschießen!`
         : `Der Torwart springt ${dirs[other]}, du schiebst ${dirs[dir]} ein. Ihr gewinnt das Elfmeterschießen!`);
-    const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
-    S.titles.push(label);
-    res.titles.push(so.title);
-    res.lines.push(`🏆 ${so.title}! Finale gegen ${so.opp} im Elfmeterschießen gewonnen.`);
-    const h = S.history[S.history.length - 1];
-    if (h) h.titles++;
-    S.player.popularity = clamp(S.player.popularity + 8, 0, 100);
-    S.money += S.contract.salary * 0.15 * 0.55;
-    queueFx('fanfare', 'confetti');
+    grantFinalTitle(so, `Finale gegen ${so.opp} im Elfmeterschießen gewonnen`);
+    setHeadline(`ELFMETER-HELD ${lastName()}! ${so.title.toUpperCase()}!`);
   } else {
     queueFx('sad');
     so.text = gk

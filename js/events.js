@@ -608,6 +608,33 @@ const EVENTS = [
       { label: 'Account für eine Weile löschen', run: () => { addFollowers({ mul: 0.7 }); return 'Ruhe im Kopf, aber viele Follower sind weg.' + mod({ form: 2 }); } },
     ],
   },
+  {
+    id: 'buddyAdvice', title: 'Ehrliche Worte',
+    cond: () => buddy().type === 'loyal' && S.player.age >= 19,
+    text: () => `${buddy().name} sagt dir ins Gesicht: „Du bist abgehoben. Denk daran, wo du herkommst.“`,
+    options: [
+      { label: 'Zuhören und nachdenken', run: () => 'Du merkst, dass es stimmt. Du konzentrierst dich wieder aufs Wesentliche.' + mod({ form: 2, trust: 3 }) + relChip(buddy(), 10) },
+      { label: 'Beleidigt abhauen', run: () => 'Ihr redet eine Weile nicht miteinander.' + relChip(buddy(), -20) },
+    ],
+  },
+  {
+    id: 'buddyTrouble', title: 'Eine Idee von deinem besten Freund',
+    cond: () => buddy().type === 'trouble' && S.player.age >= 18,
+    text: () => `${buddy().name} will mit dir am Abend vor dem Spiel zu einer Party in einer anderen Stadt fahren. „Wie früher, komm schon!“`,
+    options: [
+      { label: 'Mitfahren', run: () => chance(0.5) ? 'Die Nacht wird legendär – und niemand erfährt davon.' + mod({ form: -1, popularity: 2 }) + relChip(buddy(), 12) : 'Ihr werdet erwischt, die Fotos sind überall.' + mod({ trust: -8, popularity: -4, form: -2 }) + relChip(buddy(), 5) },
+      { label: 'Absagen', run: () => `${buddy().name} ist enttäuscht, aber du bleibst professionell.` + mod({ form: 1 }) + relChip(buddy(), -10) },
+    ],
+  },
+  {
+    id: 'buddyStory', title: 'Verrat?',
+    cond: () => buddy().rel < 40 && S.player.popularity >= 40,
+    text: () => `Ein Klatschmagazin bietet ${buddy().name} viel Geld für Geschichten aus deiner Jugend.`,
+    options: [
+      { label: 'Anrufen und reden', run: () => chance(0.6) ? `${buddy().name} lehnt das Angebot ab. Eure Freundschaft ist stärker.` + relChip(buddy(), 25) : `${buddy().name} verkauft die Geschichten trotzdem.` + mod({ popularity: -5 }) + relChip(buddy(), -30) },
+      { label: 'Selbst mehr Geld bieten', run: () => 'Das Schweigen kostet dich, aber es wirkt.' + mod({ money: -Math.max(0.02, S.money * 0.03) }) + relChip(buddy(), -5) },
+    ],
+  },
 ];
 
 // Beteiligte Personen einmal pro Ereignis festlegen

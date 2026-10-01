@@ -356,6 +356,19 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .rehabbar span.now { box-shadow: 0 0 0 3px var(--accent); }
 @media (max-width: 420px) { .slot { grid-template-columns: 30px 1fr; } .slot .shopbtns { grid-column: 1 / -1; justify-content: flex-end; } .top > span:first-child { font-size: 15px; } .helpbtn { padding: 6px 10px; } }
 
+/* Live-Finale, Schlagzeile, Rückblick */
+.card.final { border-color: var(--gold); }
+.anthem { font-style: italic; color: var(--gold); margin: 12px 0 0; }
+.ticker { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 4px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ticker li { background: var(--card2); border-radius: 8px; padding: 4px 10px; }
+.newspaper { background: #f4efe2; color: #1b1b1b; border-radius: 6px; padding: 12px 16px 14px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25); transform: rotate(-0.6deg); }
+.newspaper .paper { font-family: var(--font-display); font-size: 12px; letter-spacing: 2px; border-bottom: 2px solid #1b1b1b; padding-bottom: 4px; margin-bottom: 6px; color: #b3261e; font-weight: 800; }
+.newspaper .headline { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; line-height: 1.1; text-transform: uppercase; text-wrap: balance; }
+.pop { animation: popIn .45s ease-out both; }
+@keyframes popIn { from { transform: translateY(8px) scale(.97); opacity: .2; } to { transform: none; opacity: 1; } }
+.daily { border-color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } .newspaper { transform: none; } }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button">? Hilfe</button></span></header>
 <main id="app"></main>
@@ -969,6 +982,7 @@ function europeFor(club) {
 
 function nextStep() {
   const se = S.season;
+  if (se.step === 0) S.headline = null;
   if (se.step >= STEPS.length) { endSeason(); return; }
   const step = STEPS[se.step];
   if (step.type === 'event') setupEvent(); else setupMatch();
@@ -1130,8 +1144,18 @@ function setupMatch() {
     const others = clubsIn(L.id).filter(n => n !== own).sort((a, b) => clubStr(b) - clubStr(a));
     opp = pick(others.slice(0, 6));
   }
+  let drama = null;
+  if (matchNo === 2) {
+    drama = finalDayDrama();
+    if (drama) {
+      comp = L.name;
+      const others = clubsIn(L.id).filter(n => n !== own);
+      opp = pick(others);
+      S.season.drama = { type: drama.type };
+    }
+  }
   let rivalMatch = false;
-  if (!S.youth && rivalActive() && S.rival.club !== own && clubLeague(S.rival.club).id === L.id && comp === L.name && chance(0.4)) {
+  if (!drama && !S.youth && rivalActive() && S.rival.club !== own && clubLeague(S.rival.club).id === L.id && comp === L.name && chance(0.4)) {
     opp = S.rival.club;
     rivalMatch = true;
   }
@@ -1142,7 +1166,9 @@ function setupMatch() {
   const scene = pick(SCENES[POSITIONS[p.pos].group])(quality());
   S.current = {
     type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
-    situation: (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
+    drama: !!drama,
+    situation: (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
+      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
 }
@@ -1158,7 +1184,7 @@ function resolveMatch(i) {
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
     const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
-    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}. Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
+    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
     else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
@@ -1178,7 +1204,7 @@ function resolveMatch(i) {
   } else {
     const ok = chance(o.p);
     if (o.kind === 'goal') {
-      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
+      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
       else { text = `${o.failText || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
     } else if (o.kind === 'assist') {
       if (ok) { us++; text = `${o.okText || 'Perfekter Pass – dein Mitspieler schiebt ein!'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
@@ -1200,6 +1226,18 @@ function resolveMatch(i) {
   c.final = c.home ? `${us}:${them}` : `${them}:${us}`;
   c.chosen = i;
   queueFx(us > c.a ? 'goal' : 'whistle');
+  if (c.drama && S.season.drama) {
+    const d = S.season.drama;
+    d.won = us > them;
+    const msg = {
+      relegation: ['Klassenerhalt! Die Fans stürmen den Platz!', 'Abgestiegen. Spieler liegen weinend auf dem Rasen.'],
+      promotion: ['AUFSTIEG! Die Stadt steht kopf!', 'Der Aufstieg ist verpasst. So nah dran …'],
+      title: ['MEISTER! Die Schale gehört euch!', 'Die Meisterschaft ist weg – ein anderer jubelt.'],
+    }[d.type];
+    text += ` ${d.won ? msg[0] : msg[1]}`;
+    if (d.won) { queueFx('fanfare', 'confetti'); S.player.popularity = clamp(S.player.popularity + 5, 0, 100); }
+  }
+  if (c.comp === 'Champions League' && us > them) S.player.popularity = clamp(S.player.popularity + 2, 0, 100);
   if (c.rivalMatch) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
@@ -1248,6 +1286,7 @@ function endSeason() {
   const tables = {};
   for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, bonus);
   const myTable = tables[L.id];
+  applyDrama(myTable.rows);
   const pos = myTable.rows.findIndex(r => r.name === own) + 1;
 
   // Einsätze
@@ -1266,8 +1305,9 @@ function endSeason() {
     euroGames = Math.round(matches * (se.role === 'Stammspieler' ? 0.85 : se.role === 'Rotation' ? 0.55 : 0.2));
   }
   const games = leagueGames + cupGames + euroGames;
-  if (cupRes) maybeShootout(cupRes, 'cup', `${L.cup}-Sieger`);
-  if (euroRes) maybeShootout(euroRes, 'euro', `${euroName()}-Sieger`);
+  const playStr = str + (se.role === 'Stammspieler' ? (p.rating - str) * 0.1 : 0);
+  if (cupRes) queueLiveFinal(cupRes, 'cup', `${L.cup}-Sieger`, L.cup, playStr);
+  if (euroRes) queueLiveFinal(euroRes, 'euro', `${euroName()}-Sieger`, euroName(), playStr);
 
   // Tore, Vorlagen, Note
   const P = POSITIONS[p.pos];
@@ -1299,13 +1339,13 @@ function endSeason() {
   }
   if (cupRes) {
     if (cupRes.won) { res.titles.push(`${L.cup}-Sieger`); res.lines.push(`🏆 ${L.cup}-Sieger! Finale gegen ${cupRes.beat} gewonnen.`); }
-    else if (cupRes.pending) res.lines.push(`${L.cup}-Finale gegen ${cupRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
+    else if (cupRes.pending) res.lines.push(`🏟️ ${L.cup}: Ihr steht im Finale gegen ${cupRes.lostTo}! Das Finale spielst du live.`);
     else res.lines.push(`${L.cup}: Aus in der Runde „${cupRes.reached}“ gegen ${cupRes.lostTo}.`);
   }
   if (euroRes) {
     const name = euroName();
     if (euroRes.won) { res.titles.push(`${name}-Sieger`); res.lines.push(`🏆 ${name}-Sieger! Finale gegen ${euroRes.beat} gewonnen.`); }
-    else if (euroRes.pending) res.lines.push(`${name}-Finale gegen ${euroRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
+    else if (euroRes.pending) res.lines.push(`🏟️ ${name}: Ihr steht im Finale gegen ${euroRes.lostTo}! Das Finale spielst du live.`);
     else res.lines.push(`${name}: Aus in der Runde „${euroRes.reached}“${euroRes.lostTo ? ` gegen ${euroRes.lostTo}` : ''}.`);
   }
   res.cupRes = cupRes; res.euroRes = euroRes;
@@ -1424,12 +1464,15 @@ function endSeason() {
     S.court = { charge: 'Steuerhinterziehung', severity: 2 };
     res.lines.push('🚨 Die Steuerfahndung durchsucht dein Haus! Es kommt zum Prozess.');
   }
+  celebrationSeason(res);
   checkMilestones(res);
+  S.headline = seasonHeadline(res);
+  updateRecords(res);
   if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
 
   p.age++;
   S.seasonEnd = res;
-  S.phase = S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
+  S.phase = S.finals && S.finals.length ? 'final' : S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
   S.current = null;
 }
 
@@ -1539,8 +1582,8 @@ function tournament(res) {
   const goals = Math.round(games * rate * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   out.lines.push(`Du machst ${games} Spiele${goals ? ` und schießt ${goals} Tor${goals > 1 ? 'e' : ''}` : ''}.`);
-  if (maybeShootout(r, 'nation', `${title} ${summer}`)) {
-    out.lines.push(`Das Finale gegen ${r.lostTo} geht ins Elfmeterschießen!`);
+  if (queueLiveFinal(r, 'nation', `${title} ${summer}`, name, nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0))) {
+    out.lines.push(`🏟️ ${nat.name} steht im Finale gegen ${r.lostTo}! Das Finale spielst du live.`);
   } else if (r.won) {
     out.lines.push(`🏆 ${nat.name} ist ${title}! Finale gegen ${r.beat} gewonnen!`);
     S.titles.push(`${title} ${summer}`);
@@ -1640,6 +1683,9 @@ function acceptOffer(o) {
       S.money += o.signing * 0.55;
       S.earned += o.signing * 0.55;
     }
+    if (o.fee >= 30) setHeadline(`MEGA-TRANSFER! ${lastName()} WECHSELT FÜR ${money(o.fee).toUpperCase()} ZU ${o.club.toUpperCase()}`);
+    else if (o.club === S.dreamClub) setHeadline(`TRAUM ERFÜLLT! ${lastName()} UNTERSCHREIBT BEI ${o.club.toUpperCase()}`);
+    else if (!o.loan) setHeadline(`${lastName()} WECHSELT ZU ${o.club.toUpperCase()}`);
     S.clubId = o.club;
     S.player.trust = 45;
     if (o.club === S.dreamClub) { S.player.popularity = clamp(S.player.popularity + 5, 0, 100); S.player.form = clamp(S.player.form + 3, -10, 10); toast(`⭐ Traum erfüllt: Du spielst für ${o.club}!`); queueFx('fanfare', 'confetti'); }
@@ -1764,6 +1810,7 @@ function retire(reason) {
   S.retireReason = reason;
   S.retireAge = S.player.age;
   S.offers = null;
+  updateRecords(null);
   saveHallOfFame();
 }
 
@@ -1785,12 +1832,14 @@ function render(keepScroll = false) {
     else if (S.phase === 'seasonEnd') html += tip('seasonEnd') + renderSeasonEnd();
     else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'shootout') html += renderShootout();
+    else if (S.phase === 'final') html += renderFinal();
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
-  if (S && S.player && S.phase !== 'create') checkAchievements();
+  if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); }
+  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) { S.seasonEnd.animated = true; animateRecap(); }
   flushFx();
 }
 
@@ -1802,6 +1851,7 @@ function renderStart() {
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
   </section>
   ${renderSlots()}
+  ${renderDailyCard()}
   <section class="card howto">
     <h2>So funktioniert's</h2>
     <ol class="steps">
@@ -1812,20 +1862,22 @@ function renderStart() {
     <div class="actions">${btn('Ausführliche Hilfe', () => { uiHelp = true; render(); })}</div>
   </section>
   ${renderHallOfFame()}
+  ${renderRecords()}
   ${renderAchievements()}`;
 }
 
 function renderCreate() {
-  const h = S.heir;
-  const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
-  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === 'ST' ? ' selected' : ''}>${v.name}</option>`).join('');
+  const h = S.heir, dl = S.daily;
+  const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : dl ? dl.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
+  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === (dl ? dl.pos : 'ST') ? ' selected' : ''}>${v.name}</option>`).join('');
   return `
   <section class="card">
-    <h2>${h ? 'Die nächste Generation' : 'Dein Spieler'}</h2>
+    <h2>${h ? 'Die nächste Generation' : dl ? '🎯 Herausforderung des Tages' : 'Dein Spieler'}</h2>
+    ${dl ? `<p><b>Ziel: ${esc(dl.goal.text)}.</b> Nationalität und Position sind vorgegeben, du startest in der Jugend von ${esc(dl.club)}.</p>` : ''}
     ${h ? `<p>Du spielst jetzt als Kind von ${esc(h.parentName)}. Es ist das Jahr ${h.year}, du bist 17 und hast das Talent geerbt${h.talent > 0 ? ' – die Scouts sind begeistert' : ''}. Dazu erbst du ${money(h.money)} und den berühmten Nachnamen.</p>` : ''}
     <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller" value="${h ? esc(`${h.childName} ${h.surname}`) : ''}"></label>
-    <label>Nationalität<select id="f-nation">${natOpts}</select></label>
-    <label>Position<select id="f-pos">${posOpts}</select></label>
+    <label>Nationalität<select id="f-nation"${dl ? ' disabled' : ''}>${natOpts}</select></label>
+    <label>Position<select id="f-pos"${dl ? ' disabled' : ''}>${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
@@ -1836,7 +1888,9 @@ function renderCreate() {
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
         const fd = document.getElementById('f-diff');
-        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
+        const daily = S.daily;
+        newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, daily ? daily.pos : document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
+        if (daily) applyDaily(daily);
         render();
       }, 'primary')}
       ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
@@ -1908,6 +1962,7 @@ function renderPreseason() {
     'U19': 'Du spielst in der U19 und willst dich für die Profis empfehlen.',
   }[se.role];
   return `
+  ${renderHeadline()}
   <section class="card">
     <h2>Saisonvorschau ${seasonLabel(S.year)}</h2>
     <p>${roleText}</p>
@@ -1924,10 +1979,12 @@ function renderPreseason() {
       return btn(`${esc(gk && f.gkName ? f.gkName : f.name)}<small>${esc(gk && f.gkDesc ? f.gkDesc : f.desc)}</small>`,
         () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
     }).join('')}</div>
+    ${S.daily ? `<p class="note">🎯 Tagesziel: ${esc(S.daily.text)}${S.daily.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
     <div class="actions">${btn('Saison starten', () => {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
       nextStep(); render();
-    }, 'primary')}</div>
+    }, 'primary')}
+    ${btn('⏩ Automatisch spielen<small>Ganze Saison ohne Entscheidungen</small>', () => { autoSeason(); render(); })}</div>
   </section>`;
 }
 
@@ -1995,12 +2052,13 @@ function renderSeasonEnd() {
   const highlights = r.lines.filter((l, i) => i === 0 || key.test(l));
   const others = r.lines.filter((l, i) => !(i === 0 || key.test(l)));
   return `
-  <section class="card">
+  ${renderHeadline()}
+  <section class="card recap">
     <h2>Saisonbilanz ${seasonLabel(r.year)}</h2>
     <div class="stats">
-      <div><b>${r.games}</b><span>Spiele</span></div>
-      <div><b>${r.goals}</b><span>Tore</span></div>
-      <div><b>${r.assists}</b><span>Vorlagen</span></div>
+      <div><b data-count="${r.games}">${r.games}</b><span>Spiele</span></div>
+      <div><b data-count="${r.goals}">${r.goals}</b><span>Tore</span></div>
+      <div><b data-count="${r.assists}">${r.assists}</b><span>Vorlagen</span></div>
       ${gk ? `<div><b>${r.cleanSheets}</b><span>Zu null</span></div>` : ''}
       <div><b>${r.note === null ? '–' : fmt2(r.note)}</b><span>Ø Note</span></div>
       <div><b>${r.ratingAfter}</b><span>Stärke <em class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</em></span></div>
@@ -3005,6 +3063,33 @@ const EVENTS = [
       { label: 'Account für eine Weile löschen', run: () => { addFollowers({ mul: 0.7 }); return 'Ruhe im Kopf, aber viele Follower sind weg.' + mod({ form: 2 }); } },
     ],
   },
+  {
+    id: 'buddyAdvice', title: 'Ehrliche Worte',
+    cond: () => buddy().type === 'loyal' && S.player.age >= 19,
+    text: () => `${buddy().name} sagt dir ins Gesicht: „Du bist abgehoben. Denk daran, wo du herkommst.“`,
+    options: [
+      { label: 'Zuhören und nachdenken', run: () => 'Du merkst, dass es stimmt. Du konzentrierst dich wieder aufs Wesentliche.' + mod({ form: 2, trust: 3 }) + relChip(buddy(), 10) },
+      { label: 'Beleidigt abhauen', run: () => 'Ihr redet eine Weile nicht miteinander.' + relChip(buddy(), -20) },
+    ],
+  },
+  {
+    id: 'buddyTrouble', title: 'Eine Idee von deinem besten Freund',
+    cond: () => buddy().type === 'trouble' && S.player.age >= 18,
+    text: () => `${buddy().name} will mit dir am Abend vor dem Spiel zu einer Party in einer anderen Stadt fahren. „Wie früher, komm schon!“`,
+    options: [
+      { label: 'Mitfahren', run: () => chance(0.5) ? 'Die Nacht wird legendär – und niemand erfährt davon.' + mod({ form: -1, popularity: 2 }) + relChip(buddy(), 12) : 'Ihr werdet erwischt, die Fotos sind überall.' + mod({ trust: -8, popularity: -4, form: -2 }) + relChip(buddy(), 5) },
+      { label: 'Absagen', run: () => `${buddy().name} ist enttäuscht, aber du bleibst professionell.` + mod({ form: 1 }) + relChip(buddy(), -10) },
+    ],
+  },
+  {
+    id: 'buddyStory', title: 'Verrat?',
+    cond: () => buddy().rel < 40 && S.player.popularity >= 40,
+    text: () => `Ein Klatschmagazin bietet ${buddy().name} viel Geld für Geschichten aus deiner Jugend.`,
+    options: [
+      { label: 'Anrufen und reden', run: () => chance(0.6) ? `${buddy().name} lehnt das Angebot ab. Eure Freundschaft ist stärker.` + relChip(buddy(), 25) : `${buddy().name} verkauft die Geschichten trotzdem.` + mod({ popularity: -5 }) + relChip(buddy(), -30) },
+      { label: 'Selbst mehr Geld bieten', run: () => 'Das Schweigen kostet dich, aber es wirkt.' + mod({ money: -Math.max(0.02, S.money * 0.03) }) + relChip(buddy(), -5) },
+    ],
+  },
 ];
 
 // Beteiligte Personen einmal pro Ereignis festlegen
@@ -3776,14 +3861,18 @@ function renderHallOfFame() {
 }
 
 // ---------- Elfmeterschießen ----------
-// Mit 30 % Wahrscheinlichkeit geht ein erreichtes Finale ins Elfmeterschießen
-function maybeShootout(r, kind, title) {
-  if (!r || r.reached !== 'Finale' || !chance(0.3)) return false;
-  const opp = r.won ? r.beat : r.lostTo;
-  r.won = false; r.pending = true; r.lostTo = opp;
-  S.shootouts = S.shootouts || [];
-  S.shootouts.push({ kind, title, opp, round: 0 });
-  return true;
+// Titel nach einem gewonnenen Finale vergeben
+function grantFinalTitle(so, how) {
+  const res = S.seasonEnd;
+  const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
+  S.titles.push(label);
+  res.titles.push(so.title);
+  res.lines.push(`🏆 ${so.title}! ${how}.`);
+  const h = S.history[S.history.length - 1];
+  if (h) h.titles++;
+  S.player.popularity = clamp(S.player.popularity + (so.title.startsWith('Champions') ? 12 : 8), 0, 100);
+  S.money += S.contract.salary * 0.15 * 0.55;
+  queueFx('fanfare', 'confetti');
 }
 
 function resolveShootout(dir) {
@@ -3802,15 +3891,8 @@ function resolveShootout(dir) {
         : 'Du springst in die falsche Ecke – aber der Ball knallt an die Latte! Ihr gewinnt das Elfmeterschießen!')
       : (other === dir ? `Der Torwart ahnt die Ecke, aber dein Schuss ist zu scharf – drin! Ihr gewinnt das Elfmeterschießen!`
         : `Der Torwart springt ${dirs[other]}, du schiebst ${dirs[dir]} ein. Ihr gewinnt das Elfmeterschießen!`);
-    const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
-    S.titles.push(label);
-    res.titles.push(so.title);
-    res.lines.push(`🏆 ${so.title}! Finale gegen ${so.opp} im Elfmeterschießen gewonnen.`);
-    const h = S.history[S.history.length - 1];
-    if (h) h.titles++;
-    S.player.popularity = clamp(S.player.popularity + 8, 0, 100);
-    S.money += S.contract.salary * 0.15 * 0.55;
-    queueFx('fanfare', 'confetti');
+    grantFinalTitle(so, `Finale gegen ${so.opp} im Elfmeterschießen gewonnen`);
+    setHeadline(`ELFMETER-HELD ${lastName()}! ${so.title.toUpperCase()}!`);
   } else {
     queueFx('sad');
     so.text = gk
@@ -3876,8 +3958,8 @@ function renderHub() {
   if (S.phase !== uiLastPhase) { uiTab = 'main'; uiLastPhase = S.phase; }
   const tabs = hubTabs().map(([k, icon, label]) => btn(`<span class="ti">${icon}</span>${label}`, () => { uiTab = k; render(true); }, `tab ${uiTab === k ? 'active' : ''}`)).join('');
   let content;
-  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderHome()}${renderPets()}</section>`;
-  else if (uiTab === 'people') content = renderPeople();
+  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderCelebration()}${renderHome()}${renderPets()}</section>`;
+  else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
   else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
@@ -3934,6 +4016,11 @@ const HELP = [
   ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
   ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
   ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
+  ['🏟️ Finals', 'Erreichst du ein Finale, spielst du es live: drei Szenen mit Spielstand und Ticker. Bei Unentschieden gibt es Elfmeterschießen.'],
+  ['🔥 Letzter Spieltag', 'Im Abstiegskampf, Aufstiegsrennen oder Titelkampf entscheidet deine letzte Spielszene über die Tabelle.'],
+  ['🎉 Torjubel', 'Im Reiter „Privat“ wählst du deinen Torjubel. Triffst du oft, wird er Kult.'],
+  ['⏩ Schnellmodus', 'Vor der Saison kannst du die ganze Saison automatisch spielen lassen. Finals spielst du trotzdem selbst.'],
+  ['🎯 Tagesherausforderung', 'Jeden Tag gibt es auf dem Startbildschirm eine neue Herausforderung mit festem Startspieler und Ziel.'],
   ['🏁 Karriereende', 'Ab 33 kannst du aufhören, mit 41 ist Schluss. Danach wirst du Trainer, kaufst einen Verein oder spielst als dein Kind weiter.'],
 ];
 function renderHelp() {
@@ -4070,7 +4157,8 @@ function checkAchievements() {
   const fresh = ACHIEVEMENTS.filter(a => !have.includes(a.id) && (() => { try { return a.test(); } catch (e) { return false; } })());
   if (!fresh.length) return;
   try { localStorage.setItem(ACH_KEY, JSON.stringify([...have, ...fresh.map(a => a.id)])); } catch (e) { /* ignorieren */ }
-  fresh.forEach(a => toast(`🏅 Erfolg freigeschaltet: ${a.name}`));
+  if (fresh.length <= 2) fresh.forEach(a => toast(`🏅 Erfolg freigeschaltet: ${a.name}`));
+  else toast(`🏅 ${fresh.length} Erfolge freigeschaltet: ${fresh.map(a => a.name).join(', ')}`);
   queueFx('chime');
 }
 function renderAchievements() {
@@ -4087,6 +4175,7 @@ function renderAchievements() {
 function toast(text) {
   let box = document.getElementById('toasts');
   if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+  while (box.children.length >= 2) box.firstChild.remove();
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = text;
@@ -4477,6 +4566,408 @@ function courtVerdict(lawyer) {
   }
   S.court = null;
   return `<p>Anwaltskosten: ${money(cost)}.</p>` + text;
+}
+
+'use strict';
+
+// Live-Finale, Saisonfinale-Drama, Torjubel, Kindheitsfreund, Tagesherausforderung,
+// Schlagzeilen, Saison-Rückblick, Schnellmodus und Rekorde
+
+const lastName = () => S.player.name.trim().split(/\s+/).slice(-1)[0].toUpperCase();
+
+// ---------- Live-Finale ----------
+function opponentStrength(name) {
+  if (S.clubs[name]) return clubStr(name);
+  const nat = NATIONS.find(n => n.name === name);
+  if (nat) return nat.str;
+  for (const list of Object.values(EXTRA_OPPONENTS)) for (const [n, s] of list) if (n === name) return s;
+  return 75;
+}
+
+// Ein erreichtes Finale wird live gespielt statt ausgewürfelt
+function queueLiveFinal(r, kind, title, comp, ownStr) {
+  if (!r || r.reached !== 'Finale') return false;
+  const opp = r.won ? r.beat : r.lostTo;
+  r.won = false; r.pending = true; r.lostTo = opp;
+  S.finals = S.finals || [];
+  S.finals.push({ kind, title, comp, opp, ownStr, oppStr: opponentStrength(opp), us: 0, them: 0, scene: 0, log: [], current: null, done: false });
+  return true;
+}
+
+const FINAL_MINUTES = [23, 58, 84];
+function poisson(l) { let k = 0, p = Math.exp(-l), s = p; const u = Math.random(); while (u > s && k < 8) { k++; p *= l / k; s += p; } return k; }
+
+// Tore der Mitspieler zwischen den Szenen
+function simChunk(f, minuteFrom, minuteTo) {
+  const share = (minuteTo - minuteFrom) / 90;
+  const diffS = (f.ownStr - f.oppStr) / 12;
+  const gUs = poisson(1.25 * Math.exp(diffS) * share), gThem = poisson(1.25 * Math.exp(-diffS) * share);
+  for (let i = 0; i < gUs; i++) { f.us++; f.log.push(`${randInt(minuteFrom + 1, minuteTo - 1)}'. Tor für euch durch einen Mitspieler – ${f.us}:${f.them}!`); }
+  for (let i = 0; i < gThem; i++) { f.them++; f.log.push(`${randInt(minuteFrom + 1, minuteTo - 1)}'. Gegentor durch ${f.opp} – ${f.us}:${f.them}.`); }
+}
+
+function nextFinalScene() {
+  const f = S.finals[0];
+  const from = f.scene === 0 ? 0 : FINAL_MINUTES[f.scene - 1];
+  simChunk(f, from, FINAL_MINUTES[f.scene]);
+  const sc = pick(SCENES[POSITIONS[S.player.pos].group])(quality());
+  f.current = { situation: sc.situation, options: sc.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p - 0.05, 0.05, 0.9) : undefined })), result: null };
+}
+
+// Tore und Vorlagen im Finale zählen nachträglich zur Saison bzw. zur Nationalmannschaft
+function finalStat(f, key) {
+  if (f.kind === 'nation') { if (key === 'goals') S.player.intGoals++; return; }
+  const res = S.seasonEnd, h = S.history[S.history.length - 1];
+  res[key]++;
+  if (h) h[key]++;
+}
+
+function playFinalOption(i) {
+  const f = S.finals[0], c = f.current, o = c.options[i];
+  const q = quality();
+  let text;
+  const minute = FINAL_MINUTES[f.scene];
+  if (o.kind === 'shoot') {
+    const ok = chance(0.75 + q * 0.1);
+    if (ok) { f.us++; text = `TOOOR! Du verwandelst den Elfmeter ${o.label.toLowerCase()}!${celebrationText()}`; finalStat(f, 'goals'); queueFx('goal'); }
+    else text = 'Der Torwart hält deinen Elfmeter!';
+  } else if (o.kind === 'save') {
+    const ok = chance(0.3 + q * 0.15);
+    if (ok) text = 'GEHALTEN! Du ahnst die Ecke!';
+    else { f.them++; text = 'Der Elfmeter ist drin.'; }
+  } else {
+    const ok = chance(o.p);
+    if (o.kind === 'goal') {
+      if (ok) { f.us++; finalStat(f, 'goals'); text = `TOOOR! ${o.okText || 'Du triffst!'}${celebrationText()}`; queueFx('goal'); }
+      else text = o.failText || 'Knapp vorbei!';
+    } else if (o.kind === 'assist') {
+      if (ok) { f.us++; finalStat(f, 'assists'); text = o.okText || 'Perfekter Pass – Tor!'; queueFx('goal'); }
+      else text = o.failText || 'Der Pass kommt nicht an.';
+    } else if (o.kind === 'foul') {
+      text = ok ? 'Gelbe Karte, aber der Konter ist gestoppt.' : 'Rote Karte! Ihr müsst in Unterzahl weiterspielen.';
+      if (!ok) f.ownStr -= 4;
+    } else {
+      if (ok) text = o.okText || 'Gefahr gebannt!';
+      else { f.them++; text = o.failText || 'Gegentor.'; }
+    }
+  }
+  f.log.push(`${minute}'. ${o.label}: ${text.replace(/<[^>]+>/g, '')} (${f.us}:${f.them})`);
+  c.result = text;
+}
+
+function continueFinal() {
+  const f = S.finals[0];
+  f.scene++;
+  f.current = null;
+  if (f.scene < FINAL_MINUTES.length) { nextFinalScene(); return; }
+  simChunk(f, FINAL_MINUTES[FINAL_MINUTES.length - 1], 90);
+  f.done = true;
+  const res = S.seasonEnd;
+  if (f.us > f.them) {
+    grantFinalTitle(f, `Finale gegen ${f.opp} mit ${f.us}:${f.them} gewonnen`);
+    f.verdict = `🏆 ${f.title}! Ihr gewinnt das Finale ${f.us}:${f.them}!`;
+    setHeadline(f.kind === 'nation' ? `${lastName()} MACHT ${S.player.nation.toUpperCase()} ZUM ${f.title.split(' ')[0].toUpperCase()}!` : `FINAL-HELD ${lastName()}! ${f.title.toUpperCase()}!`);
+  } else if (f.us < f.them) {
+    f.verdict = `Ihr verliert das Finale ${f.us}:${f.them}. Bittere Tränen.`;
+    res.lines.push(`Finale gegen ${f.opp} mit ${f.us}:${f.them} verloren.`);
+    queueFx('sad');
+  } else {
+    f.verdict = `${f.us}:${f.them} nach 120 Minuten – es geht ins Elfmeterschießen!`;
+    S.shootouts = S.shootouts || [];
+    S.shootouts.push({ kind: f.kind, title: f.title, opp: f.opp, round: 0 });
+  }
+}
+
+function finishFinal() {
+  S.finals.shift();
+  if (S.finals.length) { nextFinalScene(); return; }
+  S.phase = S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
+}
+
+function renderFinal() {
+  const f = S.finals[0];
+  if (!f.current && !f.done) nextFinalScene();
+  const isCL = f.comp === 'Champions League';
+  const home = f.kind === 'nation' ? S.player.nation : S.clubId;
+  const crestOf = n => (S.clubs[n] ? crest(n) : '⚽');
+  const intro = f.scene === 0 && !f.current.result
+    ? `<p class="anthem">${isCL ? '🎶 Die Champions-League-Hymne erklingt. Flutlicht, 70.000 Fans, die ganze Welt schaut zu.' : `🏟️ Finale! Das Stadion ist ausverkauft, die Spannung ist kaum auszuhalten.`}</p>` : '';
+  return `
+  <section class="card final">
+    <div class="scoreboard">
+      <div class="comp">${esc(f.comp)} · Finale · LIVE</div>
+      <div class="teams">
+        <div class="team">${crestOf(home)}<span>${esc(home)}</span></div>
+        <div class="score">${f.us}:${f.them}<small>${f.done ? 'Abpfiff' : `${FINAL_MINUTES[f.scene]}. Minute`}</small></div>
+        <div class="team">${crestOf(f.opp)}<span>${esc(f.opp)}</span></div>
+      </div>
+    </div>
+    ${intro}
+    ${f.log.length ? `<ul class="ticker">${f.log.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+    ${f.done
+      ? `<div class="result"><p><b>${esc(f.verdict)}</b></p></div><div class="actions">${btn('Weiter', () => { finishFinal(); render(); }, 'primary')}</div>`
+      : f.current.result
+        ? `<div class="result"><p>${f.current.result}</p></div><div class="actions">${btn(f.scene < FINAL_MINUTES.length - 1 ? 'Weiterspielen' : 'Zum Abpfiff', () => { continueFinal(); render(); }, 'primary')}</div>`
+        : `<p class="situation">Szene ${f.scene + 1} von ${FINAL_MINUTES.length}: ${esc(f.current.situation)}</p>
+           <div class="choices">${f.current.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}`, () => { playFinalOption(i); render(true); })).join('')}</div>`}
+  </section>`;
+}
+
+// ---------- Drama am letzten Spieltag ----------
+function finalDayDrama() {
+  if (S.youth) return null;
+  const L = clubLeague(S.clubId);
+  const n = clubsIn(L.id).length;
+  const rank = clubsIn(L.id).sort((a, b) => clubStr(b) - clubStr(a)).indexOf(S.clubId) + 1;
+  const r = rank + randInt(-2, 2);
+  if (L.id === PROMOTION.upper && r >= n - PROMOTION.count) return { type: 'relegation', text: '🔥 Abstiegskampf am letzten Spieltag! Nur ein Sieg rettet euch vor dem Abstieg. ' };
+  if (L.id === PROMOTION.lower && r <= PROMOTION.count + 1) return { type: 'promotion', text: '🔥 Aufstiegsdrama am letzten Spieltag! Mit einem Sieg seid ihr in der Bundesliga. ' };
+  if (r <= 2) return { type: 'title', text: '🔥 Meisterschaftsfinale am letzten Spieltag! Gewinnt ihr, seid ihr Meister. ' };
+  return null;
+}
+
+// Ergebnis des letzten Spieltags in der Tabelle umsetzen
+function applyDrama(rows) {
+  const d = S.season.drama;
+  if (!d || d.won === undefined) return;
+  const n = rows.length;
+  const idx = rows.findIndex(r => r.name === S.clubId);
+  let target = idx;
+  if (d.type === 'relegation') target = d.won ? Math.min(idx, n - PROMOTION.count - 1) : Math.max(idx, n - PROMOTION.count);
+  if (d.type === 'promotion') target = d.won ? Math.min(idx, PROMOTION.count - 1) : Math.max(idx, PROMOTION.count);
+  if (d.type === 'title') target = d.won ? 0 : Math.max(idx, 1);
+  if (target === idx) return;
+  const [row] = rows.splice(idx, 1);
+  rows.splice(target, 0, row);
+  rows.forEach((r, i) => { if (i < n - 1 && rows[i + 1].pts > r.pts) rows[i + 1].pts = r.pts; });
+  if (target < idx) row.pts = Math.max(row.pts, (rows[target + 1] || row).pts + 1);
+}
+
+// ---------- Torjubel ----------
+const CELEBRATIONS = {
+  slide: 'Kniesliding zur Eckfahne',
+  salto: 'Salto mit Schraube',
+  heart: 'Herz mit den Händen',
+  sleep: 'Schlaf-Pose am Boden',
+  phone: 'Telefon-Jubel',
+  archer: 'Bogenschütze',
+  silence: 'Finger auf den Lippen',
+  dance: 'Tanz an der Eckfahne',
+};
+function celebrationText() {
+  if (!S.celebration) return '';
+  S.celebFame = (S.celebFame || 0) + 1;
+  return ` Du jubelst mit deinem ${CELEBRATIONS[S.celebration]}!`;
+}
+function celebrationSeason(res) {
+  if (!S.celebration) return;
+  const f = (S.celebFame || 0) + Math.round(res.goals / 3);
+  S.celebFame = f;
+  if (f >= 15 && !S.celebKult) {
+    S.celebKult = true;
+    S.player.popularity = clamp(S.player.popularity + 6, 0, 100);
+    res.lines.push(`⭐ Dein Jubel „${CELEBRATIONS[S.celebration]}“ wird Kult! Kinder auf allen Bolzplätzen machen ihn nach.`);
+  }
+}
+function renderCelebration() {
+  return `
+    <h3>🎉 Torjubel${S.celebration ? ` · ${esc(CELEBRATIONS[S.celebration])}${S.celebKult ? ' (Kult!)' : ''}` : ''}</h3>
+    <div class="lifeacts">${Object.entries(CELEBRATIONS).map(([k, v]) => btn(esc(v), () => {
+      if (S.celebration !== k) { S.celebration = k; S.celebFame = 0; S.celebKult = false; }
+      S.lifeMsg = `Dein neuer Torjubel: ${v}. Je öfter du triffst, desto bekannter wird er.`;
+      render(true);
+    }, S.celebration === k ? 'small chosen-focus' : 'small')).join('')}</div>`;
+}
+
+// ---------- Bester Freund aus der Kindheit ----------
+const BUDDY_NAMES = ['Kevin', 'Dennis', 'Marvin', 'Jana', 'Selin', 'Tom', 'Murat', 'Lea'];
+function buddy() {
+  if (!S.buddy) S.buddy = { name: pick(BUDDY_NAMES), rel: 75, type: chance(0.5) ? 'loyal' : 'trouble', job: false };
+  return S.buddy;
+}
+function renderBuddy() {
+  const b = buddy();
+  return `
+    <div class="person">
+      <div><strong>${esc(b.name)}</strong><small>Bester Freund aus der Kindheit · ${b.type === 'loyal' ? 'hält dich auf dem Boden' : 'zieht dich gern in Abenteuer'}${b.job ? ' · arbeitet für dich' : ''}</small>${bar('Freundschaft', b.rel, 100)}</div>
+      <div class="lifeacts">
+        ${pBtn('buddyMeet', 'Treffen wie früher', 'Bolzplatz und Pizza', () => `Ihr redet über alte Zeiten. ${b.name} kennt dich besser als jeder andere.` + mod({ form: 2 }) + relChip(b, 12))}
+        ${b.job ? '' : pBtn('buddyJob', 'Job anbieten', `als Fahrer oder Assistent · ${money(0.04)}/Jahr`, () => { b.job = true; return `${b.name} arbeitet jetzt für dich und ist immer an deiner Seite.` + mod({ money: -0.04, form: 1 }) + relChip(b, 20); })}
+      </div>
+    </div>`;
+}
+
+// ---------- Tagesherausforderung ----------
+const DAILY_KEY = 'fussballkarriere-tageschallenge';
+function dateKey(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function seeded(seed) {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+}
+const DAILY_GOALS = [
+  { id: 'title23', text: 'Gewinne bis zum Alter von 23 einen Titel', test: () => S.titles.length > 0 && S.player.age <= 24 },
+  { id: 'goals150', text: 'Schieße in deiner Karriere 150 Tore', test: () => totals().goals >= 150 },
+  { id: 'caps30', text: 'Bestreite 30 Länderspiele', test: () => S.player.caps >= 30 },
+  { id: 'rating88', text: 'Erreiche Stärke 88', test: () => S.peak >= 88 },
+  { id: 'cl', text: 'Gewinne die Champions League', test: () => S.titles.some(t => t.startsWith('Champions-League-Sieger')) },
+  { id: 'money50', text: 'Besitze 50 Mio. €', test: () => S.money >= 50 },
+  { id: 'clubs4', text: 'Spiele für 4 verschiedene Vereine und gewinne einen Titel', test: () => S.clubsPlayed.length >= 4 && S.titles.length > 0 },
+];
+function dailyChallenge() {
+  const key = dateKey();
+  const rnd = seeded(key);
+  const pickR = arr => arr[Math.floor(rnd() * arr.length)];
+  const nat = pickR(NATIONS.filter(n => n.str >= 72));
+  const pos = pickR(Object.keys(POSITIONS));
+  const allClubs = LEAGUES.flatMap(L => L.clubs.filter(([, s]) => s >= 60 && s <= 72).map(([n]) => n));
+  return { date: key, nation: nat.name, pos, club: pickR(allClubs), goal: pickR(DAILY_GOALS) };
+}
+function dailyDone() { try { return (JSON.parse(localStorage.getItem(DAILY_KEY) || '{}'))[dateKey()]; } catch (e) { return false; } }
+function startDaily() {
+  const d = dailyChallenge();
+  S = { phase: 'create', daily: d };
+}
+function applyDaily(daily) {
+  S.daily = { date: daily.date, goalId: daily.goal.id, text: daily.goal.text, done: false };
+  S.academyOffers = [daily.club];
+}
+function checkDaily() {
+  if (!S || !S.daily || S.daily.done) return;
+  const g = DAILY_GOALS.find(x => x.id === S.daily.goalId);
+  if (!g || !g.test()) return;
+  S.daily.done = true;
+  try {
+    const all = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+    all[S.daily.date] = true;
+    localStorage.setItem(DAILY_KEY, JSON.stringify(all));
+  } catch (e) { /* ignorieren */ }
+  toast(`🎯 Tagesherausforderung geschafft: ${S.daily.text}!`);
+  queueFx('fanfare', 'confetti');
+}
+function renderDailyCard() {
+  const d = dailyChallenge();
+  return `
+  <section class="card daily">
+    <h2>🎯 Herausforderung des Tages</h2>
+    <p><b>${esc(d.goal.text)}</b></p>
+    <p class="muted">Start: ${esc(POSITIONS[d.pos].name)} aus ${esc(d.nation)} in der Jugend von ${esc(d.club)}. Jeden Tag gibt es eine neue Herausforderung.</p>
+    ${dailyDone() ? '<p class="up">✅ Heute schon geschafft!</p>' : ''}
+    <div class="actions">${btn('Herausforderung starten', () => { pendingSlot = SLOT_COUNT; startDaily(); render(); }, 'primary')}</div>
+    <p class="muted small">Die Herausforderung nutzt Spielstand ${SLOT_COUNT}.</p>
+  </section>`;
+}
+
+// ---------- Schlagzeilen ----------
+function setHeadline(text) { S.headline = text; }
+function seasonHeadline(res) {
+  const ln = lastName();
+  const L = clubLeague(res.club);
+  if (res.lines.some(l => l.startsWith('🚨 Positiver Dopingtest'))) return `DOPING-SKANDAL! ${ln} ERWISCHT`;
+  if (res.awards.includes("Ballon d'Or")) return `${ln} IST DER BESTE FUSSBALLER DER WELT!`;
+  if (res.titles.includes(L.champion)) return `${ln} & CO. SIND ${L.champion.toUpperCase()}!`;
+  if (res.titles.length) return `TITEL-JUBEL! ${ln} HOLT ${res.titles[0].toUpperCase()}`;
+  if (res.lines.some(l => l.startsWith('⬇️'))) return `ABSTIEG! ${res.club.toUpperCase()} IN TRÄNEN`;
+  if (res.lines.some(l => l.startsWith('⬆️'))) return `AUFSTIEG! ${res.club.toUpperCase()} FEIERT DIE GANZE NACHT`;
+  if (res.goals >= 25) return `${ln} TRIFFT UND TRIFFT – ${res.goals} SAISONTORE!`;
+  if (res.note !== null && res.note >= 3.9) return `KRISE! WAS IST NUR MIT ${ln} LOS?`;
+  if (res.ratingAfter - res.ratingBefore >= 5) return `SHOOTINGSTAR ${ln}! DIE GANZE LIGA STAUNT`;
+  return null;
+}
+function renderHeadline() {
+  if (!S.headline) return '';
+  return `<aside class="newspaper"><div class="paper">SPORT-EXPRESS · ${seasonLabel(S.year)}</div><div class="headline">${esc(S.headline)}</div></aside>`;
+}
+
+// ---------- Saison-Rückblick (Animation) ----------
+function animateRecap() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count);
+    const dec = el.dataset.dec ? parseInt(el.dataset.dec, 10) : 0;
+    const start = performance.now();
+    const fmt = v => (dec ? v.toFixed(dec).replace('.', ',') : String(Math.round(v)));
+    (function step(t) {
+      const k = Math.min(1, (t - start) / 1100);
+      el.textContent = fmt(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step); else el.textContent = fmt(target);
+    })(start);
+  });
+  document.querySelectorAll('.recap li, .recap .stats > div').forEach((el, i) => { el.style.animationDelay = `${0.08 * i}s`; el.classList.add('pop'); });
+}
+
+// ---------- Schnellmodus ----------
+function autoSeason() {
+  if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
+  nextStep();
+  let guard = 0;
+  while (S.phase === 'season' && guard++ < 50) {
+    const c = S.current;
+    if (c.type === 'event') {
+      const ev = EVENTS.find(e => e.id === c.id);
+      const i = randInt(0, ev.options.length - 1);
+      c.result = ev.options[i].run(); c.chosen = i;
+      S.season.autoLog = S.season.autoLog || [];
+      S.season.autoLog.push(`${ev.title}: ${ev.options[i].label}`);
+    } else if (c.type === 'rehab') {
+      while (!c.result) rehabStep(REHAB_CHOICES[1]);
+    } else if (!c.result) {
+      let best = 0;
+      c.options.forEach((o, i) => { if ((o.p || 0.33) > (c.options[best].p || 0.33)) best = i; });
+      resolveMatch(best);
+    }
+    S.season.step++; S.current = null; nextStep();
+  }
+}
+
+// ---------- Rekorde über alle Karrieren ----------
+const REC_KEY = 'fussballkarriere-rekorde';
+const RECORDS = [
+  ['goalsSeason', 'Meiste Tore in einer Saison', v => `${v} Tore`],
+  ['goalsCareer', 'Meiste Karrieretore', v => `${v} Tore`],
+  ['titles', 'Meiste Titel', v => `${v} Titel`],
+  ['peak', 'Höchste Stärke', v => `${v}`],
+  ['caps', 'Meiste Länderspiele', v => `${v} Spiele`],
+  ['money', 'Größtes Vermögen', v => money(v)],
+  ['ballon', "Meiste Ballon d'Ors", v => `${v}×`],
+  ['youngBallon', "Jüngster Ballon-d'Or-Sieger", v => `${v} Jahre`, true],
+  ['followers', 'Meiste Follower', v => fmtFollowers(v)],
+  ['seasons', 'Längste Karriere', v => `${v} Profisaisons`],
+];
+function loadRecords() { try { return JSON.parse(localStorage.getItem(REC_KEY) || '{}'); } catch (e) { return {}; } }
+function updateRecords(res) {
+  const rec = loadRecords();
+  const t = totals();
+  const who = `${S.player.name} (${seasonLabel(S.year)})`;
+  const vals = {
+    goalsSeason: res ? res.goals : 0, goalsCareer: t.goals, titles: S.titles.length, peak: S.peak, caps: S.player.caps,
+    money: S.money, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length,
+    followers: S.social ? S.social.followers : 0, seasons: t.seasons,
+  };
+  if (res && res.awards.includes("Ballon d'Or")) vals.youngBallon = res.age;
+  let broken = null;
+  for (const [k, label, , lower] of RECORDS) {
+    const v = vals[k];
+    if (v === undefined || !v) continue;
+    const old = rec[k];
+    if (!old || (lower ? v < old.v : v > old.v)) {
+      if (old && old.who.split(' (')[0] !== S.player.name) broken = label;
+      rec[k] = { v, who };
+    }
+  }
+  try { localStorage.setItem(REC_KEY, JSON.stringify(rec)); } catch (e) { /* ignorieren */ }
+  if (broken) toast(`📈 Neuer Rekord: ${broken}!`);
+}
+function renderRecords() {
+  const rec = loadRecords();
+  const rows = RECORDS.filter(([k]) => rec[k]);
+  if (!rows.length) return '';
+  return `
+  <section class="card">
+    <details><summary>Rekorde aller Karrieren</summary>
+      <ul class="facts">${rows.map(([k, label, f]) => `<li><span>${esc(label)}</span><b>${esc(f(rec[k].v))}<small class="sub">${esc(rec[k].who)}</small></b></li>`).join('')}</ul>
+    </details>
+  </section>`;
 }
 
 </script>

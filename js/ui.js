@@ -23,8 +23,8 @@ function renderHub() {
   if (S.phase !== uiLastPhase) { uiTab = 'main'; uiLastPhase = S.phase; }
   const tabs = hubTabs().map(([k, icon, label]) => btn(`<span class="ti">${icon}</span>${label}`, () => { uiTab = k; render(true); }, `tab ${uiTab === k ? 'active' : ''}`)).join('');
   let content;
-  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderHome()}${renderPets()}</section>`;
-  else if (uiTab === 'people') content = renderPeople();
+  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderCelebration()}${renderHome()}${renderPets()}</section>`;
+  else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
   else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
@@ -81,6 +81,11 @@ const HELP = [
   ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
   ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
   ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
+  ['🏟️ Finals', 'Erreichst du ein Finale, spielst du es live: drei Szenen mit Spielstand und Ticker. Bei Unentschieden gibt es Elfmeterschießen.'],
+  ['🔥 Letzter Spieltag', 'Im Abstiegskampf, Aufstiegsrennen oder Titelkampf entscheidet deine letzte Spielszene über die Tabelle.'],
+  ['🎉 Torjubel', 'Im Reiter „Privat“ wählst du deinen Torjubel. Triffst du oft, wird er Kult.'],
+  ['⏩ Schnellmodus', 'Vor der Saison kannst du die ganze Saison automatisch spielen lassen. Finals spielst du trotzdem selbst.'],
+  ['🎯 Tagesherausforderung', 'Jeden Tag gibt es auf dem Startbildschirm eine neue Herausforderung mit festem Startspieler und Ziel.'],
   ['🏁 Karriereende', 'Ab 33 kannst du aufhören, mit 41 ist Schluss. Danach wirst du Trainer, kaufst einen Verein oder spielst als dein Kind weiter.'],
 ];
 function renderHelp() {

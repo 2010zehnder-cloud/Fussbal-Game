@@ -122,7 +122,8 @@ function checkAchievements() {
   const fresh = ACHIEVEMENTS.filter(a => !have.includes(a.id) && (() => { try { return a.test(); } catch (e) { return false; } })());
   if (!fresh.length) return;
   try { localStorage.setItem(ACH_KEY, JSON.stringify([...have, ...fresh.map(a => a.id)])); } catch (e) { /* ignorieren */ }
-  fresh.forEach(a => toast(`🏅 Erfolg freigeschaltet: ${a.name}`));
+  if (fresh.length <= 2) fresh.forEach(a => toast(`🏅 Erfolg freigeschaltet: ${a.name}`));
+  else toast(`🏅 ${fresh.length} Erfolge freigeschaltet: ${fresh.map(a => a.name).join(', ')}`);
   queueFx('chime');
 }
 function renderAchievements() {
@@ -139,6 +140,7 @@ function renderAchievements() {
 function toast(text) {
   let box = document.getElementById('toasts');
   if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+  while (box.children.length >= 2) box.firstChild.remove();
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = text;

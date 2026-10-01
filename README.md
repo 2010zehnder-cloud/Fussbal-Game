@@ -46,6 +46,14 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **3 Spielstände**, **Schwierigkeitsgrad** (Einfach, Normal, Legende) und **Karriere teilen** als Text.
 - **Karriere-Diagramm** mit Stärke und Toren pro Saison.
 - **Sound, Konfetti** bei Toren und Titeln (Ton abschaltbar) und **Hell/Dunkel-Umschalter**.
+- **Live-Finals:** Jedes erreichte Finale spielst du live mit drei Szenen, Spielstand und Ticker – bei Unentschieden folgt das Elfmeterschießen.
+- **Drama am letzten Spieltag:** Abstiegskampf, Aufstiegsrennen oder Titelentscheidung hängen von deiner letzten Szene ab.
+- **Champions-League-Nächte** mit Hymne und mehr Beliebtheit bei Siegen.
+- **Torjubel** wählen, der bei vielen Toren Kult wird.
+- **Bester Freund aus der Kindheit** – hält dich auf dem Boden oder bringt dich in Schwierigkeiten.
+- **Tagesherausforderung** mit festem Startspieler und Ziel.
+- **Schlagzeilen** im Boulevard-Stil, **animierter Saison-Rückblick** und **Schnellmodus** (ganze Saison automatisch).
+- **Rekorde** über alle Karrieren auf dem Startbildschirm.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen
@@ -66,6 +74,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/fame.js` – Meilensteine, Vereinslegenden, Ruhmeshalle, Elfmeterschießen
 - `js/ui.js` – Reiter, Hilfe und Tipps
 - `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
+- `js/extras.js` – Live-Finals, Drama am letzten Spieltag, Torjubel, Kindheitsfreund, Tagesherausforderung, Schlagzeilen, Rückblick, Schnellmodus, Rekorde
 - `js/career.js` – Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha, Gericht
 - `js/game.js` – Spiellogik und Oberfläche
 - `tools/build_single.py` – baut die Einzeldatei in `dist/`

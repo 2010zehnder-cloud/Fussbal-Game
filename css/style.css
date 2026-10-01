@@ -351,3 +351,16 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .rehabbar span.done { background: var(--accent-dark); color: var(--on-accent); }
 .rehabbar span.now { box-shadow: 0 0 0 3px var(--accent); }
 @media (max-width: 420px) { .slot { grid-template-columns: 30px 1fr; } .slot .shopbtns { grid-column: 1 / -1; justify-content: flex-end; } .top > span:first-child { font-size: 15px; } .helpbtn { padding: 6px 10px; } }
+
+/* Live-Finale, Schlagzeile, Rückblick */
+.card.final { border-color: var(--gold); }
+.anthem { font-style: italic; color: var(--gold); margin: 12px 0 0; }
+.ticker { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 4px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ticker li { background: var(--card2); border-radius: 8px; padding: 4px 10px; }
+.newspaper { background: #f4efe2; color: #1b1b1b; border-radius: 6px; padding: 12px 16px 14px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25); transform: rotate(-0.6deg); }
+.newspaper .paper { font-family: var(--font-display); font-size: 12px; letter-spacing: 2px; border-bottom: 2px solid #1b1b1b; padding-bottom: 4px; margin-bottom: 6px; color: #b3261e; font-weight: 800; }
+.newspaper .headline { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; line-height: 1.1; text-transform: uppercase; text-wrap: balance; }
+.pop { animation: popIn .45s ease-out both; }
+@keyframes popIn { from { transform: translateY(8px) scale(.97); opacity: .2; } to { transform: none; opacity: 1; } }
+.daily { border-color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } .newspaper { transform: none; } }

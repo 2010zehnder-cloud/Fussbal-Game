@@ -303,6 +303,7 @@ function europeFor(club) {
 
 function nextStep() {
   const se = S.season;
+  if (se.step === 0) S.headline = null;
   if (se.step >= STEPS.length) { endSeason(); return; }
   const step = STEPS[se.step];
   if (step.type === 'event') setupEvent(); else setupMatch();
@@ -464,8 +465,18 @@ function setupMatch() {
     const others = clubsIn(L.id).filter(n => n !== own).sort((a, b) => clubStr(b) - clubStr(a));
     opp = pick(others.slice(0, 6));
   }
+  let drama = null;
+  if (matchNo === 2) {
+    drama = finalDayDrama();
+    if (drama) {
+      comp = L.name;
+      const others = clubsIn(L.id).filter(n => n !== own);
+      opp = pick(others);
+      S.season.drama = { type: drama.type };
+    }
+  }
   let rivalMatch = false;
-  if (!S.youth && rivalActive() && S.rival.club !== own && clubLeague(S.rival.club).id === L.id && comp === L.name && chance(0.4)) {
+  if (!drama && !S.youth && rivalActive() && S.rival.club !== own && clubLeague(S.rival.club).id === L.id && comp === L.name && chance(0.4)) {
     opp = S.rival.club;
     rivalMatch = true;
   }
@@ -476,7 +487,9 @@ function setupMatch() {
   const scene = pick(SCENES[POSITIONS[p.pos].group])(quality());
   S.current = {
     type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
-    situation: (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
+    drama: !!drama,
+    situation: (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
+      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
 }
@@ -492,7 +505,7 @@ function resolveMatch(i) {
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
     const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
-    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}. Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
+    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
     else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
@@ -512,7 +525,7 @@ function resolveMatch(i) {
   } else {
     const ok = chance(o.p);
     if (o.kind === 'goal') {
-      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
+      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
       else { text = `${o.failText || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
     } else if (o.kind === 'assist') {
       if (ok) { us++; text = `${o.okText || 'Perfekter Pass – dein Mitspieler schiebt ein!'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
@@ -534,6 +547,18 @@ function resolveMatch(i) {
   c.final = c.home ? `${us}:${them}` : `${them}:${us}`;
   c.chosen = i;
   queueFx(us > c.a ? 'goal' : 'whistle');
+  if (c.drama && S.season.drama) {
+    const d = S.season.drama;
+    d.won = us > them;
+    const msg = {
+      relegation: ['Klassenerhalt! Die Fans stürmen den Platz!', 'Abgestiegen. Spieler liegen weinend auf dem Rasen.'],
+      promotion: ['AUFSTIEG! Die Stadt steht kopf!', 'Der Aufstieg ist verpasst. So nah dran …'],
+      title: ['MEISTER! Die Schale gehört euch!', 'Die Meisterschaft ist weg – ein anderer jubelt.'],
+    }[d.type];
+    text += ` ${d.won ? msg[0] : msg[1]}`;
+    if (d.won) { queueFx('fanfare', 'confetti'); S.player.popularity = clamp(S.player.popularity + 5, 0, 100); }
+  }
+  if (c.comp === 'Champions League' && us > them) S.player.popularity = clamp(S.player.popularity + 2, 0, 100);
   if (c.rivalMatch) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
@@ -582,6 +607,7 @@ function endSeason() {
   const tables = {};
   for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, bonus);
   const myTable = tables[L.id];
+  applyDrama(myTable.rows);
   const pos = myTable.rows.findIndex(r => r.name === own) + 1;
 
   // Einsätze
@@ -600,8 +626,9 @@ function endSeason() {
     euroGames = Math.round(matches * (se.role === 'Stammspieler' ? 0.85 : se.role === 'Rotation' ? 0.55 : 0.2));
   }
   const games = leagueGames + cupGames + euroGames;
-  if (cupRes) maybeShootout(cupRes, 'cup', `${L.cup}-Sieger`);
-  if (euroRes) maybeShootout(euroRes, 'euro', `${euroName()}-Sieger`);
+  const playStr = str + (se.role === 'Stammspieler' ? (p.rating - str) * 0.1 : 0);
+  if (cupRes) queueLiveFinal(cupRes, 'cup', `${L.cup}-Sieger`, L.cup, playStr);
+  if (euroRes) queueLiveFinal(euroRes, 'euro', `${euroName()}-Sieger`, euroName(), playStr);
 
   // Tore, Vorlagen, Note
   const P = POSITIONS[p.pos];
@@ -633,13 +660,13 @@ function endSeason() {
   }
   if (cupRes) {
     if (cupRes.won) { res.titles.push(`${L.cup}-Sieger`); res.lines.push(`🏆 ${L.cup}-Sieger! Finale gegen ${cupRes.beat} gewonnen.`); }
-    else if (cupRes.pending) res.lines.push(`${L.cup}-Finale gegen ${cupRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
+    else if (cupRes.pending) res.lines.push(`🏟️ ${L.cup}: Ihr steht im Finale gegen ${cupRes.lostTo}! Das Finale spielst du live.`);
     else res.lines.push(`${L.cup}: Aus in der Runde „${cupRes.reached}“ gegen ${cupRes.lostTo}.`);
   }
   if (euroRes) {
     const name = euroName();
     if (euroRes.won) { res.titles.push(`${name}-Sieger`); res.lines.push(`🏆 ${name}-Sieger! Finale gegen ${euroRes.beat} gewonnen.`); }
-    else if (euroRes.pending) res.lines.push(`${name}-Finale gegen ${euroRes.lostTo}: Nach 120 Minuten unentschieden – Elfmeterschießen!`);
+    else if (euroRes.pending) res.lines.push(`🏟️ ${name}: Ihr steht im Finale gegen ${euroRes.lostTo}! Das Finale spielst du live.`);
     else res.lines.push(`${name}: Aus in der Runde „${euroRes.reached}“${euroRes.lostTo ? ` gegen ${euroRes.lostTo}` : ''}.`);
   }
   res.cupRes = cupRes; res.euroRes = euroRes;
@@ -758,12 +785,15 @@ function endSeason() {
     S.court = { charge: 'Steuerhinterziehung', severity: 2 };
     res.lines.push('🚨 Die Steuerfahndung durchsucht dein Haus! Es kommt zum Prozess.');
   }
+  celebrationSeason(res);
   checkMilestones(res);
+  S.headline = seasonHeadline(res);
+  updateRecords(res);
   if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
 
   p.age++;
   S.seasonEnd = res;
-  S.phase = S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
+  S.phase = S.finals && S.finals.length ? 'final' : S.shootouts && S.shootouts.length ? 'shootout' : 'seasonEnd';
   S.current = null;
 }
 
@@ -873,8 +903,8 @@ function tournament(res) {
   const goals = Math.round(games * rate * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   out.lines.push(`Du machst ${games} Spiele${goals ? ` und schießt ${goals} Tor${goals > 1 ? 'e' : ''}` : ''}.`);
-  if (maybeShootout(r, 'nation', `${title} ${summer}`)) {
-    out.lines.push(`Das Finale gegen ${r.lostTo} geht ins Elfmeterschießen!`);
+  if (queueLiveFinal(r, 'nation', `${title} ${summer}`, name, nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0))) {
+    out.lines.push(`🏟️ ${nat.name} steht im Finale gegen ${r.lostTo}! Das Finale spielst du live.`);
   } else if (r.won) {
     out.lines.push(`🏆 ${nat.name} ist ${title}! Finale gegen ${r.beat} gewonnen!`);
     S.titles.push(`${title} ${summer}`);
@@ -974,6 +1004,9 @@ function acceptOffer(o) {
       S.money += o.signing * 0.55;
       S.earned += o.signing * 0.55;
     }
+    if (o.fee >= 30) setHeadline(`MEGA-TRANSFER! ${lastName()} WECHSELT FÜR ${money(o.fee).toUpperCase()} ZU ${o.club.toUpperCase()}`);
+    else if (o.club === S.dreamClub) setHeadline(`TRAUM ERFÜLLT! ${lastName()} UNTERSCHREIBT BEI ${o.club.toUpperCase()}`);
+    else if (!o.loan) setHeadline(`${lastName()} WECHSELT ZU ${o.club.toUpperCase()}`);
     S.clubId = o.club;
     S.player.trust = 45;
     if (o.club === S.dreamClub) { S.player.popularity = clamp(S.player.popularity + 5, 0, 100); S.player.form = clamp(S.player.form + 3, -10, 10); toast(`⭐ Traum erfüllt: Du spielst für ${o.club}!`); queueFx('fanfare', 'confetti'); }
@@ -1098,6 +1131,7 @@ function retire(reason) {
   S.retireReason = reason;
   S.retireAge = S.player.age;
   S.offers = null;
+  updateRecords(null);
   saveHallOfFame();
 }
 
@@ -1119,12 +1153,14 @@ function render(keepScroll = false) {
     else if (S.phase === 'seasonEnd') html += tip('seasonEnd') + renderSeasonEnd();
     else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'shootout') html += renderShootout();
+    else if (S.phase === 'final') html += renderFinal();
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
-  if (S && S.player && S.phase !== 'create') checkAchievements();
+  if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); }
+  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) { S.seasonEnd.animated = true; animateRecap(); }
   flushFx();
 }
 
@@ -1136,6 +1172,7 @@ function renderStart() {
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
   </section>
   ${renderSlots()}
+  ${renderDailyCard()}
   <section class="card howto">
     <h2>So funktioniert's</h2>
     <ol class="steps">
@@ -1146,20 +1183,22 @@ function renderStart() {
     <div class="actions">${btn('Ausführliche Hilfe', () => { uiHelp = true; render(); })}</div>
   </section>
   ${renderHallOfFame()}
+  ${renderRecords()}
   ${renderAchievements()}`;
 }
 
 function renderCreate() {
-  const h = S.heir;
-  const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
-  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === 'ST' ? ' selected' : ''}>${v.name}</option>`).join('');
+  const h = S.heir, dl = S.daily;
+  const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : dl ? dl.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
+  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === (dl ? dl.pos : 'ST') ? ' selected' : ''}>${v.name}</option>`).join('');
   return `
   <section class="card">
-    <h2>${h ? 'Die nächste Generation' : 'Dein Spieler'}</h2>
+    <h2>${h ? 'Die nächste Generation' : dl ? '🎯 Herausforderung des Tages' : 'Dein Spieler'}</h2>
+    ${dl ? `<p><b>Ziel: ${esc(dl.goal.text)}.</b> Nationalität und Position sind vorgegeben, du startest in der Jugend von ${esc(dl.club)}.</p>` : ''}
     ${h ? `<p>Du spielst jetzt als Kind von ${esc(h.parentName)}. Es ist das Jahr ${h.year}, du bist 17 und hast das Talent geerbt${h.talent > 0 ? ' – die Scouts sind begeistert' : ''}. Dazu erbst du ${money(h.money)} und den berühmten Nachnamen.</p>` : ''}
     <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller" value="${h ? esc(`${h.childName} ${h.surname}`) : ''}"></label>
-    <label>Nationalität<select id="f-nation">${natOpts}</select></label>
-    <label>Position<select id="f-pos">${posOpts}</select></label>
+    <label>Nationalität<select id="f-nation"${dl ? ' disabled' : ''}>${natOpts}</select></label>
+    <label>Position<select id="f-pos"${dl ? ' disabled' : ''}>${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
@@ -1170,7 +1209,9 @@ function renderCreate() {
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
         const fd = document.getElementById('f-diff');
-        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
+        const daily = S.daily;
+        newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, daily ? daily.pos : document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
+        if (daily) applyDaily(daily);
         render();
       }, 'primary')}
       ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
@@ -1242,6 +1283,7 @@ function renderPreseason() {
     'U19': 'Du spielst in der U19 und willst dich für die Profis empfehlen.',
   }[se.role];
   return `
+  ${renderHeadline()}
   <section class="card">
     <h2>Saisonvorschau ${seasonLabel(S.year)}</h2>
     <p>${roleText}</p>
@@ -1258,10 +1300,12 @@ function renderPreseason() {
       return btn(`${esc(gk && f.gkName ? f.gkName : f.name)}<small>${esc(gk && f.gkDesc ? f.gkDesc : f.desc)}</small>`,
         () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
     }).join('')}</div>
+    ${S.daily ? `<p class="note">🎯 Tagesziel: ${esc(S.daily.text)}${S.daily.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
     <div class="actions">${btn('Saison starten', () => {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
       nextStep(); render();
-    }, 'primary')}</div>
+    }, 'primary')}
+    ${btn('⏩ Automatisch spielen<small>Ganze Saison ohne Entscheidungen</small>', () => { autoSeason(); render(); })}</div>
   </section>`;
 }
 
@@ -1329,12 +1373,13 @@ function renderSeasonEnd() {
   const highlights = r.lines.filter((l, i) => i === 0 || key.test(l));
   const others = r.lines.filter((l, i) => !(i === 0 || key.test(l)));
   return `
-  <section class="card">
+  ${renderHeadline()}
+  <section class="card recap">
     <h2>Saisonbilanz ${seasonLabel(r.year)}</h2>
     <div class="stats">
-      <div><b>${r.games}</b><span>Spiele</span></div>
-      <div><b>${r.goals}</b><span>Tore</span></div>
-      <div><b>${r.assists}</b><span>Vorlagen</span></div>
+      <div><b data-count="${r.games}">${r.games}</b><span>Spiele</span></div>
+      <div><b data-count="${r.goals}">${r.goals}</b><span>Tore</span></div>
+      <div><b data-count="${r.assists}">${r.assists}</b><span>Vorlagen</span></div>
       ${gk ? `<div><b>${r.cleanSheets}</b><span>Zu null</span></div>` : ''}
       <div><b>${r.note === null ? '–' : fmt2(r.note)}</b><span>Ø Note</span></div>
       <div><b>${r.ratingAfter}</b><span>Stärke <em class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</em></span></div>
