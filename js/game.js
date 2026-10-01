@@ -326,9 +326,9 @@ const SCENES = {
     q => ({
       situation: 'Du bekommst den Ball 18 Meter vor dem Tor. Ein Verteidiger rückt heraus, links läuft ein Mitspieler frei.',
       options: [
-        { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal' },
-        { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist' },
-        { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true },
+        { label: 'Direkt abziehen', p: 0.25 + q * 0.3, kind: 'goal', okText: 'Dein Schuss aus 18 Metern schlägt flach im langen Eck ein!', failText: 'Der Schuss streicht knapp am Pfosten vorbei.' },
+        { label: 'Den Mitspieler bedienen', p: 0.42 + q * 0.25, kind: 'assist', okText: 'Dein Querpass kommt perfekt – dein Mitspieler muss nur noch einschieben!', failText: 'Der Verteidiger spitzelt deinen Pass weg.' },
+        { label: 'Ins Dribbling gehen', p: 0.18 + q * 0.32, kind: 'goal', bonus: true, okText: 'Du lässt zwei Verteidiger stehen, umkurvst den Torwart und schiebst ein. Was für ein Solo!', failText: 'Du bleibst am dritten Gegenspieler hängen.' },
       ],
     }),
     () => ({
@@ -342,17 +342,17 @@ const SCENES = {
     q => ({
       situation: 'Freistoß aus 20 Metern, halbrechts. Die Mauer steht, der Torwart schreit Kommandos.',
       options: [
-        { label: 'Über die Mauer zirkeln', p: 0.12 + q * 0.3, kind: 'goal', bonus: true },
-        { label: 'Scharf ins Torwarteck', p: 0.18 + q * 0.25, kind: 'goal' },
-        { label: 'Kurz ablegen', p: 0.35 + q * 0.2, kind: 'assist' },
+        { label: 'Über die Mauer zirkeln', p: 0.12 + q * 0.3, kind: 'goal', bonus: true, okText: 'Der Ball fliegt über die Mauer und senkt sich unhaltbar in den Winkel!', failText: 'Der Ball streift die Latte und fliegt ins Aus.' },
+        { label: 'Scharf ins Torwarteck', p: 0.18 + q * 0.25, kind: 'goal', okText: 'Hart und platziert ins Torwarteck – der Torwart kommt zu spät!', failText: 'Der Torwart ist zur Stelle und faustet den Ball weg.' },
+        { label: 'Kurz ablegen', p: 0.35 + q * 0.2, kind: 'assist', okText: 'Die kurze Variante überrascht alle – dein Mitspieler hämmert den Ball ins Netz!', failText: 'Die Mauer ist schneller da und blockt den Schuss.' },
       ],
     }),
     q => ({
       situation: 'Flanke von rechts! Du stehst am langen Pfosten, der Verteidiger klebt an dir.',
       options: [
-        { label: 'Volley nehmen', p: 0.15 + q * 0.3, kind: 'goal', bonus: true },
-        { label: 'Kopfball aufs Tor', p: 0.22 + q * 0.28, kind: 'goal' },
-        { label: 'Quer auf den Mitspieler köpfen', p: 0.3 + q * 0.25, kind: 'assist' },
+        { label: 'Volley nehmen', p: 0.15 + q * 0.3, kind: 'goal', bonus: true, okText: 'Volley aus der Luft – der Ball zappelt im Netz! Das wird das Tor des Monats.', failText: 'Du triffst den Ball nicht richtig, er fliegt hoch übers Tor.' },
+        { label: 'Kopfball aufs Tor', p: 0.22 + q * 0.28, kind: 'goal', okText: 'Du steigst am höchsten und köpfst wuchtig ein!', failText: 'Dein Kopfball landet direkt in den Armen des Torwarts.' },
+        { label: 'Quer auf den Mitspieler köpfen', p: 0.3 + q * 0.25, kind: 'assist', okText: 'Deine Kopfball-Ablage landet genau bei deinem Mitspieler – Tor!', failText: 'Der Ball springt ins Toraus.' },
       ],
     }),
   ],
@@ -360,32 +360,32 @@ const SCENES = {
     q => ({
       situation: 'Ballgewinn im Mittelfeld! Vor dir öffnet sich Raum für einen Konter.',
       options: [
-        { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist' },
-        { label: 'Selbst durchlaufen und schießen', p: 0.18 + q * 0.28, kind: 'goal' },
-        { label: 'Tempo rausnehmen, Ballbesitz sichern', p: 0.85, kind: 'safe' },
+        { label: 'Steilpass in die Spitze', p: 0.35 + q * 0.3, kind: 'assist', okText: 'Dein Steilpass schneidet die Abwehr auf – dein Stürmer vollendet eiskalt!', failText: 'Der Pass ist einen Tick zu lang, der Torwart ist vorher da.' },
+        { label: 'Selbst durchlaufen und schießen', p: 0.18 + q * 0.28, kind: 'goal', okText: 'Du sprintest übers halbe Feld und schließt selbst ab – drin!', failText: 'Dir geht die Puste aus, der Schuss ist zu schwach.' },
+        { label: 'Tempo rausnehmen, Ballbesitz sichern', p: 0.85, kind: 'safe', okText: 'Clever gespielt. Ihr lasst den Ball laufen und kontrolliert das Spiel.', failText: 'Ballverlust im Mittelfeld – der Gegner kontert und trifft!' },
       ],
     }),
     q => ({
       situation: 'Ein abgewehrter Ball springt dir 25 Meter vor dem Tor vor die Füße.',
       options: [
-        { label: 'Volley aus der Distanz', p: 0.1 + q * 0.28, kind: 'goal', bonus: true },
-        { label: 'Annehmen und in die Gasse spielen', p: 0.3 + q * 0.25, kind: 'assist' },
-        { label: 'Flanke in den Strafraum', p: 0.25 + q * 0.22, kind: 'assist' },
+        { label: 'Volley aus der Distanz', p: 0.1 + q * 0.28, kind: 'goal', bonus: true, okText: 'Aus 25 Metern volley – der Ball schlägt im Winkel ein! Ein Traumtor!', failText: 'Der Ball landet auf der Tribüne.' },
+        { label: 'Annehmen und in die Gasse spielen', p: 0.3 + q * 0.25, kind: 'assist', okText: 'Du nimmst den Ball an und spielst einen perfekten Pass in die Gasse – Tor!', failText: 'Ein Verteidiger fängt den Pass ab.' },
+        { label: 'Flanke in den Strafraum', p: 0.25 + q * 0.22, kind: 'assist', okText: 'Deine Flanke findet den Kopf deines Stürmers – Tor!', failText: 'Die Flanke ist zu weit, niemand kommt ran.' },
       ],
     }),
     q => ({
       situation: 'Freistoß aus 22 Metern, zentral. Alle schauen auf dich.',
       options: [
-        { label: 'Direkt schießen', p: 0.12 + q * 0.28, kind: 'goal', bonus: true },
-        { label: 'Hoch in den Strafraum flanken', p: 0.28 + q * 0.22, kind: 'assist' },
-        { label: 'Einstudierte Variante spielen', p: 0.2 + q * 0.3, kind: 'assist' },
+        { label: 'Direkt schießen', p: 0.12 + q * 0.28, kind: 'goal', bonus: true, okText: 'Der Freistoß fliegt über die Mauer und schlägt unhaltbar ein!', failText: 'Der Ball klatscht an die Mauer.' },
+        { label: 'Hoch in den Strafraum flanken', p: 0.28 + q * 0.22, kind: 'assist', okText: 'Deine Freistoßflanke wird im Strafraum eingeköpft – Tor!', failText: 'Der Torwart fängt die Flanke sicher.' },
+        { label: 'Einstudierte Variante spielen', p: 0.2 + q * 0.3, kind: 'assist', okText: 'Die einstudierte Variante klappt wie im Training – Tor!', failText: 'Die Variante ist durchschaubar, der Gegner klärt.' },
       ],
     }),
     q => ({
       situation: 'Der Gegner kontert mit drei gegen zwei. Du sprintest zurück.',
       options: [
-        { label: 'In den Passweg grätschen', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: 'Pass abgefangen! Du leitest sofort den nächsten Angriff ein.' },
-        { label: 'Den Ballführenden stellen', p: 0.35 + q * 0.3, kind: 'stop', okText: 'Du verzögerst lange genug – die Abwehr ist wieder sortiert.' },
+        { label: 'In den Passweg grätschen', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: 'Pass abgefangen! Du leitest sofort den nächsten Angriff ein.', failText: 'Du kommst einen Schritt zu spät – der Konter läuft und endet im Tor.' },
+        { label: 'Den Ballführenden stellen', p: 0.35 + q * 0.3, kind: 'stop', okText: 'Du verzögerst lange genug – die Abwehr ist wieder sortiert.', failText: 'Der Gegner spielt den Konter sauber zu Ende – Gegentor.' },
         { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
       ],
     }),
@@ -394,25 +394,25 @@ const SCENES = {
     q => ({
       situation: 'Der gegnerische Stürmer ist durch und läuft allein auf dich zu. Du bist der letzte Mann!',
       options: [
-        { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'stop', risky: true },
-        { label: 'Stellung halten und abdrängen', p: 0.4 + q * 0.25, kind: 'stop' },
+        { label: 'Grätsche!', p: 0.3 + q * 0.35, kind: 'stop', risky: true, okText: 'Saubere Grätsche! Du spielst den Ball und rettest in letzter Sekunde.', failText: 'Der Stürmer springt über dein Bein und trifft.' },
+        { label: 'Stellung halten und abdrängen', p: 0.4 + q * 0.25, kind: 'stop', okText: 'Du drängst den Stürmer nach außen ab, sein Schuss geht ins Aus.', failText: 'Der Stürmer lässt dich mit einer Körpertäuschung stehen und trifft.' },
         { label: 'Taktisches Foul', p: 0.9, kind: 'foul' },
       ],
     }),
     q => ({
       situation: 'Ecke für euch in der Nachspielzeit! Du gehst mit nach vorne.',
       options: [
-        { label: 'Kopfball aufs Tor', p: 0.18 + q * 0.25, kind: 'goal', bonus: true },
-        { label: 'Ball für den Mitspieler zurücklegen', p: 0.25 + q * 0.2, kind: 'assist' },
-        { label: 'Hinten bleiben und absichern', p: 0.85, kind: 'safe' },
+        { label: 'Kopfball aufs Tor', p: 0.18 + q * 0.25, kind: 'goal', bonus: true, okText: 'Du steigst bei der Ecke am höchsten und köpfst den Ball ins Tor!', failText: 'Dein Kopfball geht knapp über die Latte.' },
+        { label: 'Ball für den Mitspieler zurücklegen', p: 0.25 + q * 0.2, kind: 'assist', okText: 'Du legst per Kopf zurück, dein Mitspieler drückt den Ball über die Linie!', failText: 'Die Ablage landet beim Gegner.' },
+        { label: 'Hinten bleiben und absichern', p: 0.85, kind: 'safe', okText: 'Du sicherst hinten ab und unterbindest einen Konter im Keim.', failText: 'Der Gegner kontert über deine Seite – Gegentor!' },
       ],
     }),
     q => ({
       situation: 'Gefährliche Flanke von links, der Stürmer steigt hinter dir hoch.',
       options: [
-        { label: 'Kopfball-Duell annehmen', p: 0.35 + q * 0.35, kind: 'stop', okText: 'Du gewinnst das Luftduell und köpfst den Ball weit weg!' },
-        { label: 'Den Ball ins Aus klären', p: 0.5 + q * 0.25, kind: 'stop', okText: 'Ecke statt Gefahr – das reicht. Ihr übersteht die Situation.' },
-        { label: 'Auf Abseits spekulieren', p: 0.3 + q * 0.2, kind: 'stop', okText: 'Die Fahne geht hoch – Abseits! Genau richtig gelesen.' },
+        { label: 'Kopfball-Duell annehmen', p: 0.35 + q * 0.35, kind: 'stop', okText: 'Du gewinnst das Luftduell und köpfst den Ball weit weg!', failText: 'Der Stürmer setzt sich im Kopfballduell durch und trifft.' },
+        { label: 'Den Ball ins Aus klären', p: 0.5 + q * 0.25, kind: 'stop', okText: 'Ecke statt Gefahr – das reicht. Ihr übersteht die Situation.', failText: 'Deine Abwehr landet direkt beim Gegner, der Nachschuss sitzt.' },
+        { label: 'Auf Abseits spekulieren', p: 0.3 + q * 0.2, kind: 'stop', okText: 'Die Fahne geht hoch – Abseits! Genau richtig gelesen.', failText: 'Keine Fahne! Der Stürmer stand nicht im Abseits und trifft.' },
       ],
     }),
   ],
@@ -428,17 +428,17 @@ const SCENES = {
     q => ({
       situation: 'Ein Stürmer läuft allein auf dich zu!',
       options: [
-        { label: 'Rauslaufen und Winkel verkürzen', p: 0.35 + q * 0.35, kind: 'stop', risky: true, okText: 'Du machst dich riesig und hältst den Ball fest!' },
-        { label: 'Auf der Linie bleiben', p: 0.28 + q * 0.3, kind: 'stop', okText: 'Reflex! Du lenkst den Schuss mit den Fingerspitzen um den Pfosten.' },
-        { label: 'Früh abtauchen', p: 0.25 + q * 0.35, kind: 'stop', okText: 'Du spekulierst richtig und begräbst den Ball unter dir.' },
+        { label: 'Rauslaufen und Winkel verkürzen', p: 0.35 + q * 0.35, kind: 'stop', risky: true, okText: 'Du machst dich riesig und hältst den Ball fest!', failText: 'Der Stürmer lupft den Ball über dich ins Tor.' },
+        { label: 'Auf der Linie bleiben', p: 0.28 + q * 0.3, kind: 'stop', okText: 'Reflex! Du lenkst den Schuss mit den Fingerspitzen um den Pfosten.', failText: 'Der Schuss ist zu platziert – keine Chance.' },
+        { label: 'Früh abtauchen', p: 0.25 + q * 0.35, kind: 'stop', okText: 'Du spekulierst richtig und begräbst den Ball unter dir.', failText: 'Du gehst zu früh runter, der Stürmer schiebt locker ein.' },
       ],
     }),
     q => ({
       situation: 'Hohe Flanke in den Fünfmeterraum, drei Spieler rennen auf den Ball zu.',
       options: [
-        { label: 'Rauskommen und fangen', p: 0.35 + q * 0.45, kind: 'stop', okText: 'Sicher gefangen – das ganze Stadion atmet auf.' },
-        { label: 'Den Ball wegfausten', p: 0.5 + q * 0.3, kind: 'stop', okText: 'Du faustest den Ball 30 Meter weit aus der Gefahrenzone.' },
-        { label: 'Auf der Linie bleiben', p: 0.3 + q * 0.3, kind: 'stop', okText: 'Der Kopfball kommt – und du reißt die Arme hoch. Gehalten!' },
+        { label: 'Rauskommen und fangen', p: 0.35 + q * 0.45, kind: 'stop', okText: 'Sicher gefangen – das ganze Stadion atmet auf.', failText: 'Dir rutscht der Ball durch die Hände – Gegentor!' },
+        { label: 'Den Ball wegfausten', p: 0.5 + q * 0.3, kind: 'stop', okText: 'Du faustest den Ball 30 Meter weit aus der Gefahrenzone.', failText: 'Du faustest ins Leere, der Kopfball sitzt.' },
+        { label: 'Auf der Linie bleiben', p: 0.3 + q * 0.3, kind: 'stop', okText: 'Der Kopfball kommt – und du reißt die Arme hoch. Gehalten!', failText: 'Der Kopfball ist unhaltbar im Winkel.' },
       ],
     }),
   ],
@@ -492,28 +492,38 @@ function resolveMatch(i) {
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
     const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
-    if (scored) { us++; text = `TOOOR! Der Torwart springt ${['nach links', 'nicht', 'nach rechts'][keeper]}${keeper === 1 ? ' weg' : ''} – eiskalt verwandelt zum ${us}:${them}. Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
-    else { text = `Der Torwart ahnt die Ecke und hält! Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
+    if (scored) { us++; text = `TOOOR! ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}. Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
+    else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
     const saved = shot === o.dir ? chance(0.55 + quality() * 0.3) : chance(0.04 + quality() * 0.06);
-    if (saved) { text = `Gehalten! Du ahnst die Ecke und parierst. Ihr bringt das ${us}:${them} über die Zeit.`; eff = { form: 3, trust: 3, popularity: 5 }; }
-    else { them++; text = `Der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`; eff = { form: -1 }; }
+    if (saved) {
+      text = shot === o.dir
+        ? `Gehalten! Du ahnst die Ecke und parierst. Ihr bringt das ${us}:${them} über die Zeit.`
+        : `Du springst in die falsche Ecke – aber der Schütze trifft nur den Pfosten! Glück gehabt, es bleibt beim ${us}:${them}.`;
+      eff = { form: 3, trust: 3, popularity: 5 };
+    } else {
+      them++;
+      text = shot === o.dir
+        ? `Du bist in der richtigen Ecke, aber der Schuss ist zu scharf. Endstand ${us}:${them}.`
+        : `Du springst in die falsche Ecke, der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`;
+      eff = { form: -1 };
+    }
   } else {
     const ok = chance(o.p);
     if (o.kind === 'goal') {
-      if (ok) { us++; text = `TOOOR! Du triffst zum ${us}:${them}!${o.bonus ? ' Was für ein Solo – das Stadion bebt!' : ''} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
-      else { text = `${o.bonus ? 'Du bleibst am dritten Gegenspieler hängen.' : 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
+      if (ok) { us++; text = `TOOOR! ${o.okText || 'Du triffst!'}${o.bonus ? ' Das Stadion bebt!' : ''} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
+      else { text = `${o.failText || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
     } else if (o.kind === 'assist') {
-      if (ok) { us++; text = `Perfekter Pass – dein Mitspieler schiebt ein! ${us}:${them}. So endet das Spiel.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
-      else { text = `Der Pass wird abgefangen. Endstand ${us}:${them}.`; eff = { form: -1 }; }
+      if (ok) { us++; text = `${o.okText || 'Perfekter Pass – dein Mitspieler schiebt ein!'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: 3, assists: 1 }; }
+      else { text = `${o.failText || 'Der Pass wird abgefangen.'} Endstand ${us}:${them}.`; eff = { form: -1 }; }
     } else if (o.kind === 'safe') {
-      if (ok) { text = `Clever gespielt. Ihr kontrolliert das Spiel. Endstand ${us}:${them}.`; eff = { trust: 2 }; }
-      else { them++; text = `Ballverlust im Aufbau – Gegentor! Endstand ${us}:${them}.`; eff = { form: -2, trust: -3 }; }
+      if (ok) { text = `${o.okText || 'Clever gespielt. Ihr kontrolliert das Spiel.'} Endstand ${us}:${them}.`; eff = { trust: 2 }; }
+      else { them++; text = `${o.failText || 'Ballverlust – Gegentor!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -3 }; }
     } else if (o.kind === 'stop') {
       if (ok) { text = `${o.okText || 'Ball erobert! Die Fans feiern deine Rettungstat.'} Endstand ${us}:${them}.`; eff = { form: 2, trust: 4, popularity: o.risky ? 5 : 3 }; }
       else if (o.risky && chance(0.35)) { them++; text = `Zu spät! Rote Karte und Elfmeter – ${us}:${them}. Du bist für 3 Spiele gesperrt.`; eff = { form: -3, trust: -5, injuredGames: 3 }; }
-      else { them++; text = `Nicht zu verhindern – der Ball ist drin. Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
+      else { them++; text = `${o.failText || 'Nicht zu verhindern – der Ball ist drin.'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2 }; }
     } else {
       if (ok) { text = `Gelbe Karte – aber der Konter ist gestoppt. Endstand ${us}:${them}.`; eff = { trust: 1 }; }
       else { text = `Der Schiri zeigt Rot! Du fliegst vom Platz. Endstand ${us}:${them}.`; eff = { trust: -4, injuredGames: 2 }; }

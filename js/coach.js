@@ -67,13 +67,13 @@ const COACH_EVENTS = [
     text: 'Zwei Spieler prügeln sich im Training.',
     options: [
       { label: 'Beide suspendieren', run: c => { c.bonus -= 0.02; c.skill += 1; return 'Harte, aber klare Linie.'; } },
-      { label: 'Aussprache moderieren', run: c => { c.bonus += chance(0.6) ? 0.03 : -0.03; return 'Das Gespräch zeigt Wirkung – zumindest ein bisschen.'; } },
+      { label: 'Aussprache moderieren', run: c => { if (chance(0.6)) { c.bonus += 0.03; return 'Die beiden geben sich die Hand. Die Kabine ist wieder vereint.'; } c.bonus -= 0.03; return 'Die Aussprache bringt nichts – die Stimmung bleibt vergiftet.'; } },
     ],
   },
   {
     text: 'Ein 17-jähriges Talent brennt im Training alles ab.',
     options: [
-      { label: 'Sofort in die Startelf', run: c => { c.bonus += chance(0.5) ? 0.05 : -0.03; return 'Mutige Entscheidung!'; } },
+      { label: 'Sofort in die Startelf', run: c => { if (chance(0.5)) { c.bonus += 0.05; return 'Das Talent schlägt voll ein und trifft gleich im ersten Spiel!'; } c.bonus -= 0.03; return 'Das Talent ist noch nicht so weit und wirkt nervös.'; } },
       { label: 'Langsam heranführen', run: c => { c.nextBoost = (c.nextBoost || 0) + 1; return 'Das Talent entwickelt sich in Ruhe.'; } },
     ],
   },

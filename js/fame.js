@@ -138,8 +138,10 @@ function resolveShootout(dir) {
   const dirs = ['links', 'in die Mitte', 'rechts'];
   if (ok) {
     so.text = gk
-      ? `Der Schütze zielt ${dirs[other]} – und du bist da! GEHALTEN! Ihr gewinnt das Elfmeterschießen!`
-      : `Der Torwart springt ${dirs[other]}, du schiebst ${dirs[dir]} ein. Ihr gewinnt das Elfmeterschießen!`;
+      ? (other === dir ? `Der Schütze zielt ${dirs[other]} – und du bist da! GEHALTEN! Ihr gewinnt das Elfmeterschießen!`
+        : 'Du springst in die falsche Ecke – aber der Ball knallt an die Latte! Ihr gewinnt das Elfmeterschießen!')
+      : (other === dir ? `Der Torwart ahnt die Ecke, aber dein Schuss ist zu scharf – drin! Ihr gewinnt das Elfmeterschießen!`
+        : `Der Torwart springt ${dirs[other]}, du schiebst ${dirs[dir]} ein. Ihr gewinnt das Elfmeterschießen!`);
     const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
     S.titles.push(label);
     res.titles.push(so.title);
@@ -152,8 +154,10 @@ function resolveShootout(dir) {
   } else {
     queueFx('sad');
     so.text = gk
-      ? `Der Ball schlägt ${dirs[other]} ein. Ihr verliert das Elfmeterschießen.`
-      : `Der Torwart ahnt die Ecke und hält! Ihr verliert das Elfmeterschießen.`;
+      ? (other === dir ? 'Du bist in der richtigen Ecke, aber der Schuss ist zu platziert. Ihr verliert das Elfmeterschießen.'
+        : `Du springst in die falsche Ecke, der Ball geht ${dirs[other]} rein. Ihr verliert das Elfmeterschießen.`)
+      : (other === dir ? 'Der Torwart ahnt die Ecke und hält! Ihr verliert das Elfmeterschießen.'
+        : 'Du schießt neben das Tor! Ihr verliert das Elfmeterschießen.');
     res.lines.push(`Finale gegen ${so.opp} im Elfmeterschießen verloren.`);
     S.player.popularity = clamp(S.player.popularity - 3, 0, 100);
   }
