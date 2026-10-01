@@ -545,6 +545,69 @@ const EVENTS = [
       { label: 'Ignorieren', run: () => 'Du lässt es an dir abprallen.' + mod({}) },
     ],
   },
+  {
+    id: 'court', title: 'Vor Gericht',
+    cond: () => !!S.court,
+    weight: () => 25,
+    text: () => S.court.plaintiff
+      ? `Heute beginnt dein Prozess: Du klagst wegen ${S.court.charge}. Wie gehst du vor?`
+      : `Heute beginnt dein Prozess wegen ${S.court.charge}. Die Presse belagert das Gericht. Wie verteidigst du dich?`,
+    options: [
+      { label: 'Teuren Staranwalt nehmen', run: () => courtVerdict('star') },
+      { label: 'Normalen Anwalt nehmen', run: () => courtVerdict('normal') },
+      { label: 'Vergleich anbieten (milderes Urteil)', run: () => courtVerdict('confess') },
+    ],
+  },
+  {
+    id: 'taxScheme', title: 'Das Steuersparmodell',
+    cond: () => !S.youth && S.money >= 1 && !S.court && !S.taxRisk,
+    text: () => 'Dein Steuerberater zeigt dir ein „kreatives“ Modell mit Briefkastenfirmen. Du würdest jedes Jahr viel Geld sparen.',
+    options: [
+      { label: 'Machen', run: () => { S.taxRisk = true; return 'Du sparst sofort eine Menge Geld. Hoffentlich schaut niemand genau hin …' + mod({ money: Math.max(0.05, S.money * 0.05) }); } },
+      { label: 'Ablehnen – ich zahle meine Steuern', run: () => 'Du bleibst sauber.' + mod({ popularity: 1 }) },
+    ],
+  },
+  {
+    id: 'carAccident', title: 'Unfall',
+    cond: () => !S.youth && (ownedCount('car2') || ownedCount('car3')) && !S.court,
+    text: () => 'Nachts fährst du mit deinem Sportwagen viel zu schnell und rammst ein parkendes Auto. Niemand hat es gesehen …',
+    options: [
+      {
+        label: 'Einfach weiterfahren', run: () => {
+          if (chance(0.55)) { S.court = { charge: 'Fahrerflucht', severity: 2 }; return 'Eine Überwachungskamera hat alles gefilmt. Die Polizei ermittelt – es kommt zum Prozess.' + mod({ popularity: -10 }); }
+          return 'Niemand findet es heraus. Aber dein schlechtes Gewissen bleibt.' + mod({ form: -1 });
+        },
+      },
+      { label: 'Polizei rufen und den Schaden zahlen', run: () => 'Ein Bußgeld und eine Schlagzeile – mehr nicht.' + mod({ money: -0.02, popularity: -2 }) },
+    ],
+  },
+  {
+    id: 'fakeFriend', title: 'Falsche Freunde',
+    cond: () => S.player.popularity >= 35 && !S.court,
+    text: () => 'Ein angeblicher Jugendfreund verkauft erfundene Geschichten über dich an ein Klatschmagazin.',
+    options: [
+      { label: 'Verklagen', run: () => { S.court = { charge: 'Verleumdung', severity: 1, plaintiff: true }; return 'Deine Anwälte reichen Klage ein. Der Prozess beginnt bald.' + mod({}); } },
+      { label: 'Ignorieren', run: () => 'Die Geschichte verschwindet nach ein paar Tagen.' + mod({ popularity: -3 }) },
+    ],
+  },
+  {
+    id: 'petChaos', title: 'Chaos zu Hause',
+    cond: () => pets().length > 0,
+    text: () => { const pt = pets()[0]; return `${pt.name} hat während deines Auswärtsspiels das halbe Wohnzimmer zerlegt.`; },
+    options: [
+      { label: 'Hundeschule bzw. Tiertrainer buchen', run: () => 'Ab jetzt herrscht Ordnung.' + mod({ money: -0.003, form: 1 }) },
+      { label: 'Ein Video davon posten', run: () => { addFollowers({ mul: 1.15, add: 2000 }); return 'Das Video geht viral – Millionen lachen mit.' + mod({ popularity: 4 }); } },
+    ],
+  },
+  {
+    id: 'hacked', title: 'Account gehackt!',
+    cond: () => S.social && S.social.followers >= 10000,
+    text: () => 'Jemand hat sich in deinen Social-Media-Account gehackt und peinliche Nachrichten gepostet.',
+    options: [
+      { label: 'Sofort öffentlich erklären', run: () => 'Die Fans glauben dir und lachen mit.' + mod({ popularity: 1 }) },
+      { label: 'Account für eine Weile löschen', run: () => { addFollowers({ mul: 0.7 }); return 'Ruhe im Kopf, aber viele Follower sind weg.' + mod({ form: 2 }); } },
+    ],
+  },
 ];
 
 // Beteiligte Personen einmal pro Ereignis festlegen

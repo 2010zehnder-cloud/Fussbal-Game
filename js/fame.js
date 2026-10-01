@@ -148,7 +148,9 @@ function resolveShootout(dir) {
     if (h) h.titles++;
     S.player.popularity = clamp(S.player.popularity + 8, 0, 100);
     S.money += S.contract.salary * 0.15 * 0.55;
+    queueFx('fanfare', 'confetti');
   } else {
+    queueFx('sad');
     so.text = gk
       ? `Der Ball schlägt ${dirs[other]} ein. Ihr verliert das Elfmeterschießen.`
       : `Der Torwart ahnt die Ecke und hält! Ihr verliert das Elfmeterschießen.`;

@@ -15,9 +15,29 @@
   --silver: #c4ccd4;
   --bronze: #c88a4f;
   --red: #ef5b5b;
+  --hover: #24402f;
+  --danger-bg: #5a2323;
+  --header-bg: rgba(0,0,0,.25);
+  --on-accent: #ffffff;
+  --board: #0a140e;
+  --board-text: #e8f1ea;
   --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
+}
+
+/* Helles Design: folgt dem System, außer es wurde ausdrücklich Dunkel gewählt */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eaf1ec; --card: #ffffff; --card2: #f1f6f2; --line: #d2ded6; --text: #13251a; --muted: #557062;
+    --accent: #13824a; --accent-dark: #1b9654; --gold: #a87f00; --red: #c63737;
+    --hover: #e1ece5; --danger-bg: #fbe3e3; --header-bg: rgba(255,255,255,.7); color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eaf1ec; --card: #ffffff; --card2: #f1f6f2; --line: #d2ded6; --text: #13251a; --muted: #557062;
+  --accent: #13824a; --accent-dark: #1b9654; --gold: #a87f00; --red: #c63737;
+  --hover: #e1ece5; --danger-bg: #fbe3e3; --header-bg: rgba(255,255,255,.7); color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -37,7 +57,7 @@ body {
   letter-spacing: .5px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
-  background: rgba(0,0,0,.25);
+  background: var(--header-bg);
 }
 
 main { max-width: 760px; margin: 0 auto; padding: 16px; }
@@ -85,12 +105,13 @@ h3 { font-size: 1rem; margin-top: 18px; color: var(--muted); text-transform: upp
   align-items: center;
   gap: 2px;
 }
-.btn:hover { background: #24402f; }
+.btn:hover { background: var(--hover); }
 .btn:active { transform: scale(.98); }
 .btn small { font-weight: 400; color: var(--muted); font-size: 12px; }
-.btn.primary { background: var(--accent-dark); border-color: var(--accent); }
-.btn.primary:hover { background: #26b566; }
-.btn.danger { background: #5a2323; border-color: var(--red); }
+.btn.primary { background: var(--accent-dark); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary small { color: var(--on-accent); opacity: .85; }
+.btn.primary:hover { background: var(--accent); }
+.btn.danger { background: var(--danger-bg); border-color: var(--red); }
 .btn.small { padding: 8px 12px; font-size: 14px; }
 
 label { display: block; margin-bottom: 12px; color: var(--muted); font-size: 14px; }
@@ -187,7 +208,7 @@ input, select {
 .chip.up { background: rgba(61,220,132,.15); color: var(--accent); }
 .chip.down { background: rgba(239,91,91,.15); color: var(--red); }
 
-.scoreboard { background: #0a140e; border-radius: 12px; padding: 12px; text-align: center; }
+.scoreboard { background: var(--board); color: var(--board-text); border-radius: 12px; padding: 12px; text-align: center; }
 .comp { color: var(--gold); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
 .teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 8px; }
 .team { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
@@ -276,7 +297,7 @@ td.club { text-align: left; }
 .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
 .btn.tab { padding: 8px 2px; border-radius: 12px; font-size: 12px; gap: 2px; min-width: 0; }
 .btn.tab .ti { font-size: 20px; line-height: 1.1; }
-.btn.tab.active { background: var(--accent-dark); border-color: var(--accent); }
+.btn.tab.active { background: var(--accent-dark); border-color: var(--accent); color: var(--on-accent); }
 .tip { background: rgba(232,197,71,.1); border: 1px solid rgba(232,197,71,.4); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
 .tip b { color: var(--gold); }
 .tip p { margin: 4px 0 6px; }
@@ -287,7 +308,7 @@ td.club { text-align: left; }
 .helpgrid p { margin: 0; color: var(--muted); }
 .steps { list-style: none; counter-reset: st; padding: 0; margin: 10px 0 0; display: grid; gap: 10px; }
 .steps li { counter-increment: st; display: grid; grid-template-columns: 34px 1fr; column-gap: 10px; align-items: start; }
-.steps li::before { content: counter(st); grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dark); display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.steps li::before { content: counter(st); grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dark); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--on-accent); }
 .steps span { color: var(--muted); }
 .lines.big li { font-size: 1.05rem; margin: 6px 0; }
 .moneyline { background: var(--card2); border-radius: 10px; padding: 8px 12px; }
@@ -298,8 +319,45 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .tag.bad { background: rgba(239,91,91,.15); color: var(--red); }
 .rolechip { background: var(--card2); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; color: var(--text); }
 
+/* Spielstände, Ziele, Erfolge, Diagramm, Einblendungen */
+.hbtns { display: flex; gap: 6px; }
+.slots { display: grid; gap: 8px; }
+.slot { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.slotnum { width: 30px; height: 30px; border-radius: 50%; background: var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.slotwarn { grid-column: 1 / -1; margin: 0; color: var(--red); font-size: 13px; }
+.goals { list-style: none; padding: 0; margin: 6px 0; display: grid; gap: 6px; }
+.goals li { background: var(--card2); border-radius: 10px; padding: 8px 12px; }
+.goals li.ok { box-shadow: inset 3px 0 0 var(--accent); }
+.goals li.fail { box-shadow: inset 3px 0 0 var(--red); }
+.small { font-size: 13px; }
+.achs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
+.ach { background: var(--card2); border-radius: 10px; padding: 8px 10px; opacity: .55; display: flex; flex-direction: column; }
+.ach.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
+.ach small { color: var(--muted); }
+.sharebox { width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical; }
+#toasts { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: grid; gap: 8px; z-index: 50; width: min(92vw, 420px); pointer-events: none; }
+.toast { background: var(--card); color: var(--text); border: 1px solid var(--gold); border-radius: 12px; padding: 10px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); animation: toastIn .3s ease-out; font-weight: 600; }
+@keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+.chart { width: 100%; max-width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 10px; font-family: var(--font-body); }
+.chart .gbar { fill: var(--gold); opacity: .55; }
+.chart .rline { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.chart .rarea { fill: var(--accent); opacity: .12; }
+.chart .rpeak { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+.lg { display: inline-block; width: 12px; height: 4px; border-radius: 2px; vertical-align: middle; }
+.lg-r { background: var(--accent); }
+.lg-g { background: var(--gold); height: 10px; opacity: .55; }
+.rehabbar { display: flex; gap: 8px; margin: 10px 0; }
+.rehabbar span { width: 32px; height: 32px; border-radius: 50%; background: var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.rehabbar span.done { background: var(--accent-dark); color: var(--on-accent); }
+.rehabbar span.now { box-shadow: 0 0 0 3px var(--accent); }
+@media (max-width: 420px) { .slot { grid-template-columns: 30px 1fr; } .slot .shopbtns { grid-column: 1 / -1; justify-content: flex-end; } .top > span:first-child { font-size: 15px; } .helpbtn { padding: 6px 10px; } }
+
 </style>
-<header class="top"><span>⚽ Fußballkarriere</span><button id="help-btn" class="helpbtn" type="button">? Hilfe</button></header>
+<header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button">? Hilfe</button></span></header>
 <main id="app"></main>
 <footer class="foot">Fanprojekt · Alle Vereinsnamen gehören ihren jeweiligen Inhabern · Stärkewerte sind Schätzungen</footer>
 <script>
@@ -608,7 +666,6 @@ const SHOP = [
 
 'use strict';
 
-const SAVE_KEY = 'fussballkarriere-save-v2';
 const START_YEAR = 2026;
 
 let S = null; // Spielstand
@@ -720,12 +777,11 @@ function switchTarget() {
 }
 
 // ---------- Speichern ----------
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* ignorieren */ } }
-function loadSave() { try { const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
-function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignorieren */ } }
+function save() { writeSlot(S.slot || 1, S); }
+function deleteSave() { clearSlot(S.slot || 1); }
 
 // ---------- Neues Spiel ----------
-function newGame(name, nationName, pos, number, heir = null) {
+function newGame(name, nationName, pos, number, heir = null, difficulty = 'normal') {
   let clubs = {};
   if (heir) clubs = heir.clubs;
   else for (const L of LEAGUES) for (const [n, str] of L.clubs) clubs[n] = { league: L.id, base: str, drift: 0 };
@@ -750,6 +806,12 @@ function newGame(name, nationName, pos, number, heir = null) {
     S.player.popularity = clamp(20 + heir.fame, 0, 100);
     if (heir.talent >= 3) S.player.rating += 2;
   }
+  S.slot = heir ? heir.slot : pendingSlot;
+  S.diff = heir ? heir.diff : difficulty;
+  const d = diff();
+  S.player.rating += d.rating;
+  S.player.potential = clamp(S.player.potential + d.potential, 65, 99);
+  S.player.injuryProne = d.injury;
   S.peak = S.player.rating;
   S.academyOffers = academyOffers();
   initRival();
@@ -769,7 +831,7 @@ function startHeir(child) {
     money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
-    parentState: S,
+    parentState: S, slot: S.slot, diff: S.diff,
     family: {
       parents: [
         { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
@@ -885,6 +947,7 @@ function startSeason() {
   const str = clubStr(S.clubId);
   const role = S.youth ? 'U19' : roleFor(p.rating, str, p.trust);
   S.season = { role, focus: 'balanced', devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
+  genSeasonGoals();
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
@@ -913,6 +976,7 @@ function nextStep() {
 }
 
 function setupEvent() {
+  if (maybeSeriousInjury()) return;
   const pool = EVENTS.filter(e => !S.season.usedEvents.includes(e.id) && (!e.cond || e.cond()));
   const total = pool.reduce((s, e) => s + (e.weight ? e.weight() : 1), 0);
   let r = Math.random() * total, ev = pool[0];
@@ -1125,6 +1189,7 @@ function resolveMatch(i) {
   S.season.scenes.push(`${c.comp}: ${resultWord} gegen ${c.opp} (${us}:${them})`);
   c.final = c.home ? `${us}:${them}` : `${them}:${us}`;
   c.chosen = i;
+  queueFx(us > c.a ? 'goal' : 'whistle');
   if (c.rivalMatch) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
@@ -1241,7 +1306,7 @@ function endSeason() {
 
   // Dopingkontrolle
   if (se.doped) {
-    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0);
+    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' ? 0.1 : 0);
     if (chance(caughtP)) {
       const prison = chance(0.35);
       const years = prison ? randInt(1, 3) : (S.dopeCaught ? 4 : 2);
@@ -1286,6 +1351,7 @@ function endSeason() {
   const a = p.age;
   let g = a <= 19 ? 5 : a <= 22 ? 3.5 : a <= 25 ? 1.5 : a <= 28 ? 0.5 : a <= 30 ? -0.7 : a <= 32 ? -1.8 : a <= 34 ? -3 : -4.5;
   if (g > 0) {
+    g *= diff().growth;
     const play = { 'Stammspieler': 1.25, 'Rotation': 1, 'Ergänzungsspieler': 0.55, 'U19': 1 }[se.role];
     g *= play;
     if (p.rating >= p.potential) g *= 0.15;
@@ -1337,7 +1403,19 @@ function endSeason() {
   familySeason(res);
   teamSeason(res);
   if (businesses().length) res.finance.business = businessSeason(res);
+  evalSeasonGoals(res);
+  nationalSeason(res);
+  socialSeason(res);
+  const living = homeSeason(res) + petsSeason(res);
+  S.money -= living;
+  if (living) res.finance.living = living;
+  if (S.taxRisk && chance(0.4)) {
+    S.taxRisk = false;
+    S.court = { charge: 'Steuerhinterziehung', severity: 2 };
+    res.lines.push('🚨 Die Steuerfahndung durchsucht dein Haus! Es kommt zum Prozess.');
+  }
   checkMilestones(res);
+  if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
 
   p.age++;
   S.seasonEnd = res;
@@ -1426,6 +1504,7 @@ function tournament(res) {
   const title = wm ? 'Weltmeister' : CONTINENTAL[nat.conf].title;
   const p = S.player;
   const out = { name, summer, lines: [] };
+  if (S.natRetired) { out.lines.push(`Du bist aus der Nationalmannschaft zurückgetreten und schaust die ${name} vor dem Fernseher.`); out.nominated = false; return out; }
   if (p.age < 18 || S.youth || S.fugitive || p.rating < nat.str - 8 || (res.games < 8 && p.rating < nat.str)) {
     out.lines.push(`Du wirst für die ${name} ${summer} nicht nominiert.`);
     out.nominated = false;
@@ -1525,6 +1604,7 @@ function openTransfer() {
     const weakest = Object.keys(S.clubs).filter(n => n !== S.clubId).sort((a, b) => clubStr(a) - clubStr(b)).slice(0, 12);
     shuffle(weakest).slice(0, 2).forEach(n => offers.push(newOffer(n)));
   }
+  dreamOffer(offers, newOffer, p);
   offers.sort((a, b) => clubStr(b.club) - clubStr(a.club));
   if (released && !offers.length) {
     retire('Kein Verein will dich mehr verpflichten. Du beendest deine Karriere.');
@@ -1552,6 +1632,7 @@ function acceptOffer(o) {
     }
     S.clubId = o.club;
     S.player.trust = 45;
+    if (o.club === S.dreamClub) { S.player.popularity = clamp(S.player.popularity + 5, 0, 100); S.player.form = clamp(S.player.form + 3, -10, 10); toast(`⭐ Traum erfüllt: Du spielst für ${o.club}!`); queueFx('fanfare', 'confetti'); }
   } else if (S.offers.extension) {
     S.contract = { ...S.offers.extension };
   }
@@ -1690,7 +1771,7 @@ function render(keepScroll = false) {
   else {
     html = renderPlayerCard();
     if (S.phase === 'preseason' || S.phase === 'transfer') html += renderHub();
-    else if (S.phase === 'season') html += tip(S.current.type) + (S.current.type === 'event' ? renderEvent() : renderMatch());
+    else if (S.phase === 'season') html += tip(S.current.type) + (S.current.type === 'event' ? renderEvent() : S.current.type === 'rehab' ? renderRehab() : renderMatch());
     else if (S.phase === 'seasonEnd') html += tip('seasonEnd') + renderSeasonEnd();
     else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'shootout') html += renderShootout();
@@ -1699,20 +1780,18 @@ function render(keepScroll = false) {
   root.innerHTML = html;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
+  if (S && S.player && S.phase !== 'create') checkAchievements();
+  flushFx();
 }
 
 function renderStart() {
-  const saved = loadSave();
   return `
   <section class="hero">
     <div class="ball">⚽</div>
     <h1>Fußballkarriere</h1>
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
-    <div class="actions">
-      ${saved && saved.phase !== 'retired' ? btn(`Karriere fortsetzen (${esc(saved.player.name)}, ${saved.player.age} J.)`, () => { S = saved; render(); }, 'primary') : ''}
-      ${btn('Neue Karriere starten', () => { S = { phase: 'create' }; render(); }, saved && saved.phase !== 'retired' ? '' : 'primary')}
-    </div>
   </section>
+  ${renderSlots()}
   <section class="card howto">
     <h2>So funktioniert's</h2>
     <ol class="steps">
@@ -1722,7 +1801,8 @@ function renderStart() {
     </ol>
     <div class="actions">${btn('Ausführliche Hilfe', () => { uiHelp = true; render(); })}</div>
   </section>
-  ${renderHallOfFame()}`;
+  ${renderHallOfFame()}
+  ${renderAchievements()}`;
 }
 
 function renderCreate() {
@@ -1737,6 +1817,7 @@ function renderCreate() {
     <label>Nationalität<select id="f-nation">${natOpts}</select></label>
     <label>Position<select id="f-pos">${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
+    ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
     <div class="actions">
       ${btn('Los geht\'s', () => {
@@ -1744,7 +1825,8 @@ function renderCreate() {
         const num = parseInt(document.getElementById('f-num').value, 10);
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
-        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null);
+        const fd = document.getElementById('f-diff');
+        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
         render();
       }, 'primary')}
       ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
@@ -1825,6 +1907,7 @@ function renderPreseason() {
       ${S.youth ? '' : `<li><span>Erwartete Platzierung</span><b>${exp}. Platz</b></li>`}
       <li><span>Wettbewerbe</span><b>${comps.map(esc).join(', ')}</b></li>
     </ul>
+    ${se.goals && se.goals.length ? `<h3>Deine Saisonziele</h3>${renderGoalList(se.goals)}<p class="muted small">Für jedes erreichte Ziel gibt es Beliebtheit, Vertrauen und eine Prämie.</p>` : ''}
     <h3>Trainingsschwerpunkt</h3>
     <div class="focus">${Object.entries(FOCUS).map(([k, f]) => {
       const gk = S.player.pos === 'TW';
@@ -1912,6 +1995,7 @@ function renderSeasonEnd() {
       <div><b>${r.note === null ? '–' : fmt2(r.note)}</b><span>Ø Note</span></div>
       <div><b>${r.ratingAfter}</b><span>Stärke <em class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</em></span></div>
     </div>
+    ${r.goalResults ? `<h3>Saisonziele</h3>${renderGoalList(r.goalResults, r.goalResults)}` : ''}
     <h3>Das Wichtigste</h3>
     <ul class="lines big">${highlights.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${r.milestones && r.milestones.length ? `<ul class="lines big">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
@@ -1936,6 +2020,7 @@ function renderTransfer() {
     const str = clubStr(of.club);
     const role = roleFor(p.rating, str, 45);
     const tags = [];
+    if (of.dream) tags.push(['good', '⭐ Traumverein!']);
     if (of.loan) tags.push(['good', '🔁 Leihe: Spielpraxis sammeln']);
     if (!o.released && rank[role] > rank[curRole]) tags.push(['good', '⏱️ Mehr Spielzeit']);
     if (!o.released && rank[role] < rank[curRole]) tags.push(['bad', '⚠️ Weniger Spielzeit']);
@@ -1981,6 +2066,7 @@ function renderTransfer() {
       <div class="lifeacts">
         ${raise}
         ${agentBtn}
+        ${p.caps > 0 && p.age >= 29 && !S.natRetired ? btn('Rücktritt aus der Nationalmannschaft<small>Mehr Ruhe, keine Länderspiele mehr</small>', () => { S.natRetired = true; S.player.injuryProne = clamp(S.player.injuryProne - 3, 0, 40); o.msgs.push(`Du erklärst nach ${p.caps} Länderspielen deinen Rücktritt aus der Nationalmannschaft. Standing Ovations beim Abschiedsspiel!`); render(); }) : ''}
         ${p.age >= 33 ? btn('Karriere beenden<small>Schuhe an den Nagel hängen</small>', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
       </div>
     </details>
@@ -2105,6 +2191,7 @@ function renderFinance(f) {
       ${f.upkeep ? row('Unterhalt für Besitz', -f.upkeep, 'down') : ''}
       ${f.fund ? row('Rendite Fonds', f.fund, f.fund >= 0 ? 'up' : 'down') : ''}
       ${f.business !== undefined ? row('Gewinn deiner Firmen', f.business, f.business >= 0 ? 'up' : 'down') : ''}
+      ${f.living ? row('Miete und Haustiere', -f.living, 'down') : ''}
       <li class="sum"><span>Vermögen jetzt</span><b>${money(S.money)}</b></li>
     </ul>`;
 }
@@ -2271,8 +2358,10 @@ function renderRetired() {
     <p>Vereine: ${S.clubsPlayed.map(esc).join(' → ')}</p>
     <p>Privat: ${esc(lifeText())}</p>
     ${S.dopeCaught ? `<p class="down">Dopingsünder: ${S.dopeCaught}× erwischt.</p>` : ''}
-    <div class="actions">${btn('Neue Karriere starten', () => { deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
+    <div class="actions">${btn('Neue Karriere starten', () => { pendingSlot = S.slot || 1; deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
   </section>
+  ${renderCareerChart()}
+  ${renderShare()}
   ${renderHistory()}`;
 }
 
@@ -2280,6 +2369,11 @@ function renderRetired() {
 function init() {
   const hb = document.getElementById('help-btn');
   if (hb) hb.addEventListener('click', toggleHelp);
+  const tb = document.getElementById('theme-btn');
+  if (tb) tb.addEventListener('click', toggleTheme);
+  const sb = document.getElementById('sound-btn');
+  if (sb) sb.addEventListener('click', toggleSound);
+  applyTheme();
   app().addEventListener('click', e => {
     const b = e.target.closest('[data-h]');
     if (!b) return;
@@ -2836,6 +2930,69 @@ const EVENTS = [
       { label: 'Zur Rede stellen', run: () => chance(0.5) ? 'Ihr sprecht euch aus – es war ein Missverständnis.' + relChip(enemyMate(), 25) : 'Das Gespräch eskaliert.' + relChip(enemyMate(), -20) + mod({ trust: -2 }) },
       { label: 'Selbst mit dem Trainer reden', run: () => 'Der Trainer schätzt deine Offenheit.' + mod({ trust: 4 }) + relChip(enemyMate(), -10) },
       { label: 'Ignorieren', run: () => 'Du lässt es an dir abprallen.' + mod({}) },
+    ],
+  },
+  {
+    id: 'court', title: 'Vor Gericht',
+    cond: () => !!S.court,
+    weight: () => 25,
+    text: () => S.court.plaintiff
+      ? `Heute beginnt dein Prozess: Du klagst wegen ${S.court.charge}. Wie gehst du vor?`
+      : `Heute beginnt dein Prozess wegen ${S.court.charge}. Die Presse belagert das Gericht. Wie verteidigst du dich?`,
+    options: [
+      { label: 'Teuren Staranwalt nehmen', run: () => courtVerdict('star') },
+      { label: 'Normalen Anwalt nehmen', run: () => courtVerdict('normal') },
+      { label: 'Vergleich anbieten (milderes Urteil)', run: () => courtVerdict('confess') },
+    ],
+  },
+  {
+    id: 'taxScheme', title: 'Das Steuersparmodell',
+    cond: () => !S.youth && S.money >= 1 && !S.court && !S.taxRisk,
+    text: () => 'Dein Steuerberater zeigt dir ein „kreatives“ Modell mit Briefkastenfirmen. Du würdest jedes Jahr viel Geld sparen.',
+    options: [
+      { label: 'Machen', run: () => { S.taxRisk = true; return 'Du sparst sofort eine Menge Geld. Hoffentlich schaut niemand genau hin …' + mod({ money: Math.max(0.05, S.money * 0.05) }); } },
+      { label: 'Ablehnen – ich zahle meine Steuern', run: () => 'Du bleibst sauber.' + mod({ popularity: 1 }) },
+    ],
+  },
+  {
+    id: 'carAccident', title: 'Unfall',
+    cond: () => !S.youth && (ownedCount('car2') || ownedCount('car3')) && !S.court,
+    text: () => 'Nachts fährst du mit deinem Sportwagen viel zu schnell und rammst ein parkendes Auto. Niemand hat es gesehen …',
+    options: [
+      {
+        label: 'Einfach weiterfahren', run: () => {
+          if (chance(0.55)) { S.court = { charge: 'Fahrerflucht', severity: 2 }; return 'Eine Überwachungskamera hat alles gefilmt. Die Polizei ermittelt – es kommt zum Prozess.' + mod({ popularity: -10 }); }
+          return 'Niemand findet es heraus. Aber dein schlechtes Gewissen bleibt.' + mod({ form: -1 });
+        },
+      },
+      { label: 'Polizei rufen und den Schaden zahlen', run: () => 'Ein Bußgeld und eine Schlagzeile – mehr nicht.' + mod({ money: -0.02, popularity: -2 }) },
+    ],
+  },
+  {
+    id: 'fakeFriend', title: 'Falsche Freunde',
+    cond: () => S.player.popularity >= 35 && !S.court,
+    text: () => 'Ein angeblicher Jugendfreund verkauft erfundene Geschichten über dich an ein Klatschmagazin.',
+    options: [
+      { label: 'Verklagen', run: () => { S.court = { charge: 'Verleumdung', severity: 1, plaintiff: true }; return 'Deine Anwälte reichen Klage ein. Der Prozess beginnt bald.' + mod({}); } },
+      { label: 'Ignorieren', run: () => 'Die Geschichte verschwindet nach ein paar Tagen.' + mod({ popularity: -3 }) },
+    ],
+  },
+  {
+    id: 'petChaos', title: 'Chaos zu Hause',
+    cond: () => pets().length > 0,
+    text: () => { const pt = pets()[0]; return `${pt.name} hat während deines Auswärtsspiels das halbe Wohnzimmer zerlegt.`; },
+    options: [
+      { label: 'Hundeschule bzw. Tiertrainer buchen', run: () => 'Ab jetzt herrscht Ordnung.' + mod({ money: -0.003, form: 1 }) },
+      { label: 'Ein Video davon posten', run: () => { addFollowers({ mul: 1.15, add: 2000 }); return 'Das Video geht viral – Millionen lachen mit.' + mod({ popularity: 4 }); } },
+    ],
+  },
+  {
+    id: 'hacked', title: 'Account gehackt!',
+    cond: () => S.social && S.social.followers >= 10000,
+    text: () => 'Jemand hat sich in deinen Social-Media-Account gehackt und peinliche Nachrichten gepostet.',
+    options: [
+      { label: 'Sofort öffentlich erklären', run: () => 'Die Fans glauben dir und lachen mit.' + mod({ popularity: 1 }) },
+      { label: 'Account für eine Weile löschen', run: () => { addFollowers({ mul: 0.7 }); return 'Ruhe im Kopf, aber viele Follower sind weg.' + mod({ form: 2 }); } },
     ],
   },
 ];
@@ -3641,7 +3798,9 @@ function resolveShootout(dir) {
     if (h) h.titles++;
     S.player.popularity = clamp(S.player.popularity + 8, 0, 100);
     S.money += S.contract.salary * 0.15 * 0.55;
+    queueFx('fanfare', 'confetti');
   } else {
+    queueFx('sad');
     so.text = gk
       ? `Der Ball schlägt ${dirs[other]} ein. Ihr verliert das Elfmeterschießen.`
       : `Der Torwart ahnt die Ecke und hält! Ihr verliert das Elfmeterschießen.`;
@@ -3703,10 +3862,10 @@ function renderHub() {
   if (S.phase !== uiLastPhase) { uiTab = 'main'; uiLastPhase = S.phase; }
   const tabs = hubTabs().map(([k, icon, label]) => btn(`<span class="ti">${icon}</span>${label}`, () => { uiTab = k; render(true); }, `tab ${uiTab === k ? 'active' : ''}`)).join('');
   let content;
-  if (uiTab === 'life') content = renderLife();
+  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderHome()}${renderPets()}</section>`;
   else if (uiTab === 'people') content = renderPeople();
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
-  else if (uiTab === 'career') content = renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>';
+  else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -3757,6 +3916,10 @@ const HELP = [
   ['💰 Geld', 'Du verdienst Gehalt, Prämien und Werbegeld. Im Reiter „Geld“ kaufst du Autos, Häuser oder gründest Firmen.'],
   ['❤️ Privatleben', 'Im Reiter „Privat“ findest du Partner, machst Dates, heiratest und bekommst Kinder. Ohne Pflege kühlt die Beziehung ab.'],
   ['⚠️ Risiken', 'Partys, Casino und vor allem Doping können deine Karriere zerstören. Doping bringt sofort Stärke, aber wer erwischt wird, wird gesperrt oder muss ins Gefängnis.'],
+  ['🎯 Saisonziele', 'Vor jeder Saison bekommst du zwei Ziele. Erreichst du sie, gibt es Beliebtheit, Vertrauen und eine Geldprämie.'],
+  ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
+  ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
+  ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
   ['🏁 Karriereende', 'Ab 33 kannst du aufhören, mit 41 ist Schluss. Danach wirst du Trainer, kaufst einen Verein oder spielst als dein Kind weiter.'],
 ];
 function renderHelp() {
@@ -3768,5 +3931,538 @@ function renderHelp() {
   </section>`;
 }
 function toggleHelp() { uiHelp = !uiHelp; render(); }
+
+'use strict';
+
+// Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm und Design
+
+// ---------- Mehrere Spielstände ----------
+const SLOT_COUNT = 3;
+const slotKey = n => `fussballkarriere-slot-${n}`;
+let pendingSlot = 1;
+let slotConfirm = null;
+
+function readSlot(n) {
+  try {
+    // Alten Einzelspielstand einmalig in Slot 1 übernehmen
+    if (n === 1 && !localStorage.getItem(slotKey(1))) {
+      const old = localStorage.getItem('fussballkarriere-save-v2');
+      if (old) { localStorage.setItem(slotKey(1), old); localStorage.removeItem('fussballkarriere-save-v2'); }
+    }
+    const r = localStorage.getItem(slotKey(n));
+    return r ? JSON.parse(r) : null;
+  } catch (e) { return null; }
+}
+function writeSlot(n, data) { try { localStorage.setItem(slotKey(n), JSON.stringify(data)); } catch (e) { /* ignorieren */ } }
+function clearSlot(n) { try { localStorage.removeItem(slotKey(n)); } catch (e) { /* ignorieren */ } }
+
+function renderSlots() {
+  const rows = [];
+  for (let n = 1; n <= SLOT_COUNT; n++) {
+    const d = readSlot(n);
+    let info = '<span class="muted">Leer</span>';
+    if (d && d.player) {
+      const what = d.phase === 'retired' ? 'Karriere beendet' : d.phase && d.phase.startsWith('coach') ? 'Trainer' : d.phase === 'owner' ? 'Präsident' : (d.clubId || 'Akademie');
+      info = `<strong>${esc(d.player.name)}</strong><small>${d.player.age} Jahre · ${esc(what)} · Stärke ${Math.round(d.peak || d.player.rating)}${d.gen > 1 ? ` · Gen. ${d.gen}` : ''}</small>`;
+    }
+    const confirm = slotConfirm === n;
+    rows.push(`<div class="slot">
+      <div class="slotnum">${n}</div>
+      <div class="offer-info">${info}</div>
+      <div class="shopbtns">
+        ${d && d.player && d.phase !== 'create' ? btn('Weiter', () => { S = d; S.slot = n; render(); }, 'primary small') : ''}
+        ${btn(d ? 'Neu' : 'Neue Karriere', () => {
+          if (d && !confirm) { slotConfirm = n; render(true); return; }
+          slotConfirm = null; clearSlot(n); pendingSlot = n; S = { phase: 'create' }; render();
+        }, confirm ? 'small danger' : d ? 'small' : 'primary small')}
+      </div>
+      ${confirm ? `<p class="slotwarn">Achtung: Der alte Spielstand wird gelöscht. Zum Bestätigen nochmal auf „Neu“ tippen.</p>` : ''}
+    </div>`);
+  }
+  return `<section class="card"><h2>Spielstände</h2><div class="slots">${rows.join('')}</div></section>`;
+}
+
+// ---------- Schwierigkeitsgrad ----------
+const DIFFICULTY = {
+  easy: { name: 'Einfach', desc: 'Mehr Talent, weniger Verletzungen.', rating: 3, potential: 3, injury: 5, growth: 1.15 },
+  normal: { name: 'Normal', desc: 'Das ausgewogene Spiel.', rating: 0, potential: 0, injury: 8, growth: 1 },
+  legend: { name: 'Legende', desc: 'Weniger Talent, mehr Verletzungen, strengere Kontrollen.', rating: -2, potential: -3, injury: 12, growth: 0.9 },
+};
+const diff = () => DIFFICULTY[(S && S.diff) || 'normal'];
+
+// ---------- Karriere teilen ----------
+function shareText() {
+  const t = totals();
+  const [, title] = legacy();
+  const bd = S.awards.filter(a => a.startsWith("Ballon d'Or")).length;
+  return [
+    `⚽ Meine Fußballkarriere: ${S.player.name} (${S.player.nation}, ${POSITIONS[S.player.pos].name})`,
+    `🏟️ ${S.clubsPlayed.join(' → ')}`,
+    `📊 ${t.games} Spiele · ${t.goals} Tore · ${t.assists} Vorlagen · Stärke bis ${S.peak}`,
+    `🏆 ${S.titles.length} Titel${bd ? ` · ${bd}× Ballon d'Or` : ''} · ${S.player.caps} Länderspiele`,
+    `💰 Vermögen: ${money(S.money)}`,
+    `⭐ Status: ${title}${S.phase === 'retired' ? '' : ' (Karriere läuft noch)'}`,
+  ].join('\n');
+}
+function renderShare() {
+  const text = shareText();
+  return `
+  <section class="card">
+    <h2>Karriere teilen</h2>
+    <textarea id="share-text" class="sharebox" readonly rows="6">${esc(text)}</textarea>
+    <div class="actions">${btn('Text kopieren', () => copyShare(), 'primary')}</div>
+    <p class="muted" id="share-status"></p>
+  </section>`;
+}
+function copyShare() {
+  const ta = document.getElementById('share-text');
+  const status = document.getElementById('share-status');
+  const fallback = () => { ta.focus(); ta.select(); status.textContent = 'Text markiert – jetzt mit „Kopieren“ übernehmen.'; };
+  try {
+    navigator.clipboard.writeText(ta.value).then(() => { status.textContent = 'Kopiert! Jetzt einfach in WhatsApp & Co. einfügen.'; }, fallback);
+  } catch (e) { fallback(); }
+}
+
+// ---------- Erfolge (über alle Karrieren) ----------
+const ACH_KEY = 'fussballkarriere-erfolge';
+const ACHIEVEMENTS = [
+  { id: 'firstTitle', name: 'Erster Pokal', desc: 'Gewinne deinen ersten Titel.', test: () => S.titles.length >= 1 },
+  { id: 'cl', name: 'Königsklasse', desc: 'Gewinne die Champions League.', test: () => S.titles.some(t => t.startsWith('Champions-League-Sieger')) },
+  { id: 'world', name: 'Weltmeister', desc: 'Werde Weltmeister.', test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
+  { id: 'ballon', name: 'Bester der Welt', desc: "Gewinne den Ballon d'Or.", test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'goals100', name: 'Torjäger', desc: 'Schieße 100 Karrieretore.', test: () => totals().goals >= 100 },
+  { id: 'goals300', name: 'Tormaschine', desc: 'Schieße 300 Karrieretore.', test: () => totals().goals >= 300 },
+  { id: 'clubs5', name: 'Wandervogel', desc: 'Spiele für 5 Vereine.', test: () => S.clubsPlayed.length >= 5 },
+  { id: 'legend', name: 'Vereinslegende', desc: 'Werde Legende bei einem Verein.', test: () => legends().length >= 1 },
+  { id: 'million', name: 'Millionär', desc: 'Besitze 1 Mio. €.', test: () => S.money >= 1 },
+  { id: 'billion', name: 'Milliardär', desc: 'Besitze 1 Milliarde €.', test: () => S.money >= 1000 },
+  { id: 'married', name: 'Ja, ich will', desc: 'Heirate.', test: () => S.life && S.life.married },
+  { id: 'kids3', name: 'Großfamilie', desc: 'Bekomme 3 Kinder.', test: () => S.life && S.life.children && S.life.children.length >= 3 },
+  { id: 'gen3', name: 'Dynastie', desc: 'Spiele die 3. Generation.', test: () => (S.gen || 1) >= 3 },
+  { id: 'caught', name: 'Erwischt', desc: 'Werde beim Doping erwischt.', test: () => (S.dopeCaught || 0) >= 1 },
+  { id: 'escape', name: 'Ausbrecher', desc: 'Brich aus dem Gefängnis aus.', test: () => !!S.fugitive },
+  { id: 'rival', name: 'Rivalen-Schreck', desc: 'Gewinne 5 Duelle gegen deinen Rivalen.', test: () => S.rival && S.rival.wins >= 5 },
+  { id: 'dream', name: 'Traum erfüllt', desc: 'Spiele für deinen Traumverein.', test: () => S.dreamClub && S.clubsPlayed.includes(S.dreamClub) },
+  { id: 'followers', name: 'Influencer', desc: 'Erreiche 1 Mio. Follower.', test: () => S.social && S.social.followers >= 1e6 },
+  { id: 'captain', name: 'Spielführer', desc: 'Werde Kapitän der Nationalmannschaft.', test: () => !!S.natCaptain },
+  { id: 'coachTitle', name: 'Meistertrainer', desc: 'Gewinne einen Titel als Trainer.', test: () => S.coach && S.coach.titles.length >= 1 },
+  { id: 'president', name: 'Boss', desc: 'Kaufe einen Verein.', test: () => !!(S.owner || S.ownerDone) },
+  { id: 'goals5', name: 'Musterschüler', desc: 'Erfülle 10 Saisonziele.', test: () => (S.goalsDone || 0) >= 10 },
+];
+function unlockedAchievements() { try { return JSON.parse(localStorage.getItem(ACH_KEY) || '[]'); } catch (e) { return []; } }
+function checkAchievements() {
+  if (!S || !S.player) return;
+  const have = unlockedAchievements();
+  const fresh = ACHIEVEMENTS.filter(a => !have.includes(a.id) && (() => { try { return a.test(); } catch (e) { return false; } })());
+  if (!fresh.length) return;
+  try { localStorage.setItem(ACH_KEY, JSON.stringify([...have, ...fresh.map(a => a.id)])); } catch (e) { /* ignorieren */ }
+  fresh.forEach(a => toast(`🏅 Erfolg freigeschaltet: ${a.name}`));
+  queueFx('chime');
+}
+function renderAchievements() {
+  const have = unlockedAchievements();
+  return `
+  <section class="card">
+    <details><summary>Erfolge · ${have.length} von ${ACHIEVEMENTS.length}</summary>
+      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach ${have.includes(a.id) ? 'got' : ''}"><b>${have.includes(a.id) ? '🏅' : '🔒'} ${esc(a.name)}</b><small>${esc(a.desc)}</small></div>`).join('')}</div>
+    </details>
+  </section>`;
+}
+
+// ---------- Kurze Einblendungen ----------
+function toast(text) {
+  let box = document.getElementById('toasts');
+  if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = text;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ---------- Sound (ohne Dateien, mit Web Audio erzeugt) ----------
+const PREF_KEY = 'fussballkarriere-einstellungen';
+function prefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}'); } catch (e) { return {}; } }
+function setPref(k, v) { const p = prefs(); p[k] = v; try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch (e) { /* ignorieren */ } }
+let audioCtx = null;
+let fxQueue = [];
+function queueFx(...names) { fxQueue.push(...names); }
+function flushFx() {
+  const list = fxQueue; fxQueue = [];
+  for (const n of list) {
+    if (n === 'confetti') confetti();
+    else playSound(n);
+  }
+}
+function tone(freq, start, dur, type = 'sine', vol = 0.15) {
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+  g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime + start); o.stop(audioCtx.currentTime + start + dur + 0.05);
+}
+function crowd(dur) {
+  const len = audioCtx.sampleRate * dur;
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / len) * 0.5;
+  const src = audioCtx.createBufferSource(), f = audioCtx.createBiquadFilter(), g = audioCtx.createGain();
+  f.type = 'bandpass'; f.frequency.value = 900; g.gain.value = 0.35;
+  src.buffer = buf; src.connect(f); f.connect(g); g.connect(audioCtx.destination); src.start();
+}
+function playSound(name) {
+  if (prefs().mute) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (name === 'goal') { crowd(1.6); tone(523, 0, 0.15, 'square', 0.06); tone(784, 0.15, 0.3, 'square', 0.06); }
+    else if (name === 'whistle') { tone(2900, 0, 0.18, 'sine', 0.08); tone(2900, 0.25, 0.45, 'sine', 0.08); }
+    else if (name === 'fanfare') [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.14, 0.4, 'triangle', 0.12));
+    else if (name === 'chime') { tone(880, 0, 0.3, 'sine', 0.1); tone(1320, 0.12, 0.4, 'sine', 0.08); }
+    else if (name === 'sad') { tone(392, 0, 0.35, 'triangle', 0.1); tone(330, 0.3, 0.5, 'triangle', 0.1); }
+  } catch (e) { /* kein Ton möglich */ }
+}
+
+// ---------- Konfetti ----------
+function confetti() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = document.createElement('canvas');
+  c.className = 'confetti';
+  c.width = window.innerWidth; c.height = window.innerHeight;
+  document.body.appendChild(c);
+  const ctx = c.getContext('2d');
+  const colors = ['#3ddc84', '#e8c547', '#ef5b5b', '#4aa3ff', '#ffffff'];
+  const parts = Array.from({ length: 140 }, () => ({
+    x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.5, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3,
+    r: 4 + Math.random() * 5, a: Math.random() * Math.PI, va: (Math.random() - 0.5) * 0.3, col: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  const start = performance.now();
+  (function frame(t) {
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.col; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore();
+    }
+    if (t - start < 3200) requestAnimationFrame(frame); else c.remove();
+  })(start);
+}
+
+// ---------- Design und Ton umschalten ----------
+function applyTheme() {
+  const t = prefs().theme;
+  if (t) document.documentElement.setAttribute('data-theme', t);
+  else document.documentElement.removeAttribute('data-theme');
+  const tb = document.getElementById('theme-btn');
+  if (tb) tb.textContent = currentTheme() === 'dark' ? '☀️' : '🌙';
+  const sb = document.getElementById('sound-btn');
+  if (sb) sb.textContent = prefs().mute ? '🔇' : '🔊';
+}
+function currentTheme() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t) return t;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+function toggleTheme() { setPref('theme', currentTheme() === 'dark' ? 'light' : 'dark'); applyTheme(); }
+function toggleSound() { setPref('mute', !prefs().mute); applyTheme(); if (!prefs().mute) playSound('chime'); }
+
+// ---------- Karriere-Diagramm ----------
+function renderCareerChart() {
+  const rows = S.history.filter(h => !h.banned);
+  if (rows.length < 2) return '';
+  const W = 340, H = 170, padL = 30, padR = 10, padT = 12, padB = 26;
+  const ratings = rows.map(h => h.rating);
+  const goals = rows.map(h => h.goals);
+  const minR = Math.max(30, Math.floor((Math.min(...ratings) - 3) / 10) * 10);
+  const maxR = Math.min(100, Math.ceil((Math.max(...ratings) + 3) / 10) * 10);
+  const maxG = Math.max(10, ...goals);
+  const x = i => padL + (i * (W - padL - padR)) / (rows.length - 1);
+  const yR = v => padT + (1 - (v - minR) / (maxR - minR)) * (H - padT - padB);
+  const yG = v => H - padB - (v / maxG) * (H - padT - padB) * 0.6;
+  const bw = Math.max(3, Math.min(14, (W - padL - padR) / rows.length - 3));
+  const ticks = [];
+  for (let v = minR; v <= maxR; v += 10) ticks.push(v);
+  const line = rows.map((h, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${yR(h.rating).toFixed(1)}`).join(' ');
+  const area = `${line} L${x(rows.length - 1).toFixed(1)},${H - padB} L${x(0).toFixed(1)},${H - padB} Z`;
+  const peakI = ratings.indexOf(Math.max(...ratings));
+  const labelEvery = Math.ceil(rows.length / 6);
+  return `
+  <section class="card">
+    <h2>Deine Karriere als Kurve</h2>
+    <p class="muted"><span class="lg lg-r"></span> Stärke &nbsp; <span class="lg lg-g"></span> Tore pro Saison</p>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Stärke und Tore pro Saison">
+      ${ticks.map(v => `<line x1="${padL}" x2="${W - padR}" y1="${yR(v)}" y2="${yR(v)}" class="grid"/><text x="${padL - 4}" y="${yR(v) + 3}" class="axis" text-anchor="end">${v}</text>`).join('')}
+      ${rows.map((h, i) => `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${yG(h.goals).toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - padB - yG(h.goals)).toFixed(1)}" class="gbar"><title>${seasonLabel(h.year)}: ${h.goals} Tore</title></rect>`).join('')}
+      <path d="${area}" class="rarea"/>
+      <path d="${line}" class="rline"/>
+      <circle cx="${x(peakI)}" cy="${yR(ratings[peakI])}" r="4" class="rpeak"><title>Höchste Stärke: ${ratings[peakI]}</title></circle>
+      ${rows.map((h, i) => (i % labelEvery === 0 ? `<text x="${x(i)}" y="${H - 8}" class="axis" text-anchor="middle">${h.age}</text>` : '')).join('')}
+    </svg>
+    <p class="muted small">Unten: dein Alter.</p>
+  </section>`;
+}
+
+'use strict';
+
+// Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha und Gericht
+
+// ---------- Saisonziele ----------
+function genSeasonGoals() {
+  const p = S.player, se = S.season;
+  if (S.youth) { se.goals = []; return; }
+  const grp = POSITIONS[p.pos].group;
+  const L = clubLeague(S.clubId);
+  const expected = clubsIn(L.id).sort((a, b) => clubStr(b) - clubStr(a)).indexOf(S.clubId) + 1;
+  const share = { 'Stammspieler': 0.85, 'Rotation': 0.55, 'Ergänzungsspieler': 0.25 }[se.role];
+  const pool = [];
+  const games = Math.max(5, Math.round((clubsIn(L.id).length - 1) * 2 * share * 0.9));
+  pool.push({ type: 'games', target: games, text: `Mindestens ${games} Pflichtspiele` });
+  if (grp === 'att' || grp === 'mid') {
+    const g = Math.max(2, Math.round(games * POSITIONS[p.pos].goals * clamp(0.5 + (p.rating - 72) * 0.035, 0.2, 1.6)));
+    pool.push({ type: 'goals', target: g, text: `Mindestens ${g} Tore` });
+  }
+  if (grp === 'mid' || p.pos === 'AV' || p.pos === 'FL') {
+    const a = Math.max(2, Math.round(games * POSITIONS[p.pos].assists * 0.9));
+    pool.push({ type: 'assists', target: a, text: `Mindestens ${a} Vorlagen` });
+  }
+  if (grp === 'gk') pool.push({ type: 'clean', target: Math.max(3, Math.round(games * 0.3)), text: `Mindestens ${Math.max(3, Math.round(games * 0.3))} Spiele zu null` });
+  pool.push({ type: 'note', target: 3.0, text: 'Durchschnittsnote 3,0 oder besser' });
+  pool.push({ type: 'pos', target: Math.max(1, expected - 1), text: expected <= 2 ? 'Meister werden' : `Mit dem Verein mindestens Platz ${Math.max(1, expected - 1)}` });
+  if (se.role !== 'Stammspieler') pool.push({ type: 'starter', target: 1, text: 'Nächste Saison Stammspieler werden (Stärke steigern)' });
+  se.goals = shuffle(pool).slice(0, 2);
+}
+
+function evalSeasonGoals(res) {
+  const se = S.season;
+  if (!se.goals || !se.goals.length) return;
+  const results = se.goals.map(g => {
+    let ok = false;
+    if (g.type === 'games') ok = res.games >= g.target;
+    else if (g.type === 'goals') ok = res.goals >= g.target;
+    else if (g.type === 'assists') ok = res.assists >= g.target;
+    else if (g.type === 'clean') ok = res.cleanSheets >= g.target;
+    else if (g.type === 'note') ok = res.note !== null && res.note <= g.target;
+    else if (g.type === 'pos') ok = res.pos <= g.target;
+    else if (g.type === 'starter') ok = roleFor(S.player.rating, clubStr(S.clubId), S.player.trust) === 'Stammspieler';
+    return { text: g.text, ok };
+  });
+  const done = results.filter(r => r.ok).length;
+  if (done) {
+    S.goalsDone = (S.goalsDone || 0) + done;
+    S.player.popularity = clamp(S.player.popularity + 2 * done, 0, 100);
+    S.player.trust = clamp(S.player.trust + 4 * done, 0, 100);
+    S.money += S.contract.salary * 0.08 * done;
+  }
+  res.goalResults = results;
+}
+
+function renderGoalList(list, results) {
+  if (!list || !list.length) return '';
+  return `<ul class="goals">${list.map((g, i) => {
+    const r = results && results[i];
+    return `<li class="${r ? (r.ok ? 'ok' : 'fail') : ''}">${r ? (r.ok ? '✅' : '❌') : '🎯'} ${esc(g.text)}</li>`;
+  }).join('')}</ul>`;
+}
+
+// ---------- Traumverein ----------
+function dreamOffer(offers, newOffer, p) {
+  const d = S.dreamClub;
+  if (!d || d === S.clubId || offers.some(o => o.club === d)) return;
+  const pChance = sigmoid((p.rating - clubStr(d) + 2) / 2) * (S.agent ? 1.3 : 1) * 0.8;
+  if (chance(pChance)) { const o = newOffer(d); o.dream = true; offers.push(o); }
+}
+function renderDreamClub() {
+  const all = Object.keys(S.clubs).sort((a, b) => a.localeCompare(b, 'de'));
+  const d = S.dreamClub;
+  return `
+  <section class="card">
+    <h2>Traumverein</h2>
+    <p class="muted">${d ? `Dein Traumverein: <b>${esc(d)}</b> (Stärke ${clubStr(d)}). Je näher deine Stärke an der des Vereins ist, desto eher meldet er sich im Transferfenster.` : 'Wähle einen Traumverein. Dein Berater versucht dann jedes Jahr, dich dorthin zu bringen.'}</p>
+    <label>Verein wählen<select id="dream-select"><option value="">– keiner –</option>${all.map(n => `<option${n === d ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <div class="actions">${btn('Speichern', () => { S.dreamClub = document.getElementById('dream-select').value || null; render(true); }, 'small')}</div>
+  </section>`;
+}
+
+// ---------- Nationalmannschaft ----------
+function nationalSeason(res) {
+  const p = S.player, nat = nation();
+  if (S.youth || p.age < 18 || S.fugitive || S.natRetired || p.rating < nat.str - 8 || res.games < 5) return;
+  const games = randInt(4, 8);
+  const goals = Math.round(games * POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4) * rand(0.6, 1.3));
+  p.caps += games; p.intGoals += goals;
+  res.lines.push(`🌍 Nationalmannschaft: ${games} Länderspiele${goals ? `, ${goals} Tore` : ''} (insgesamt ${p.caps} Spiele, ${p.intGoals} Tore).`);
+  if (!S.natCaptain && p.caps >= 40 && p.age >= 26 && p.rating >= nat.str) {
+    S.natCaptain = true;
+    res.lines.push(`⭐ Du wirst Kapitän der Nationalmannschaft von ${nat.name}!`);
+  }
+  if (p.caps >= 120 && !(S.milestones || []).some(m => m.id === 'natRecord')) addMilestone('natRecord', `Rekordnationalspieler von ${nat.name}`, res);
+  if (p.intGoals >= 50 && !(S.milestones || []).some(m => m.id === 'natGoals')) addMilestone('natGoals', `Rekordtorschütze von ${nat.name}`, res);
+}
+
+// ---------- Social Media ----------
+function social() { if (!S.social) S.social = { followers: 500 }; return S.social; }
+function fmtFollowers(n) {
+  if (n >= 1e6) return `${fmt1(n / 1e6)} Mio.`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)} Tsd.`;
+  return String(Math.round(n));
+}
+function addFollowers(f) {
+  const so = social();
+  so.followers = Math.max(50, Math.round(so.followers * f.mul + (f.add || 0)));
+}
+function socialSeason(res) {
+  const so = social(), p = S.player;
+  const before = so.followers;
+  addFollowers({ mul: 1 + (p.popularity - 35) / 150 + res.titles.length * 0.08 + (res.goals >= 20 ? 0.1 : 0), add: Math.exp((p.rating - 60) / 8) * 300 });
+  const diffF = so.followers - before;
+  if (Math.abs(diffF) > 1000) res.lines.push(`📱 Social Media: ${diffF > 0 ? '+' : '−'}${fmtFollowers(Math.abs(diffF))} Follower (jetzt ${fmtFollowers(so.followers)}).`);
+}
+function shitstorm() {
+  addFollowers({ mul: 0.88 });
+  return 'Shitstorm! Tausende wütende Kommentare unter deinem Post.' + mod({ popularity: -8, form: -1 });
+}
+function renderSocial() {
+  const so = social();
+  const dealSum = Math.round(clamp(so.followers / 1e6 * 0.15, 0, 20) * 1000) / 1000;
+  return `
+    <h3>📱 Social Media · ${fmtFollowers(so.followers)} Follower</h3>
+    <div class="lifeacts">
+      ${actBtn('postTraining', 'Trainingsvideo posten', 'Sicher, bringt Follower', () => { addFollowers({ mul: 1.06, add: 300 }); return 'Die Fans lieben deinen Einsatz.' + mod({ popularity: 1 }); })}
+      ${actBtn('postLuxury', 'Luxus-Post', 'Viele Follower, etwas riskant', () => {
+        if (chance(0.25)) return shitstorm();
+        addFollowers({ mul: 1.12, add: 800 }); return 'Dein Post mit Sportwagen und Pool geht viral.' + mod({ popularity: 2 });
+      })}
+      ${actBtn('postProvoke', 'Rivalen provozieren', 'Sehr riskant', () => {
+        if (chance(0.45)) return shitstorm();
+        addFollowers({ mul: 1.2, add: 1500 }); return 'Das Internet feiert deinen frechen Post.' + mod({ popularity: 4, trust: -2 });
+      })}
+      ${so.followers >= 1e5 ? actBtn('influencer', 'Influencer-Deal', `ca. ${money(dealSum)}`, () => 'Du bewirbst Energy-Drinks und Kopfhörer.' + mod({ money: dealSum, popularity: -1 })) : ''}
+    </div>`;
+}
+
+// ---------- Wohnort ----------
+const HOMES = {
+  internat: { name: 'Internat', rent: 0, desc: 'Für Jugendspieler, kostenlos.', youthOnly: true },
+  wg: { name: 'WG mit Teamkollegen', rent: 0.006, desc: 'Günstig, besseres Verhältnis zu Mitspielern.' },
+  flat: { name: 'Stadtwohnung', rent: 0.02, desc: 'Nah am Nachtleben: mehr Beliebtheit, manchmal schlechte Form.', owned: 'home1' },
+  country: { name: 'Haus auf dem Land', rent: 0.05, desc: 'Ruhe: bessere Form, weniger Verletzungen.' },
+  villa: { name: 'Villa am Meer', rent: 0.5, desc: 'Luxus pur: mehr Beliebtheit und Form.', owned: 'home2' },
+};
+const homeOf = () => S.home || (S.youth ? 'internat' : 'flat');
+const homeRent = id => (HOMES[id].owned && ownedCount(HOMES[id].owned)) || (id === 'villa' && ownedCount('home3')) ? 0 : HOMES[id].rent;
+function homeSeason(res) {
+  const id = homeOf(), p = S.player;
+  if (S.youth && id === 'internat') return 0;
+  const rent = homeRent(id);
+  if (id === 'wg' && S.team) S.team.mates.forEach(m => { m.rel = clamp(m.rel + 6, -100, 100); });
+  if (id === 'flat') { p.popularity = clamp(p.popularity + 1, 0, 100); if (chance(0.3)) p.form = clamp(p.form - 1, -10, 10); }
+  if (id === 'country') { p.form = clamp(p.form + 1, -10, 10); p.injuryProne = clamp(p.injuryProne - 1, 0, 40); }
+  if (id === 'villa') { p.popularity = clamp(p.popularity + 2, 0, 100); p.form = clamp(p.form + 1, -10, 10); }
+  return rent;
+}
+function renderHome() {
+  const cur = homeOf();
+  return `
+    <h3>🏠 Wohnort · ${esc(HOMES[cur].name)}</h3>
+    <div class="focus">${Object.entries(HOMES).filter(([, h]) => !h.youthOnly || S.youth).map(([k, h]) => {
+      const rent = homeRent(k);
+      return btn(`${esc(h.name)}<small>${rent ? `${money(rent)}/Jahr` : 'kostenlos'} · ${esc(h.desc)}</small>`, () => { S.home = k; S.lifeMsg = `Du wohnst jetzt: ${h.name}.`; render(true); }, cur === k ? 'chosen-focus' : '');
+    }).join('')}</div>`;
+}
+
+// ---------- Haustiere ----------
+const PET_TYPES = { Hund: ['Bello', 'Rocky', 'Luna', 'Balu', 'Kiki'], Katze: ['Minka', 'Garfield', 'Mia', 'Simba', 'Tiger'], Papagei: ['Coco', 'Rio', 'Pelé', 'Kiwi'] };
+function pets() { if (!S.pets) S.pets = []; return S.pets; }
+function petsSeason(res) {
+  const list = pets();
+  if (!list.length) return 0;
+  S.player.form = clamp(S.player.form + Math.min(2, list.length), -10, 10);
+  const pet = pick(list);
+  res.lines.push(`🐾 ${pet.type === 'Hund' ? 'Dein Hund' : pet.type === 'Katze' ? 'Deine Katze' : 'Dein Papagei'} ${pet.name} wartet nach jedem Spiel an der Tür und muntert dich auf.`);
+  return list.length * 0.003;
+}
+function renderPets() {
+  const list = pets();
+  return `
+    <h3>🐾 Haustiere${list.length ? ` · ${list.map(p => `${esc(p.name)} (${p.type})`).join(', ')}` : ''}</h3>
+    <div class="lifeacts">${list.length < 3 ? Object.keys(PET_TYPES).map(t => actBtn(`pet${t}`, `${t} adoptieren`, 'aus dem Tierheim · 3 Tsd. €/Jahr', () => {
+      const name = pick(PET_TYPES[t].filter(n => !list.some(p => p.name === n)));
+      list.push({ type: t, name });
+      return `Willkommen zu Hause, ${name}! Haustiere bringen jede Saison bessere Form.` + mod({ form: 1, popularity: 1, money: -0.002 });
+    })).join('') : '<p class="muted">Mehr Tiere passen nicht ins Haus.</p>'}</div>`;
+}
+
+// ---------- Reha nach schwerer Verletzung ----------
+const SERIOUS_INJURIES = ['Kreuzbandriss', 'Achillessehnenriss', 'Schienbeinbruch', 'Knorpelschaden im Knie'];
+function maybeSeriousInjury() {
+  if (S.youth) return false;
+  const p = 0.03 * (diff().injury / 8) + S.player.injuryProne / 700;
+  if (!chance(p)) return false;
+  S.current = { type: 'rehab', ctx: {}, injury: pick(SERIOUS_INJURIES), stage: 0, progress: 0, risk: 0, log: [], result: null };
+  return true;
+}
+const REHAB_STAGES = ['Woche 1–6: Operation und erste Reha', 'Woche 7–14: Aufbautraining', 'Woche 15+: Zurück ins Mannschaftstraining'];
+const REHAB_CHOICES = [
+  { label: 'Vorsichtig', sub: 'Langsam, aber sicher', prog: 1, risk: 0 },
+  { label: 'Normal', sub: 'Nach Plan', prog: 2, risk: 0.08 },
+  { label: 'Volle Belastung', sub: 'Schnell zurück, hohes Risiko', prog: 3, risk: 0.2 },
+];
+function rehabStep(ch) {
+  const c = S.current;
+  c.progress += ch.prog; c.risk += ch.risk;
+  c.log.push(`${REHAB_STAGES[c.stage]}: ${ch.label}`);
+  c.stage++;
+  if (c.stage < REHAB_STAGES.length) return;
+  let missed = Math.round(30 - c.progress * 2.6);
+  let text = `Du bist nach ${missed} verpassten Spielen zurück auf dem Platz!`;
+  const eff = { injuredGames: missed, injuryProne: 2 };
+  if (chance(c.risk)) {
+    missed += 10;
+    eff.injuredGames = missed;
+    S.player.rating = clamp(S.player.rating - 3, 35, 99);
+    text = `Rückschlag! Du hast zu früh zu viel gemacht. Insgesamt verpasst du ${missed} Spiele und verlierst an Stärke.`;
+    queueFx('sad');
+  }
+  c.result = `<p>${text}</p>` + mod(eff);
+}
+function renderRehab() {
+  const c = S.current;
+  return `
+  <section class="card">
+    ${stepHeader()}
+    <h2>🚑 ${esc(c.injury)}!</h2>
+    <p>Eine schwere Verletzung. Wie gehst du die Reha an? Je schneller, desto größer das Risiko eines Rückschlags.</p>
+    <div class="rehabbar">${REHAB_STAGES.map((st, i) => `<span class="${i < c.stage ? 'done' : i === c.stage && !c.result ? 'now' : ''}">${i + 1}</span>`).join('')}</div>
+    ${c.log.length ? `<ul class="lines">${c.log.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+    ${c.result ? `<div class="result">${c.result}</div><div class="actions">${continueBtn()}</div>` : `
+      <h3>${esc(REHAB_STAGES[c.stage])}</h3>
+      <div class="choices">${REHAB_CHOICES.map(ch => btn(`${ch.label}<small>${ch.sub}</small>`, () => { rehabStep(ch); render(true); })).join('')}</div>`}
+  </section>`;
+}
+
+// ---------- Gerichtsprozess ----------
+function courtVerdict(lawyer) {
+  const cs = S.court;
+  const cost = { star: 0.15 + Math.max(0, S.money) * 0.03, normal: 0.01, confess: 0.005 }[lawyer];
+  S.money -= cost;
+  let text;
+  const winP = { star: 0.7, normal: 0.35, confess: 0 }[lawyer];
+  if (cs.plaintiff) {
+    if (chance(winP + 0.15)) { const gain = 0.05 + S.player.popularity / 400; text = `Du gewinnst den Prozess und bekommst ${money(gain)} Schadenersatz.` + mod({ money: gain, popularity: 3 }); }
+    else text = 'Das Gericht weist deine Klage ab.' + mod({ popularity: -2 });
+  } else if (lawyer !== 'confess' && chance(winP)) {
+    text = 'Freispruch! Du verlässt das Gericht erhobenen Hauptes.' + mod({ popularity: 2 });
+  } else {
+    const fine = (0.05 + Math.max(0, S.money) * 0.08) * cs.severity * (lawyer === 'confess' ? 0.5 : 1);
+    text = `Schuldig. Du musst ${money(fine)} Strafe zahlen.` + mod({ money: -fine, popularity: lawyer === 'confess' ? -3 : -8, trust: -3 });
+    if (cs.severity >= 2 && lawyer !== 'confess' && chance(0.35)) {
+      S.ban = { type: 'prison', years: 1 };
+      text += '<p>Außerdem verurteilt dich das Gericht zu einem Jahr Gefängnis. Nach der Saison musst du die Strafe antreten.</p>';
+    }
+  }
+  S.court = null;
+  return `<p>Anwaltskosten: ${money(cost)}.</p>` + text;
+}
 
 </script>

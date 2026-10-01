@@ -1,6 +1,5 @@
 'use strict';
 
-const SAVE_KEY = 'fussballkarriere-save-v2';
 const START_YEAR = 2026;
 
 let S = null; // Spielstand
@@ -112,12 +111,11 @@ function switchTarget() {
 }
 
 // ---------- Speichern ----------
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* ignorieren */ } }
-function loadSave() { try { const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
-function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignorieren */ } }
+function save() { writeSlot(S.slot || 1, S); }
+function deleteSave() { clearSlot(S.slot || 1); }
 
 // ---------- Neues Spiel ----------
-function newGame(name, nationName, pos, number, heir = null) {
+function newGame(name, nationName, pos, number, heir = null, difficulty = 'normal') {
   let clubs = {};
   if (heir) clubs = heir.clubs;
   else for (const L of LEAGUES) for (const [n, str] of L.clubs) clubs[n] = { league: L.id, base: str, drift: 0 };
@@ -142,6 +140,12 @@ function newGame(name, nationName, pos, number, heir = null) {
     S.player.popularity = clamp(20 + heir.fame, 0, 100);
     if (heir.talent >= 3) S.player.rating += 2;
   }
+  S.slot = heir ? heir.slot : pendingSlot;
+  S.diff = heir ? heir.diff : difficulty;
+  const d = diff();
+  S.player.rating += d.rating;
+  S.player.potential = clamp(S.player.potential + d.potential, 65, 99);
+  S.player.injuryProne = d.injury;
   S.peak = S.player.rating;
   S.academyOffers = academyOffers();
   initRival();
@@ -161,7 +165,7 @@ function startHeir(child) {
     money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
-    parentState: S,
+    parentState: S, slot: S.slot, diff: S.diff,
     family: {
       parents: [
         { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
@@ -277,6 +281,7 @@ function startSeason() {
   const str = clubStr(S.clubId);
   const role = S.youth ? 'U19' : roleFor(p.rating, str, p.trust);
   S.season = { role, focus: 'balanced', devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
+  genSeasonGoals();
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
@@ -305,6 +310,7 @@ function nextStep() {
 }
 
 function setupEvent() {
+  if (maybeSeriousInjury()) return;
   const pool = EVENTS.filter(e => !S.season.usedEvents.includes(e.id) && (!e.cond || e.cond()));
   const total = pool.reduce((s, e) => s + (e.weight ? e.weight() : 1), 0);
   let r = Math.random() * total, ev = pool[0];
@@ -517,6 +523,7 @@ function resolveMatch(i) {
   S.season.scenes.push(`${c.comp}: ${resultWord} gegen ${c.opp} (${us}:${them})`);
   c.final = c.home ? `${us}:${them}` : `${them}:${us}`;
   c.chosen = i;
+  queueFx(us > c.a ? 'goal' : 'whistle');
   if (c.rivalMatch) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
@@ -633,7 +640,7 @@ function endSeason() {
 
   // Dopingkontrolle
   if (se.doped) {
-    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0);
+    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' ? 0.1 : 0);
     if (chance(caughtP)) {
       const prison = chance(0.35);
       const years = prison ? randInt(1, 3) : (S.dopeCaught ? 4 : 2);
@@ -678,6 +685,7 @@ function endSeason() {
   const a = p.age;
   let g = a <= 19 ? 5 : a <= 22 ? 3.5 : a <= 25 ? 1.5 : a <= 28 ? 0.5 : a <= 30 ? -0.7 : a <= 32 ? -1.8 : a <= 34 ? -3 : -4.5;
   if (g > 0) {
+    g *= diff().growth;
     const play = { 'Stammspieler': 1.25, 'Rotation': 1, 'Ergänzungsspieler': 0.55, 'U19': 1 }[se.role];
     g *= play;
     if (p.rating >= p.potential) g *= 0.15;
@@ -729,7 +737,19 @@ function endSeason() {
   familySeason(res);
   teamSeason(res);
   if (businesses().length) res.finance.business = businessSeason(res);
+  evalSeasonGoals(res);
+  nationalSeason(res);
+  socialSeason(res);
+  const living = homeSeason(res) + petsSeason(res);
+  S.money -= living;
+  if (living) res.finance.living = living;
+  if (S.taxRisk && chance(0.4)) {
+    S.taxRisk = false;
+    S.court = { charge: 'Steuerhinterziehung', severity: 2 };
+    res.lines.push('🚨 Die Steuerfahndung durchsucht dein Haus! Es kommt zum Prozess.');
+  }
   checkMilestones(res);
+  if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
 
   p.age++;
   S.seasonEnd = res;
@@ -818,6 +838,7 @@ function tournament(res) {
   const title = wm ? 'Weltmeister' : CONTINENTAL[nat.conf].title;
   const p = S.player;
   const out = { name, summer, lines: [] };
+  if (S.natRetired) { out.lines.push(`Du bist aus der Nationalmannschaft zurückgetreten und schaust die ${name} vor dem Fernseher.`); out.nominated = false; return out; }
   if (p.age < 18 || S.youth || S.fugitive || p.rating < nat.str - 8 || (res.games < 8 && p.rating < nat.str)) {
     out.lines.push(`Du wirst für die ${name} ${summer} nicht nominiert.`);
     out.nominated = false;
@@ -917,6 +938,7 @@ function openTransfer() {
     const weakest = Object.keys(S.clubs).filter(n => n !== S.clubId).sort((a, b) => clubStr(a) - clubStr(b)).slice(0, 12);
     shuffle(weakest).slice(0, 2).forEach(n => offers.push(newOffer(n)));
   }
+  dreamOffer(offers, newOffer, p);
   offers.sort((a, b) => clubStr(b.club) - clubStr(a.club));
   if (released && !offers.length) {
     retire('Kein Verein will dich mehr verpflichten. Du beendest deine Karriere.');
@@ -944,6 +966,7 @@ function acceptOffer(o) {
     }
     S.clubId = o.club;
     S.player.trust = 45;
+    if (o.club === S.dreamClub) { S.player.popularity = clamp(S.player.popularity + 5, 0, 100); S.player.form = clamp(S.player.form + 3, -10, 10); toast(`⭐ Traum erfüllt: Du spielst für ${o.club}!`); queueFx('fanfare', 'confetti'); }
   } else if (S.offers.extension) {
     S.contract = { ...S.offers.extension };
   }
@@ -1082,7 +1105,7 @@ function render(keepScroll = false) {
   else {
     html = renderPlayerCard();
     if (S.phase === 'preseason' || S.phase === 'transfer') html += renderHub();
-    else if (S.phase === 'season') html += tip(S.current.type) + (S.current.type === 'event' ? renderEvent() : renderMatch());
+    else if (S.phase === 'season') html += tip(S.current.type) + (S.current.type === 'event' ? renderEvent() : S.current.type === 'rehab' ? renderRehab() : renderMatch());
     else if (S.phase === 'seasonEnd') html += tip('seasonEnd') + renderSeasonEnd();
     else if (S.phase === 'banned') html += renderBanned();
     else if (S.phase === 'shootout') html += renderShootout();
@@ -1091,20 +1114,18 @@ function render(keepScroll = false) {
   root.innerHTML = html;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
+  if (S && S.player && S.phase !== 'create') checkAchievements();
+  flushFx();
 }
 
 function renderStart() {
-  const saved = loadSave();
   return `
   <section class="hero">
     <div class="ball">⚽</div>
     <h1>Fußballkarriere</h1>
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
-    <div class="actions">
-      ${saved && saved.phase !== 'retired' ? btn(`Karriere fortsetzen (${esc(saved.player.name)}, ${saved.player.age} J.)`, () => { S = saved; render(); }, 'primary') : ''}
-      ${btn('Neue Karriere starten', () => { S = { phase: 'create' }; render(); }, saved && saved.phase !== 'retired' ? '' : 'primary')}
-    </div>
   </section>
+  ${renderSlots()}
   <section class="card howto">
     <h2>So funktioniert's</h2>
     <ol class="steps">
@@ -1114,7 +1135,8 @@ function renderStart() {
     </ol>
     <div class="actions">${btn('Ausführliche Hilfe', () => { uiHelp = true; render(); })}</div>
   </section>
-  ${renderHallOfFame()}`;
+  ${renderHallOfFame()}
+  ${renderAchievements()}`;
 }
 
 function renderCreate() {
@@ -1129,6 +1151,7 @@ function renderCreate() {
     <label>Nationalität<select id="f-nation">${natOpts}</select></label>
     <label>Position<select id="f-pos">${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
+    ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
     <div class="actions">
       ${btn('Los geht\'s', () => {
@@ -1136,7 +1159,8 @@ function renderCreate() {
         const num = parseInt(document.getElementById('f-num').value, 10);
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
-        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null);
+        const fd = document.getElementById('f-diff');
+        newGame(name, document.getElementById('f-nation').value, document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
         render();
       }, 'primary')}
       ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
@@ -1217,6 +1241,7 @@ function renderPreseason() {
       ${S.youth ? '' : `<li><span>Erwartete Platzierung</span><b>${exp}. Platz</b></li>`}
       <li><span>Wettbewerbe</span><b>${comps.map(esc).join(', ')}</b></li>
     </ul>
+    ${se.goals && se.goals.length ? `<h3>Deine Saisonziele</h3>${renderGoalList(se.goals)}<p class="muted small">Für jedes erreichte Ziel gibt es Beliebtheit, Vertrauen und eine Prämie.</p>` : ''}
     <h3>Trainingsschwerpunkt</h3>
     <div class="focus">${Object.entries(FOCUS).map(([k, f]) => {
       const gk = S.player.pos === 'TW';
@@ -1304,6 +1329,7 @@ function renderSeasonEnd() {
       <div><b>${r.note === null ? '–' : fmt2(r.note)}</b><span>Ø Note</span></div>
       <div><b>${r.ratingAfter}</b><span>Stärke <em class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</em></span></div>
     </div>
+    ${r.goalResults ? `<h3>Saisonziele</h3>${renderGoalList(r.goalResults, r.goalResults)}` : ''}
     <h3>Das Wichtigste</h3>
     <ul class="lines big">${highlights.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${r.milestones && r.milestones.length ? `<ul class="lines big">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
@@ -1328,6 +1354,7 @@ function renderTransfer() {
     const str = clubStr(of.club);
     const role = roleFor(p.rating, str, 45);
     const tags = [];
+    if (of.dream) tags.push(['good', '⭐ Traumverein!']);
     if (of.loan) tags.push(['good', '🔁 Leihe: Spielpraxis sammeln']);
     if (!o.released && rank[role] > rank[curRole]) tags.push(['good', '⏱️ Mehr Spielzeit']);
     if (!o.released && rank[role] < rank[curRole]) tags.push(['bad', '⚠️ Weniger Spielzeit']);
@@ -1373,6 +1400,7 @@ function renderTransfer() {
       <div class="lifeacts">
         ${raise}
         ${agentBtn}
+        ${p.caps > 0 && p.age >= 29 && !S.natRetired ? btn('Rücktritt aus der Nationalmannschaft<small>Mehr Ruhe, keine Länderspiele mehr</small>', () => { S.natRetired = true; S.player.injuryProne = clamp(S.player.injuryProne - 3, 0, 40); o.msgs.push(`Du erklärst nach ${p.caps} Länderspielen deinen Rücktritt aus der Nationalmannschaft. Standing Ovations beim Abschiedsspiel!`); render(); }) : ''}
         ${p.age >= 33 ? btn('Karriere beenden<small>Schuhe an den Nagel hängen</small>', () => { retire('Du hast dich entschieden, deine Karriere zu beenden.'); render(); }, 'danger') : ''}
       </div>
     </details>
@@ -1497,6 +1525,7 @@ function renderFinance(f) {
       ${f.upkeep ? row('Unterhalt für Besitz', -f.upkeep, 'down') : ''}
       ${f.fund ? row('Rendite Fonds', f.fund, f.fund >= 0 ? 'up' : 'down') : ''}
       ${f.business !== undefined ? row('Gewinn deiner Firmen', f.business, f.business >= 0 ? 'up' : 'down') : ''}
+      ${f.living ? row('Miete und Haustiere', -f.living, 'down') : ''}
       <li class="sum"><span>Vermögen jetzt</span><b>${money(S.money)}</b></li>
     </ul>`;
 }
@@ -1663,8 +1692,10 @@ function renderRetired() {
     <p>Vereine: ${S.clubsPlayed.map(esc).join(' → ')}</p>
     <p>Privat: ${esc(lifeText())}</p>
     ${S.dopeCaught ? `<p class="down">Dopingsünder: ${S.dopeCaught}× erwischt.</p>` : ''}
-    <div class="actions">${btn('Neue Karriere starten', () => { deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
+    <div class="actions">${btn('Neue Karriere starten', () => { pendingSlot = S.slot || 1; deleteSave(); S = { phase: 'create' }; render(); }, 'primary')}</div>
   </section>
+  ${renderCareerChart()}
+  ${renderShare()}
   ${renderHistory()}`;
 }
 
@@ -1672,6 +1703,11 @@ function renderRetired() {
 function init() {
   const hb = document.getElementById('help-btn');
   if (hb) hb.addEventListener('click', toggleHelp);
+  const tb = document.getElementById('theme-btn');
+  if (tb) tb.addEventListener('click', toggleTheme);
+  const sb = document.getElementById('sound-btn');
+  if (sb) sb.addEventListener('click', toggleSound);
+  applyTheme();
   app().addEventListener('click', e => {
     const b = e.target.closest('[data-h]');
     if (!b) return;

@@ -36,6 +36,16 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Firmen:** Fußballschule, Restaurant, Modemarke, E-Sport-Team, Fitnessstudios oder ein Hotel – mit Gewinnen, Verlusten und Pleiten.
 - **Nach der Karriere:** Spielbare Trainerkarriere (Taktik, Transferpolitik, Kabinen-Entscheidungen, Entlassungen), einen eigenen Verein als Präsident kaufen, TV-Experte, Sportdirektor oder Ruhestand.
 - **Ruhmeshalle:** Deine besten beendeten Karrieren werden auf dem Startbildschirm gespeichert.
+- **Saisonziele:** Jede Saison zwei Ziele mit Belohnung.
+- **Traumverein:** Dein Berater versucht jedes Jahr, dich dorthin zu bringen.
+- **Nationalmannschaft:** Länderspiele jede Saison, Kapitänsbinde, Rekorde und Rücktritt aus der Nationalelf.
+- **Schwere Verletzungen** mit Reha-Minispiel (vorsichtig, normal oder volle Belastung).
+- **Social Media, Wohnort und Haustiere** im Reiter „Privat“.
+- **Skandale und Gerichtsprozesse:** Steuertricks, Unfälle, falsche Freunde – mit Anwaltswahl.
+- **Erfolge:** 22 freischaltbare Erfolge über alle Karrieren.
+- **3 Spielstände**, **Schwierigkeitsgrad** (Einfach, Normal, Legende) und **Karriere teilen** als Text.
+- **Karriere-Diagramm** mit Stärke und Toren pro Saison.
+- **Sound, Konfetti** bei Toren und Titeln (Ton abschaltbar) und **Hell/Dunkel-Umschalter**.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
 ## Ligen
@@ -55,5 +65,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/coach.js` – Trainerkarriere
 - `js/fame.js` – Meilensteine, Vereinslegenden, Ruhmeshalle, Elfmeterschießen
 - `js/ui.js` – Reiter, Hilfe und Tipps
+- `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
+- `js/career.js` – Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha, Gericht
 - `js/game.js` – Spiellogik und Oberfläche
 - `tools/build_single.py` – baut die Einzeldatei in `dist/`

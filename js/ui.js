@@ -23,10 +23,10 @@ function renderHub() {
   if (S.phase !== uiLastPhase) { uiTab = 'main'; uiLastPhase = S.phase; }
   const tabs = hubTabs().map(([k, icon, label]) => btn(`<span class="ti">${icon}</span>${label}`, () => { uiTab = k; render(true); }, `tab ${uiTab === k ? 'active' : ''}`)).join('');
   let content;
-  if (uiTab === 'life') content = renderLife();
+  if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderHome()}${renderPets()}</section>`;
   else if (uiTab === 'people') content = renderPeople();
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
-  else if (uiTab === 'career') content = renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>';
+  else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -77,6 +77,10 @@ const HELP = [
   ['💰 Geld', 'Du verdienst Gehalt, Prämien und Werbegeld. Im Reiter „Geld“ kaufst du Autos, Häuser oder gründest Firmen.'],
   ['❤️ Privatleben', 'Im Reiter „Privat“ findest du Partner, machst Dates, heiratest und bekommst Kinder. Ohne Pflege kühlt die Beziehung ab.'],
   ['⚠️ Risiken', 'Partys, Casino und vor allem Doping können deine Karriere zerstören. Doping bringt sofort Stärke, aber wer erwischt wird, wird gesperrt oder muss ins Gefängnis.'],
+  ['🎯 Saisonziele', 'Vor jeder Saison bekommst du zwei Ziele. Erreichst du sie, gibt es Beliebtheit, Vertrauen und eine Geldprämie.'],
+  ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
+  ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
+  ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
   ['🏁 Karriereende', 'Ab 33 kannst du aufhören, mit 41 ist Schluss. Danach wirst du Trainer, kaufst einen Verein oder spielst als dein Kind weiter.'],
 ];
 function renderHelp() {
