@@ -1160,7 +1160,11 @@ function render(keepScroll = false) {
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
   if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); }
-  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) { S.seasonEnd.animated = true; animateRecap(); }
+  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) {
+    S.seasonEnd.animated = true;
+    animateRecap();
+    if (!prefs().noRecap) openRecap();
+  }
   flushFx();
 }
 
@@ -1396,6 +1400,8 @@ function renderSeasonEnd() {
       ${table}
       ${renderFinance(r.finance)}
     </details>
+    <div class="actions">${btn('▶ Rückblick ansehen', () => openRecap())}
+      ${btn(prefs().noRecap ? 'Rückblick automatisch zeigen' : 'Rückblick nicht automatisch zeigen', () => { setPref('noRecap', !prefs().noRecap); render(true); }, 'small link')}</div>
     <div class="actions">${btn('Weiter zum Transferfenster', () => { openTransfer(); render(); }, 'primary')}</div>
   </section>`;
 }

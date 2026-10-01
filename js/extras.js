@@ -399,3 +399,133 @@ function renderRecords() {
     </details>
   </section>`;
 }
+
+// ---------- Saison-Rückblick im Video-Stil ----------
+const RECAP_MS = 3400;
+let recap = null;
+
+function recapSlides() {
+  const r = S.seasonEnd;
+  const gk = S.player.pos === 'TW';
+  const diff = r.ratingAfter - r.ratingBefore;
+  const slides = [];
+  slides.push({
+    cls: 'intro',
+    html: `<div class="rc-kicker">Saison-Rückblick</div><div class="rc-big">${seasonLabel(r.year)}</div>
+      <div class="rc-club">${crest(r.club)}<span>${esc(r.club)}</span></div><div class="rc-sub">${esc(r.league)} · ${esc(r.role)}</div>`,
+  });
+  slides.push({
+    cls: 'stats',
+    html: `<div class="rc-kicker">Deine Zahlen</div>
+      <div class="rc-stats">
+        <div><b data-rc="${r.games}">0</b><span>Spiele</span></div>
+        <div><b data-rc="${r.goals}">0</b><span>Tore</span></div>
+        <div><b data-rc="${gk ? r.cleanSheets : r.assists}">0</b><span>${gk ? 'Zu null' : 'Vorlagen'}</span></div>
+      </div>
+      ${r.note !== null ? `<div class="rc-sub">Durchschnittsnote ${fmt2(r.note)}</div>` : ''}`,
+  });
+  const moments = [...(r.scenes || []), ...(r.milestones || []).map(m => `🎖️ ${m}`)].slice(0, 4);
+  if (moments.length) {
+    slides.push({
+      cls: 'moments',
+      html: `<div class="rc-kicker">Deine Momente</div><ul class="rc-list">${moments.map(m => `<li>${esc(m)}</li>`).join('')}</ul>`,
+    });
+  }
+  if (r.role !== 'U19') {
+    const drama = S.season && S.season.drama && S.season.drama.won !== undefined
+      ? `<div class="rc-sub">${S.season.drama.won ? '🔥 Am letzten Spieltag hast du alles entschieden!' : '💔 Der letzte Spieltag ging leider schief.'}</div>` : '';
+    slides.push({
+      cls: 'table',
+      html: `<div class="rc-kicker">${esc(r.league)}</div><div class="rc-big">Platz ${r.pos}</div><div class="rc-sub">von ${r.teams} Mannschaften</div>${drama}`,
+    });
+  }
+  const trophies = [...r.titles.map(t => `🏆 ${t}`), ...r.awards.map(a => `⭐ ${a}`)];
+  slides.push(trophies.length
+    ? { cls: 'trophy', fx: ['fanfare', 'confetti'], html: `<div class="rc-kicker">Titel & Auszeichnungen</div><ul class="rc-list big">${trophies.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` }
+    : { cls: 'trophy', html: `<div class="rc-kicker">Titel</div><div class="rc-big small">Diesmal kein Pokal</div><div class="rc-sub">Nächste Saison greifst du wieder an!</div>` });
+  if (S.headline) {
+    slides.push({ cls: 'news', html: `<div class="newspaper rc-paper"><div class="paper">SPORT-EXPRESS · ${seasonLabel(r.year)}</div><div class="headline">${esc(S.headline)}</div></div>` });
+  }
+  slides.push({
+    cls: 'outro',
+    html: `<div class="rc-kicker">Deine Stärke</div>
+      <div class="rc-rating"><span>${r.ratingBefore}</span><i>→</i><b>${r.ratingAfter}</b></div>
+      <div class="rc-sub ${diff >= 0 ? 'up' : 'down'}">${diff > 0 ? `+${diff} – du wirst immer besser!` : diff < 0 ? `${diff} – du musst wieder angreifen.` : 'Gleich geblieben.'}</div>`,
+  });
+  return slides;
+}
+
+function openRecap() {
+  closeRecap();
+  const slides = recapSlides();
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el = document.createElement('div');
+  el.className = 'recap-overlay';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Saison-Rückblick');
+  el.innerHTML = `
+    <div class="rc-bars">${slides.map(() => '<span><i></i></span>').join('')}</div>
+    <button class="rc-close" type="button" aria-label="Rückblick schließen">✕</button>
+    <div class="rc-stage"></div>
+    <div class="rc-nav"><button class="rc-prev" type="button" aria-label="Zurück">‹</button><button class="rc-pause" type="button">${reduced ? '▶' : '❚❚'}</button><button class="rc-next" type="button" aria-label="Weiter">›</button></div>`;
+  document.body.appendChild(el);
+  recap = { el, slides, i: -1, timer: null, paused: reduced };
+  el.querySelector('.rc-close').addEventListener('click', closeRecap);
+  el.querySelector('.rc-next').addEventListener('click', () => showSlide(recap.i + 1));
+  el.querySelector('.rc-prev').addEventListener('click', () => showSlide(Math.max(0, recap.i - 1)));
+  el.querySelector('.rc-pause').addEventListener('click', togglePause);
+  el.querySelector('.rc-stage').addEventListener('click', e => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    showSlide(e.clientX < rect.left + rect.width / 3 ? Math.max(0, recap.i - 1) : recap.i + 1);
+  });
+  document.addEventListener('keydown', recapKeys);
+  showSlide(0);
+}
+
+function recapKeys(e) {
+  if (!recap) return;
+  if (e.key === 'Escape') closeRecap();
+  else if (e.key === 'ArrowRight') showSlide(recap.i + 1);
+  else if (e.key === 'ArrowLeft') showSlide(Math.max(0, recap.i - 1));
+}
+
+function showSlide(i) {
+  if (!recap) return;
+  if (i >= recap.slides.length) { closeRecap(); return; }
+  clearTimeout(recap.timer);
+  recap.i = i;
+  const s = recap.slides[i];
+  const stage = recap.el.querySelector('.rc-stage');
+  stage.innerHTML = `<div class="rc-slide rcs-${s.cls}">${s.html}</div>`;
+  recap.el.querySelectorAll('.rc-bars span').forEach((b, k) => {
+    b.className = k < i ? 'done' : k === i ? (recap.paused ? 'now paused' : 'now') : '';
+    b.style.setProperty('--dur', `${RECAP_MS}ms`);
+  });
+  stage.querySelectorAll('[data-rc]').forEach(n => {
+    const target = parseInt(n.dataset.rc, 10);
+    if (recap.paused) { n.textContent = target; return; }
+    const start = performance.now();
+    (function step(t) {
+      const k = Math.min(1, (t - start) / 1200);
+      n.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1 && recap) requestAnimationFrame(step);
+    })(start);
+  });
+  if (s.fx) { queueFx(...s.fx); flushFx(); } else playSound(i === 0 ? 'whistle' : 'chime');
+  if (!recap.paused) recap.timer = setTimeout(() => showSlide(i + 1), RECAP_MS);
+}
+
+function togglePause() {
+  if (!recap) return;
+  recap.paused = !recap.paused;
+  recap.el.querySelector('.rc-pause').textContent = recap.paused ? '▶' : '❚❚';
+  showSlide(recap.i);
+}
+
+function closeRecap() {
+  if (!recap) return;
+  clearTimeout(recap.timer);
+  recap.el.remove();
+  document.removeEventListener('keydown', recapKeys);
+  recap = null;
+}

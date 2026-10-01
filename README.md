@@ -52,7 +52,7 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Torjubel** wählen, der bei vielen Toren Kult wird.
 - **Bester Freund aus der Kindheit** – hält dich auf dem Boden oder bringt dich in Schwierigkeiten.
 - **Tagesherausforderung** mit festem Startspieler und Ziel.
-- **Schlagzeilen** im Boulevard-Stil, **animierter Saison-Rückblick** und **Schnellmodus** (ganze Saison automatisch).
+- **Schlagzeilen** im Boulevard-Stil, **Saison-Rückblick im Video-Stil** (bildschirmfüllende Folien wie Storys, mit Sound und Konfetti) und **Schnellmodus** (ganze Saison automatisch).
 - **Rekorde** über alle Karrieren auf dem Startbildschirm.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
