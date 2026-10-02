@@ -13,6 +13,7 @@ function hubTabs() {
     ['people', '👪', 'Familie'],
     ['money', '💰', 'Geld'],
     ['career', '📋', 'Karriere'],
+    ['mail', '📬', unreadMail() ? `Post (${unreadMail()})` : 'Post'],
   ];
 }
 
@@ -26,7 +27,8 @@ function renderHub() {
   if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderCelebration()}${renderHome()}${renderPets()}</section>`;
   else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
-  else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
+  else if (uiTab === 'mail') content = renderInbox();
+  else if (uiTab === 'career') content = renderPerks() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -81,6 +83,9 @@ const HELP = [
   ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
   ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
   ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
+  ['⭐ Spezialfähigkeiten', 'Gelingen dir bestimmte Aktionen oft (Freistöße, Kopfbälle, Elfmeter …), schaltest du eine Spezialfähigkeit frei. Sie macht diese Aktionen leichter. Übersicht im Reiter „Karriere“.'],
+  ['🔥 Derbys', 'Gegen den Erzrivalen deines Vereins steht mehr auf dem Spiel: Ein Sieg bringt viel Beliebtheit, eine Niederlage tut weh.'],
+  ['📬 Post', 'Nach jeder Saison bekommst du Briefe von Fans, Familie, Berater oder Rivale. Auf viele kannst du antworten.'],
   ['🚀 Startszenarien', 'Beim Erstellen wählst du, wie deine Karriere beginnt: Akademie-Talent, Straßenfußballer, Spätstarter, Kind einer Legende oder Wunderkind.'],
   ['🎲 Zufallskarriere & Herausforderungen', 'Auf dem Startbildschirm startest du eine komplett zufällige Karriere oder fertige Herausforderungen wie „Werde mit dem HSV Meister“.'],
   ['📈 Saisonverlauf', 'Jede Saison kann ruhig, ein Höhenflug, eine Krise oder chaotisch verlaufen. Ab der Winterpause siehst du, wie es läuft.'],

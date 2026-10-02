@@ -40,7 +40,7 @@ function checkMilestones(res) {
   const t = totals();
   for (const m of MILESTONES) if (m.test(t)) addMilestone(m.id, m.text, res);
   if (res.goals >= 30) addMilestone('season30', `${res.goals} Tore in einer Saison`, res);
-  if (res.goals >= 45) addMilestone('season45', 'Über 45 Saisontore – Weltrekord-Verdächtig', res);
+  if (res.goals >= 45) addMilestone('season45', 'Über 45 Saisontore – weltrekordverdächtig', res);
   if (res.goals > 0 && res.age <= 18) addMilestone('young', `Profitor mit nur ${res.age} Jahren`, res);
   // Vereinslegende
   for (const l of legends()) addMilestone(`legend_${l.club}`, `Vereinslegende bei ${l.club}`, res);

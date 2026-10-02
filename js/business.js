@@ -102,7 +102,7 @@ function ownerSeason() {
   const value = clubPrice(club);
   const investAmt = Math.min(Math.max(0, S.money), { none: 0, small: value * 0.1, big: value * 0.3 }[o.invest]);
   S.money -= investAmt;
-  S.clubs[club].base = Math.max(S.clubs[club].base, Math.min(92, S.clubs[club].base + (investAmt / Math.max(1, value)) * 12));
+  S.clubs[club].base = Math.max(S.clubs[club].base, Math.min(88, S.clubs[club].base + (investAmt / Math.max(1, value)) * 7));
   const ticketF = { cheap: 0.7, normal: 1, high: 1.35 }[o.tickets];
   const fanBonus = o.tickets === 'cheap' ? 0.05 : o.tickets === 'high' ? -0.04 : 0;
   const europe = europeFor(club);

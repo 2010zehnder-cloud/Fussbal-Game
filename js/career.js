@@ -82,8 +82,10 @@ function renderDreamClub() {
 // ---------- Nationalmannschaft ----------
 function nationalSeason(res) {
   const p = S.player, nat = nation();
-  if (S.youth || p.age < 18 || S.fugitive || S.natRetired || p.rating < nat.str - 8 || res.games < 5) return;
-  const games = randInt(4, 8);
+  if (S.youth || p.age < 18 || S.fugitive || S.natRetired || p.rating < nat.str - 6 || res.games < 10) return;
+  // Stammspieler der Nationalelf spielen fast alles, Ergänzungsspieler nur ab und zu
+  const games = p.rating >= nat.str ? randInt(5, 8) : p.rating >= nat.str - 3 ? randInt(2, 5) : randInt(0, 2);
+  if (!games) return;
   const goals = Math.round(games * POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4) * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   res.lines.push(`🌍 Nationalmannschaft: ${games} Länderspiele${goals ? `, ${goals} Tore` : ''} (insgesamt ${p.caps} Spiele, ${p.intGoals} Tore).`);

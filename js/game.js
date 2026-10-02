@@ -497,7 +497,9 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  maybeDerby(S.current, L);
   flavorMatch(S.current, L);
+  applyPerks(S.current);
 }
 
 function quality() {
@@ -510,12 +512,12 @@ function resolveMatch(i) {
   let us = c.a, them = c.b, text, eff;
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
-    const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
+    const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12 + (o.perk ? 0.15 : 0));
     if (scored) { us++; text = `${goalCry()} ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
     else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
-    const saved = shot === o.dir ? chance(0.55 + quality() * 0.3) : chance(0.04 + quality() * 0.06);
+    const saved = shot === o.dir ? chance(0.55 + quality() * 0.3 + (o.perk ? 0.1 : 0)) : chance(0.04 + quality() * 0.06 + (o.perk ? 0.05 : 0));
     if (saved) {
       text = shot === o.dir
         ? `Gehalten! Du ahnst die Ecke und parierst. Ihr bringt das ${us}:${them} über die Zeit.`
@@ -570,6 +572,8 @@ function resolveMatch(i) {
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
   }
   text += afterMatch(c, us, them, o);
+  const success = ['goal', 'assist', 'shoot'].includes(o.kind) ? us > c.a : ['stop', 'save', 'safe'].includes(o.kind) ? them === c.b : false;
+  text += derbyResult(c, us, them) + countPerk(o, success);
   c.result = `<p>${text}</p>` + mod(eff);
 }
 
@@ -798,6 +802,7 @@ function endSeason() {
   themeSeasonEnd(res);
   worldSeasonEvents(res);
   checkMilestones(res);
+  mailSeason(res);
   S.headline = seasonHeadline(res);
   updateRecords(res);
   if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
@@ -955,7 +960,7 @@ function openTransfer() {
   const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi
     && (!S.fugitive || clubLeague(n).country !== nation().country))
     .sort((a, b) => clubStr(b) - clubStr(a));
-  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) - (p.age >= 33 ? 1 : 0);
+  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) + (S.agentPush || 0) - (p.age >= 33 ? 1 : 0);
   if (released) k = Math.max(k, 2);
   const chosen = [];
   const top = cands.slice(0, Math.max(6, Math.ceil(cands.length / 3)));
@@ -989,6 +994,7 @@ function openTransfer() {
     const weakest = Object.keys(S.clubs).filter(n => n !== S.clubId).sort((a, b) => clubStr(a) - clubStr(b)).slice(0, 12);
     shuffle(weakest).slice(0, 2).forEach(n => offers.push(newOffer(n)));
   }
+  S.agentPush = 0;
   dreamOffer(offers, newOffer, p);
   if (hasFlag('superOffer')) superOffer(offers, newOffer);
   offers.sort((a, b) => clubStr(b.club) - clubStr(a.club));
@@ -1369,7 +1375,7 @@ function renderMatch() {
   const c = S.current;
   const homeName = c.home ? S.clubId : c.opp, awayName = c.home ? c.opp : S.clubId;
   const score = c.final || (c.home ? `${c.a}:${c.b}` : `${c.b}:${c.a}`);
-  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}`, () => {
+  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}${o.perk ? `<small>⭐ ${esc(o.perk)}</small>` : ''}`, () => {
     resolveMatch(i);
     render();
   })).join('');
@@ -1764,6 +1770,7 @@ function renderRetired() {
   </section>
   ${renderAfterCareer()}
   ${renderLegends()}
+  ${renderDiary()}
   ${S.after && !S.ownerDone ? renderClubPurchase() : ''}
   ${renderCoachHistory()}
   ${renderDynasty()}

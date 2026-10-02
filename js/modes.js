@@ -23,7 +23,7 @@ function applyOrigin(origin) {
     p.rating += 2; p.popularity = clamp(p.popularity + 25, 0, 100); p.trust -= 8;
     S.legacyParent = `${pick(['Michael', 'Thomas', 'Lothar', 'Jürgen', 'Oliver', 'Miroslav'])} ${S.player.name.trim().split(/\s+/).slice(-1)[0]}`;
   } else if (origin === 'wonderkid') {
-    p.rating += 5; p.potential = clamp(p.potential + 3, 80, 99); p.popularity += 15; p.injuryProne += 4;
+    p.rating += 4; p.potential = clamp(p.potential + 1, 78, 97); p.popularity += 15; p.injuryProne += 5;
     S.academyOffers = Object.keys(S.clubs).sort((a, b) => clubStr(b) - clubStr(a)).slice(0, 8).sort(() => Math.random() - 0.5).slice(0, 3);
   } else if (origin === 'late') {
     p.age = 20; p.rating = randInt(57, 61); p.potential = clamp(p.potential - 4, 72, 90);

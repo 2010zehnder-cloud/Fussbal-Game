@@ -436,6 +436,21 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .flow span { color: var(--muted); font-size: 14px; }
 .oppstyle { font-size: 12px; color: var(--board-text); opacity: .8; margin-top: 2px; }
 
+/* Spezialfähigkeiten, Posteingang, Tagebuch */
+.tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.btn.tab { font-size: 11px; padding: 8px 1px; }
+.perks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.perk { background: var(--card2); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; opacity: .75; }
+.perk.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
+.perk small { color: var(--muted); }
+.perk .bar { grid-template-columns: 70px 1fr; font-size: 11px; }
+.mails { display: grid; gap: 10px; }
+.mail { background: var(--card2); border-radius: 12px; padding: 10px 12px; }
+.mail header { display: flex; justify-content: space-between; gap: 8px; }
+.mail header small { color: var(--muted); }
+.mail p { margin: 6px 0; }
+.diary p { max-width: 65ch; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button">? Hilfe</button></span></header>
 <main id="app"></main>
@@ -1243,7 +1258,9 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  maybeDerby(S.current, L);
   flavorMatch(S.current, L);
+  applyPerks(S.current);
 }
 
 function quality() {
@@ -1256,12 +1273,12 @@ function resolveMatch(i) {
   let us = c.a, them = c.b, text, eff;
   if (o.kind === 'shoot') {
     const keeper = randInt(0, 2);
-    const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12);
+    const scored = keeper !== o.dir ? chance(0.9 + quality() * 0.08) : chance(0.12 + quality() * 0.12 + (o.perk ? 0.15 : 0));
     if (scored) { us++; text = `${goalCry()} ${keeper === 1 ? 'Der Torwart bleibt in der Mitte stehen' : `Der Torwart springt nach ${keeper === 0 ? 'links' : 'rechts'}`} – du verwandelst eiskalt ${['links unten', 'in die Mitte', 'rechts oben'][o.dir]}.${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: 4, goals: 1 }; }
     else { text = `${keeper === o.dir ? 'Der Torwart ahnt die Ecke und hält!' : 'Du schießt am Tor vorbei!'} Endstand ${us}:${them}.`; eff = { form: -2, trust: -2, popularity: -2 }; }
   } else if (o.kind === 'save') {
     const shot = randInt(0, 2);
-    const saved = shot === o.dir ? chance(0.55 + quality() * 0.3) : chance(0.04 + quality() * 0.06);
+    const saved = shot === o.dir ? chance(0.55 + quality() * 0.3 + (o.perk ? 0.1 : 0)) : chance(0.04 + quality() * 0.06 + (o.perk ? 0.05 : 0));
     if (saved) {
       text = shot === o.dir
         ? `Gehalten! Du ahnst die Ecke und parierst. Ihr bringt das ${us}:${them} über die Zeit.`
@@ -1316,6 +1333,8 @@ function resolveMatch(i) {
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
   }
   text += afterMatch(c, us, them, o);
+  const success = ['goal', 'assist', 'shoot'].includes(o.kind) ? us > c.a : ['stop', 'save', 'safe'].includes(o.kind) ? them === c.b : false;
+  text += derbyResult(c, us, them) + countPerk(o, success);
   c.result = `<p>${text}</p>` + mod(eff);
 }
 
@@ -1544,6 +1563,7 @@ function endSeason() {
   themeSeasonEnd(res);
   worldSeasonEvents(res);
   checkMilestones(res);
+  mailSeason(res);
   S.headline = seasonHeadline(res);
   updateRecords(res);
   if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
@@ -1701,7 +1721,7 @@ function openTransfer() {
   const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi
     && (!S.fugitive || clubLeague(n).country !== nation().country))
     .sort((a, b) => clubStr(b) - clubStr(a));
-  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) - (p.age >= 33 ? 1 : 0);
+  let k = randInt(1, 3) + (perf > 0.5 ? 1 : 0) + (S.season.transferBoost || 0) + (S.agent ? 1 : 0) + (S.agentPush || 0) - (p.age >= 33 ? 1 : 0);
   if (released) k = Math.max(k, 2);
   const chosen = [];
   const top = cands.slice(0, Math.max(6, Math.ceil(cands.length / 3)));
@@ -1735,6 +1755,7 @@ function openTransfer() {
     const weakest = Object.keys(S.clubs).filter(n => n !== S.clubId).sort((a, b) => clubStr(a) - clubStr(b)).slice(0, 12);
     shuffle(weakest).slice(0, 2).forEach(n => offers.push(newOffer(n)));
   }
+  S.agentPush = 0;
   dreamOffer(offers, newOffer, p);
   if (hasFlag('superOffer')) superOffer(offers, newOffer);
   offers.sort((a, b) => clubStr(b.club) - clubStr(a.club));
@@ -2115,7 +2136,7 @@ function renderMatch() {
   const c = S.current;
   const homeName = c.home ? S.clubId : c.opp, awayName = c.home ? c.opp : S.clubId;
   const score = c.final || (c.home ? `${c.a}:${c.b}` : `${c.b}:${c.a}`);
-  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}`, () => {
+  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}${o.perk ? `<small>⭐ ${esc(o.perk)}</small>` : ''}`, () => {
     resolveMatch(i);
     render();
   })).join('');
@@ -2510,6 +2531,7 @@ function renderRetired() {
   </section>
   ${renderAfterCareer()}
   ${renderLegends()}
+  ${renderDiary()}
   ${S.after && !S.ownerDone ? renderClubPurchase() : ''}
   ${renderCoachHistory()}
   ${renderDynasty()}
@@ -3545,7 +3567,7 @@ function ownerSeason() {
   const value = clubPrice(club);
   const investAmt = Math.min(Math.max(0, S.money), { none: 0, small: value * 0.1, big: value * 0.3 }[o.invest]);
   S.money -= investAmt;
-  S.clubs[club].base = Math.max(S.clubs[club].base, Math.min(92, S.clubs[club].base + (investAmt / Math.max(1, value)) * 12));
+  S.clubs[club].base = Math.max(S.clubs[club].base, Math.min(88, S.clubs[club].base + (investAmt / Math.max(1, value)) * 7));
   const ticketF = { cheap: 0.7, normal: 1, high: 1.35 }[o.tickets];
   const fanBonus = o.tickets === 'cheap' ? 0.05 : o.tickets === 'high' ? -0.04 : 0;
   const europe = europeFor(club);
@@ -3891,7 +3913,7 @@ function checkMilestones(res) {
   const t = totals();
   for (const m of MILESTONES) if (m.test(t)) addMilestone(m.id, m.text, res);
   if (res.goals >= 30) addMilestone('season30', `${res.goals} Tore in einer Saison`, res);
-  if (res.goals >= 45) addMilestone('season45', 'Über 45 Saisontore – Weltrekord-Verdächtig', res);
+  if (res.goals >= 45) addMilestone('season45', 'Über 45 Saisontore – weltrekordverdächtig', res);
   if (res.goals > 0 && res.age <= 18) addMilestone('young', `Profitor mit nur ${res.age} Jahren`, res);
   // Vereinslegende
   for (const l of legends()) addMilestone(`legend_${l.club}`, `Vereinslegende bei ${l.club}`, res);
@@ -4055,6 +4077,7 @@ function hubTabs() {
     ['people', '👪', 'Familie'],
     ['money', '💰', 'Geld'],
     ['career', '📋', 'Karriere'],
+    ['mail', '📬', unreadMail() ? `Post (${unreadMail()})` : 'Post'],
   ];
 }
 
@@ -4068,7 +4091,8 @@ function renderHub() {
   if (uiTab === 'life') content = renderLife() + `<section class="card">${renderSocial()}${renderCelebration()}${renderHome()}${renderPets()}</section>`;
   else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
-  else if (uiTab === 'career') content = (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
+  else if (uiTab === 'mail') content = renderInbox();
+  else if (uiTab === 'career') content = renderPerks() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -4123,6 +4147,9 @@ const HELP = [
   ['⭐ Traumverein', 'Im Reiter „Karriere“ wählst du deinen Traumverein. Je näher deine Stärke an seiner liegt, desto eher kommt ein Angebot.'],
   ['📱 Social Media', 'Im Reiter „Privat“ postest du Videos und sammelst Follower. Provokante Posts bringen viele Follower – oder einen Shitstorm.'],
   ['🏅 Erfolge', 'Erfolge wie „Weltmeister“ oder „Milliardär“ bleiben über alle Karrieren gespeichert. Du siehst sie auf dem Startbildschirm.'],
+  ['⭐ Spezialfähigkeiten', 'Gelingen dir bestimmte Aktionen oft (Freistöße, Kopfbälle, Elfmeter …), schaltest du eine Spezialfähigkeit frei. Sie macht diese Aktionen leichter. Übersicht im Reiter „Karriere“.'],
+  ['🔥 Derbys', 'Gegen den Erzrivalen deines Vereins steht mehr auf dem Spiel: Ein Sieg bringt viel Beliebtheit, eine Niederlage tut weh.'],
+  ['📬 Post', 'Nach jeder Saison bekommst du Briefe von Fans, Familie, Berater oder Rivale. Auf viele kannst du antworten.'],
   ['🚀 Startszenarien', 'Beim Erstellen wählst du, wie deine Karriere beginnt: Akademie-Talent, Straßenfußballer, Spätstarter, Kind einer Legende oder Wunderkind.'],
   ['🎲 Zufallskarriere & Herausforderungen', 'Auf dem Startbildschirm startest du eine komplett zufällige Karriere oder fertige Herausforderungen wie „Werde mit dem HSV Meister“.'],
   ['📈 Saisonverlauf', 'Jede Saison kann ruhig, ein Höhenflug, eine Krise oder chaotisch verlaufen. Ab der Winterpause siehst du, wie es läuft.'],
@@ -4507,8 +4534,10 @@ function renderDreamClub() {
 // ---------- Nationalmannschaft ----------
 function nationalSeason(res) {
   const p = S.player, nat = nation();
-  if (S.youth || p.age < 18 || S.fugitive || S.natRetired || p.rating < nat.str - 8 || res.games < 5) return;
-  const games = randInt(4, 8);
+  if (S.youth || p.age < 18 || S.fugitive || S.natRetired || p.rating < nat.str - 6 || res.games < 10) return;
+  // Stammspieler der Nationalelf spielen fast alles, Ergänzungsspieler nur ab und zu
+  const games = p.rating >= nat.str ? randInt(5, 8) : p.rating >= nat.str - 3 ? randInt(2, 5) : randInt(0, 2);
+  if (!games) return;
   const goals = Math.round(games * POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4) * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   res.lines.push(`🌍 Nationalmannschaft: ${games} Länderspiele${goals ? `, ${goals} Tore` : ''} (insgesamt ${p.caps} Spiele, ${p.intGoals} Tore).`);
@@ -4729,6 +4758,7 @@ function nextFinalScene() {
   simChunk(f, from, FINAL_MINUTES[f.scene]);
   const sc = pick(SCENES[POSITIONS[S.player.pos].group])(quality());
   f.current = { situation: sc.situation, options: sc.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p - 0.05, 0.05, 0.9) : undefined })), result: null };
+  applyPerks(f.current);
 }
 
 // Tore und Vorlagen im Finale zählen nachträglich zur Saison bzw. zur Nationalmannschaft
@@ -4742,18 +4772,18 @@ function finalStat(f, key) {
 function playFinalOption(i) {
   const f = S.finals[0], c = f.current, o = c.options[i];
   const q = quality();
-  let text;
+  let text, ok;
   const minute = FINAL_MINUTES[f.scene];
   if (o.kind === 'shoot') {
-    const ok = chance(0.75 + q * 0.1);
-    if (ok) { f.us++; text = `TOOOR! Du verwandelst den Elfmeter ${o.label.toLowerCase()}!${celebrationText()}`; finalStat(f, 'goals'); queueFx('goal'); }
+    ok = chance(0.75 + q * 0.1 + (o.perk ? PERK_BONUS : 0));
+    if (ok) { f.us++; text = `${goalCry()} Du verwandelst den Elfmeter ${o.label.toLowerCase()}!${celebrationText()}`; finalStat(f, 'goals'); queueFx('goal'); }
     else text = 'Der Torwart hält deinen Elfmeter!';
   } else if (o.kind === 'save') {
-    const ok = chance(0.3 + q * 0.15);
+    ok = chance(0.3 + q * 0.15 + (o.perk ? PERK_BONUS : 0));
     if (ok) text = 'GEHALTEN! Du ahnst die Ecke!';
     else { f.them++; text = 'Der Elfmeter ist drin.'; }
   } else {
-    const ok = chance(o.p);
+    ok = chance(o.p);
     if (o.kind === 'goal') {
       if (ok) { f.us++; finalStat(f, 'goals'); text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${celebrationText()}`; queueFx('goal'); }
       else text = pickText(o.failText) || 'Knapp vorbei!';
@@ -4763,11 +4793,13 @@ function playFinalOption(i) {
     } else if (o.kind === 'foul') {
       text = ok ? 'Gelbe Karte, aber der Konter ist gestoppt.' : 'Rote Karte! Ihr müsst in Unterzahl weiterspielen.';
       if (!ok) f.ownStr -= 4;
+      ok = false;
     } else {
       if (ok) text = pickText(o.okText) || 'Gefahr gebannt!';
       else { f.them++; text = pickText(o.failText) || 'Gegentor.'; }
     }
   }
+  text += countPerk(o, ok);
   f.log.push(`${minute}'. ${o.label}: ${text.replace(/<[^>]+>/g, '')} (${f.us}:${f.them})`);
   c.result = text;
 }
@@ -5698,7 +5730,7 @@ function applyOrigin(origin) {
     p.rating += 2; p.popularity = clamp(p.popularity + 25, 0, 100); p.trust -= 8;
     S.legacyParent = `${pick(['Michael', 'Thomas', 'Lothar', 'Jürgen', 'Oliver', 'Miroslav'])} ${S.player.name.trim().split(/\s+/).slice(-1)[0]}`;
   } else if (origin === 'wonderkid') {
-    p.rating += 5; p.potential = clamp(p.potential + 3, 80, 99); p.popularity += 15; p.injuryProne += 4;
+    p.rating += 4; p.potential = clamp(p.potential + 1, 78, 97); p.popularity += 15; p.injuryProne += 5;
     S.academyOffers = Object.keys(S.clubs).sort((a, b) => clubStr(b) - clubStr(a)).slice(0, 8).sort(() => Math.random() - 0.5).slice(0, 3);
   } else if (origin === 'late') {
     p.age = 20; p.rating = randInt(57, 61); p.potential = clamp(p.potential - 4, 72, 90);
@@ -6043,6 +6075,246 @@ function startRandomCareer() {
   newGame(`${pick(FIRST_NAMES)} ${pick(SURNAMES)}`, nat, pick(Object.keys(POSITIONS)), randInt(1, 99), null, 'normal');
   applyOrigin(pick(Object.keys(ORIGINS)));
   return true;
+}
+
+'use strict';
+
+// Spezialfähigkeiten, Posteingang, Derbys und Karriere-Tagebuch
+
+// ---------- Spezialfähigkeiten ----------
+const PERKS = {
+  freekick: { name: 'Freistoß-Spezialist', icon: '🎯', need: 4, desc: 'Freistöße gelingen dir öfter.' },
+  header: { name: 'Kopfballmonster', icon: '🦒', need: 4, desc: 'Kopfbälle gelingen dir öfter.' },
+  penalty: { name: 'Elfmeterkiller', icon: '🧊', need: 3, desc: 'Elfmeter verwandelst du noch sicherer.' },
+  dribble: { name: 'Dribbelkünstler', icon: '🪄', need: 4, desc: 'Dribblings und Solos gelingen dir öfter.' },
+  pass: { name: 'Spielmacher', icon: '🧠', need: 6, desc: 'Deine Pässe kommen öfter an.' },
+  longshot: { name: 'Distanzschütze', icon: '🚀', need: 3, desc: 'Fernschüsse und Volleys gelingen dir öfter.' },
+  tackle: { name: 'Abwehrchef', icon: '🛡️', need: 5, desc: 'Zweikämpfe und Rettungstaten gelingen dir öfter.' },
+  save: { name: 'Katze im Tor', icon: '🐈', need: 5, desc: 'Du hältst mehr Bälle.' },
+};
+const PERK_BONUS = 0.08;
+
+// Welche Fähigkeit eine Option trainiert
+function perkCat(o, situation) {
+  const l = o.label;
+  if (o.kind === 'shoot') return 'penalty';
+  if (o.kind === 'save') return 'save';
+  if (/Freistoß/.test(situation) && (o.kind === 'goal' || /Mauer|Torwarteck|Direkt/.test(l))) return 'freekick';
+  if (/Kopf/.test(l)) return o.kind === 'stop' ? 'tackle' : 'header';
+  if (/Dribbling|tunneln|Losdribbeln|Selbst durchlaufen/.test(l)) return 'dribble';
+  if (/Volley|Distanz|Mittellinie|Fernschuss/.test(l)) return 'longshot';
+  if (o.kind === 'assist') return 'pass';
+  if (o.kind === 'stop') return S.player.pos === 'TW' ? 'save' : 'tackle';
+  return null;
+}
+function perks() { if (!S.perks) S.perks = { counts: {}, have: [] }; return S.perks; }
+const hasPerk = k => perks().have.includes(k);
+
+function applyPerks(c) {
+  c.options.forEach(o => {
+    const cat = perkCat(o, c.situation);
+    o.cat = cat;
+    if (cat && hasPerk(cat)) {
+      o.perk = PERKS[cat].name;
+      if (o.p !== undefined) o.p = clamp(o.p + PERK_BONUS, 0.05, 0.95);
+    }
+  });
+}
+function countPerk(o, success) {
+  if (!success || !o.cat) return '';
+  const pk = perks();
+  pk.counts[o.cat] = (pk.counts[o.cat] || 0) + 1;
+  const def = PERKS[o.cat];
+  if (!hasPerk(o.cat) && pk.counts[o.cat] >= def.need) {
+    pk.have.push(o.cat);
+    toast(`${def.icon} Neue Spezialfähigkeit: ${def.name}!`);
+    queueFx('chime');
+    return ` ${def.icon} Neue Spezialfähigkeit freigeschaltet: ${def.name}!`;
+  }
+  return '';
+}
+function renderPerks() {
+  const pk = perks();
+  return `
+  <section class="card">
+    <h2>Spezialfähigkeiten</h2>
+    <p class="muted small">Gelingt dir eine Aktion oft genug, schaltest du eine Spezialfähigkeit frei. Sie erhöht die Erfolgschance dieser Aktionen um ${Math.round(PERK_BONUS * 100)} Prozentpunkte.</p>
+    <div class="perks">${Object.entries(PERKS).map(([k, d]) => {
+      const n = Math.min(pk.counts[k] || 0, d.need), got = hasPerk(k);
+      return `<div class="perk ${got ? 'got' : ''}"><b>${got ? d.icon : '🔒'} ${esc(d.name)}</b><small>${esc(d.desc)}</small>${got ? '' : bar('Fortschritt', n, d.need)}</div>`;
+    }).join('')}</div>
+  </section>`;
+}
+
+// ---------- Derbys ----------
+const DERBIES = [
+  ['Borussia Dortmund', 'FC Schalke 04', 'Revierderby'], ['FC Bayern München', 'Borussia Dortmund', 'Der Klassiker'],
+  ['Hamburger SV', 'FC St. Pauli', 'Hamburger Stadtderby'], ['1. FC Köln', 'Borussia Mönchengladbach', 'Rheinderby'],
+  ['VfB Stuttgart', 'SC Freiburg', 'Baden-Württemberg-Derby'], ['Hertha BSC', '1. FC Union Berlin', 'Berliner Stadtderby'],
+  ['Real Madrid', 'FC Barcelona', 'El Clásico'], ['Real Madrid', 'Atlético Madrid', 'Madrid-Derby'], ['FC Sevilla', 'Real Betis', 'Gran Derbi'],
+  ['Inter Mailand', 'AC Mailand', 'Derby della Madonnina'], ['AS Rom', 'Lazio Rom', 'Derby della Capitale'], ['Juventus Turin', 'FC Turin', 'Derby della Mole'],
+  ['FC Liverpool', 'FC Everton', 'Merseyside-Derby'], ['Manchester United', 'Manchester City', 'Manchester-Derby'], ['FC Arsenal', 'Tottenham Hotspur', 'Nord-London-Derby'],
+  ['Olympique Marseille', 'Paris Saint-Germain', 'Le Classique'], ['Ajax Amsterdam', 'Feyenoord Rotterdam', 'De Klassieker'],
+  ['Benfica Lissabon', 'Sporting Lissabon', 'Lissabon-Derby'], ['Galatasaray Istanbul', 'Fenerbahçe Istanbul', 'Istanbul-Derby'],
+  ['Celtic Glasgow', 'Glasgow Rangers', 'Old Firm'], ['SK Rapid Wien', 'FK Austria Wien', 'Wiener Derby'], ['FC Basel', 'FC Zürich', 'Schweizer Klassiker'],
+  ['Boca Juniors', 'River Plate', 'Superclásico'], ['Flamengo', 'Fluminense', 'Fla-Flu'], ['Al-Hilal', 'Al-Nassr', 'Riad-Derby'],
+  ['LA Galaxy', 'Los Angeles FC', 'El Tráfico'], ['FC Brügge', 'RSC Anderlecht', 'Belgischer Klassiker'],
+];
+function derbyFor(club) {
+  const list = DERBIES.filter(([a, b]) => (a === club || b === club))
+    .map(([a, b, name]) => ({ opp: a === club ? b : a, name }))
+    .filter(d => S.clubs[d.opp] && S.clubs[d.opp].league === S.clubs[club].league);
+  return list.length ? pick(list) : null;
+}
+// Bei Liga-Spielen kommt öfter das Derby
+function maybeDerby(c, L) {
+  if (S.youth || c.comp !== L.name || c.drama || c.rivalMatch) return;
+  const d = derbyFor(S.clubId);
+  if (!d || !chance(0.45)) return;
+  c.opp = d.opp;
+  c.derby = d.name;
+  c.situation = `🔥 ${d.name}! Die ganze Stadt ist seit Tagen im Ausnahmezustand. ` + c.situation;
+}
+function derbyResult(c, us, them) {
+  if (!c.derby) return '';
+  S.derbyStats = S.derbyStats || { w: 0, d: 0, l: 0 };
+  if (us > them) {
+    S.derbyStats.w++;
+    S.player.popularity = clamp(S.player.popularity + 6, 0, 100);
+    setHeadline(`DERBYSIEG! ${lastName()} LÄSST ${S.clubId.toUpperCase()} JUBELN`);
+    return ` Derbysieg! Die Fans feiern dich die ganze Nacht.`;
+  }
+  if (us < them) { S.derbyStats.l++; S.player.popularity = clamp(S.player.popularity - 3, 0, 100); return ' Derby verloren – das tut doppelt weh.'; }
+  S.derbyStats.d++;
+  return ' Ein Remis im Derby. Keiner kann jubeln.';
+}
+
+// ---------- Posteingang ----------
+function inbox() { if (!S.inbox) S.inbox = []; return S.inbox; }
+function sendMail(from, text, replies = null) {
+  inbox().unshift({ id: `${Date.now()}-${randInt(0, 9999)}`, from, text, replies, read: false, answered: null, year: S.year });
+  if (S.inbox.length > 30) S.inbox.length = 30;
+}
+const unreadMail = () => inbox().filter(m => !m.read).length;
+
+// Briefe nach jeder Saison, passend zu dem, was passiert ist
+function mailSeason(res) {
+  if (res.role === 'U19' && chance(0.5)) return;
+  const p = S.player;
+  const pool = [];
+  if (res.goals >= 10) pool.push(() => sendMail('Fan-Post', `Hallo! Ich bin 9 Jahre alt und habe alle deine ${res.goals} Tore diese Saison im Album. Kannst du mir ein Autogramm schicken?`,
+    [{ label: 'Signiertes Trikot schicken', eff: { popularity: 3 }, reply: 'Das Kind postet ein Video vor Freude. Tausende teilen es.' }, { label: 'Autogrammkarte schicken', eff: { popularity: 1 }, reply: 'Eine nette Geste.' }]));
+  if (res.note !== null && res.note >= 3.8) pool.push(() => sendMail('Wütender Fan', 'So schlecht wie du diese Saison hat noch nie jemand in unserem Trikot gespielt. Verkauft ihn!',
+    [{ label: 'Freundlich antworten', eff: { popularity: 2 }, reply: 'Der Fan entschuldigt sich sogar.' }, { label: 'Ignorieren', eff: {}, reply: 'Du löschst die Nachricht.' }]));
+  const parent = (S.family && S.family.parents || []).find(x => x.alive);
+  if (parent) pool.push(() => sendMail(`${parent.name} (Familie)`, pick([
+    'Wir haben jedes Spiel im Fernsehen gesehen. Iss genug Gemüse und ruf mal wieder an!',
+    'Die Nachbarn fragen ständig nach dir. Wir sind so stolz!',
+    'Kommst du an Weihnachten nach Hause? Es gibt dein Lieblingsessen.',
+  ]), [{ label: 'Anrufen', eff: { form: 1 }, reply: 'Ihr telefoniert eine Stunde lang. Das tut gut.', fam: 8 }, { label: 'Kurz zurückschreiben', eff: {}, reply: 'Ein kurzes „Danke, alles gut!“', fam: 2 }]));
+  if (!S.youth && S.contract.years <= 1) pool.push(() => sendMail('Dein Berater', 'Dein Vertrag läuft bald aus. Ich habe schon mit drei Vereinen gesprochen. Sollen wir pokern?',
+    [{ label: 'Ja, lass uns pokern', eff: { trust: -3 }, reply: 'Dein Berater streut Gerüchte. Mehr Vereine werden aufmerksam.', boost: 1 }, { label: 'Nein, ich bleibe ruhig', eff: { trust: 2 }, reply: 'Der Berater respektiert deine Entscheidung.' }]));
+  if (S.team && S.team.mates.length) {
+    const m = pick(S.team.mates);
+    pool.push(() => sendMail(m.name, pick(['Starke Saison, Kollege! Gehen wir nach dem Training essen?', 'Hast du Lust, im Urlaub zusammen zu trainieren?', 'Danke für den Pass im letzten Spiel – das Bier geht auf mich!']),
+      [{ label: 'Gerne!', eff: { form: 1 }, reply: 'Ihr habt einen lustigen Abend.', mate: m.name }, { label: 'Keine Zeit', eff: {}, reply: 'Vielleicht ein anderes Mal.' }]));
+  }
+  if (rivalActive() && chance(0.4)) pool.push(() => sendMail(S.rival.name, pick(['Glückwunsch zur Saison. Nächstes Jahr schlage ich dich.', 'Du hattest Glück diese Saison. Mal sehen, wer am Ende mehr Titel hat.']),
+    [{ label: 'Kampfansage zurück', eff: { popularity: 2 }, reply: 'Die Medien lieben euer Duell.' }, { label: 'Respektvoll antworten', eff: { trust: 1 }, reply: 'Ihr verabschiedet euch mit gegenseitigem Respekt.' }]));
+  if (S.player.popularity >= 50 && chance(0.5)) pool.push(() => sendMail('Fernsehsender', 'Wir möchten eine Doku über dein Leben drehen. Darf ein Kamerateam dich eine Woche begleiten?',
+    [{ label: 'Zusagen', eff: { popularity: 5, form: -1 }, reply: 'Die Doku wird ein Riesenerfolg.', money: dealSize() }, { label: 'Ablehnen', eff: {}, reply: 'Du bleibst lieber privat.' }]));
+  if (res.titles.length) pool.push(() => sendMail('Bürgermeister', `Herzlichen Glückwunsch zum Titel! Die Stadt möchte dich ins Goldene Buch eintragen.`,
+    [{ label: 'Gerne kommen', eff: { popularity: 4 }, reply: 'Tausende Fans feiern dich vor dem Rathaus.' }, { label: 'Absagen', eff: { popularity: -1 }, reply: 'Der Bürgermeister ist enttäuscht.' }]));
+  shuffle(pool).slice(0, randInt(1, 3)).forEach(f => f());
+}
+
+function answerMail(m, r) {
+  m.answered = r.label;
+  let text = r.reply + mod(r.eff || {});
+  if (r.money) text += mod({ money: r.money });
+  if (r.boost) S.agentPush = (S.agentPush || 0) + r.boost;
+  if (r.fam && S.family) S.family.parents.filter(x => x.alive).forEach(x => { x.rel = clamp(x.rel + r.fam, 0, 100); });
+  if (r.mate && S.team) { const mt = S.team.mates.find(x => x.name === r.mate); if (mt) mt.rel = clamp(mt.rel + 10, -100, 100); }
+  m.result = text;
+}
+
+function renderInbox() {
+  const list = inbox();
+  list.forEach(m => { m.read = true; });
+  if (!list.length) return '<section class="card"><h2>Posteingang</h2><p class="muted">Noch keine Nachrichten. Nach jeder Saison bekommst du Post.</p></section>';
+  return `
+  <section class="card">
+    <h2>Posteingang</h2>
+    <div class="mails">${list.map(m => `
+      <article class="mail">
+        <header><b>${esc(m.from)}</b><small>${seasonLabel(m.year)}</small></header>
+        <p>${esc(m.text)}</p>
+        ${m.answered ? `<div class="result"><p class="chosen">Deine Antwort: ${esc(m.answered)}</p>${m.result || ''}</div>`
+          : m.replies ? `<div class="lifeacts">${m.replies.map(r => btn(esc(r.label), () => { answerMail(m, r); render(true); }, 'small')).join('')}</div>` : ''}
+      </article>`).join('')}</div>
+  </section>`;
+}
+
+// ---------- Karriere-Tagebuch ----------
+function careerDiary() {
+  const p = S.player;
+  const first = p.name.trim().split(/\s+/)[0];
+  const parts = [];
+  const originText = {
+    academy: `${first} kam mit 17 Jahren in die Jugend`,
+    street: `${first} wurde auf einem Bolzplatz entdeckt und kam in die Jugend`,
+    late: `${first} war ein Spätstarter und begann die Profikarriere erst mit 20`,
+    legacy: `${first} trug einen berühmten Nachnamen und begann in der Jugend`,
+    wonderkid: `${first} galt schon mit 17 als Wunderkind und kam in die Jugend`,
+  }[originOf()] || `${first} begann in der Jugend`;
+  const rows = S.history;
+  const youth = rows.find(h => h.youth);
+  const start = youth ? `${originText} von ${youth.club}` : originOf() === 'late' ? originText : `${first} begann die Karriere mit 17 Jahren`;
+  parts.push(`${start}${S.gen > 1 ? ` – als Kind von ${S.parentName}, das die Familientradition fortsetzen wollte` : ''}.`);
+  // Stationen
+  const stints = [];
+  for (const h of rows.filter(r => !r.youth)) {
+    const last = stints[stints.length - 1];
+    if (last && last.club === h.club) { last.to = h.year; last.games += h.games; last.goals += h.goals; last.titles += h.titles; }
+    else stints.push({ club: h.club, from: h.year, to: h.year, games: h.games, goals: h.goals, titles: h.titles, banned: h.banned, loan: h.loan });
+  }
+  stints.forEach((st, i) => {
+    const span = st.from === st.to ? `${st.from}` : `${st.from} bis ${st.to + 1}`;
+    if (st.banned) { parts.push(`${span} folgte der Tiefpunkt: ${st.club === 'Gefängnis' ? 'eine Zeit im Gefängnis' : 'eine lange Dopingsperre'}.`); return; }
+    const verb = i === 0 ? 'Den Durchbruch suchte ' + first : pick(['Danach wechselte ' + first, 'Anschließend ging es weiter', 'Die nächste Station']);
+    parts.push(`${verb} ${i === 0 ? 'bei' : 'zu'} ${st.club}${st.loan ? ' (Leihe)' : ''} (${span}): ${st.games} Spiele, ${st.goals} Tore${st.titles ? `, ${st.titles} Titel` : ''}.`);
+  });
+  // Höhepunkte
+  const bd = S.awards.filter(a => a.startsWith("Ballon d'Or"));
+  if (bd.length) parts.push(`Der größte Ruhm: ${bd.length === 1 ? 'der Ballon d\'Or' : `${bd.length} Ballon d'Ors`} (${bd.map(a => a.match(/\((.*)\)/)[1]).join(', ')}).`);
+  const big = S.titles.filter(t => /Weltmeister|Europameister|Champions-League-Sieger/.test(t));
+  if (big.length) parts.push(`Unvergessen bleiben ${big.join(', ')}.`);
+  if (S.milestones && S.milestones.length) parts.push(`Meilensteine: ${S.milestones.slice(0, 5).map(m => m.text).join(', ')}.`);
+  if (S.derbyStats && (S.derbyStats.w + S.derbyStats.l + S.derbyStats.d)) parts.push(`In Derbys stand die Bilanz bei ${S.derbyStats.w} Siegen, ${S.derbyStats.d} Remis und ${S.derbyStats.l} Niederlagen.`);
+  if (perks().have.length) parts.push(`Bekannt war ${first} als ${perks().have.map(k => PERKS[k].name).join(' und ')}.`);
+  if (S.dopeCaught) parts.push(`Ein dunkler Fleck: ${S.dopeCaught}× beim Doping erwischt.`);
+  // Privat
+  const l = life();
+  if (l.partner || l.children.length) {
+    let t = l.married ? `Privat fand ${first} das Glück mit ${l.partner.name}` : l.partner ? `Privat war ${first} mit ${l.partner.name} zusammen` : 'Privat';
+    if (l.children.length) t += `${l.partner ? ' und' : ''} bekam ${l.children.length === 1 ? 'ein Kind' : `${l.children.length} Kinder`}: ${l.children.map(c => c.name).join(', ')}`;
+    parts.push(t + '.');
+  }
+  if (rivalActive() || (S.rival && S.rival.games)) parts.push(`Der ewige Rivale hieß ${S.rival.name} – direkte Duelle: ${S.rival.wins}:${S.rival.losses}.`);
+  if (S.phase === 'retired') {
+    parts.push(`Mit ${S.retireAge || p.age} Jahren beendete ${first} die Karriere: ${totals().games} Spiele, ${totals().goals} Tore, ${S.titles.length} Titel.`);
+    if (S.after) parts.push(S.after);
+  } else parts.push(`Die Geschichte ist noch nicht zu Ende – ${first} ist ${p.age} Jahre alt und spielt für ${S.clubId}.`);
+  return parts;
+}
+function renderDiary() {
+  if (!S.history || !S.history.length) return '';
+  return `
+  <section class="card diary">
+    <details${S.phase === 'retired' ? ' open' : ''}><summary>📖 Lebensgeschichte</summary>
+      ${careerDiary().map(t => `<p>${esc(t)}</p>`).join('')}
+    </details>
+  </section>`;
 }
 
 </script>

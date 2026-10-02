@@ -42,6 +42,7 @@ function nextFinalScene() {
   simChunk(f, from, FINAL_MINUTES[f.scene]);
   const sc = pick(SCENES[POSITIONS[S.player.pos].group])(quality());
   f.current = { situation: sc.situation, options: sc.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p - 0.05, 0.05, 0.9) : undefined })), result: null };
+  applyPerks(f.current);
 }
 
 // Tore und Vorlagen im Finale zählen nachträglich zur Saison bzw. zur Nationalmannschaft
@@ -55,18 +56,18 @@ function finalStat(f, key) {
 function playFinalOption(i) {
   const f = S.finals[0], c = f.current, o = c.options[i];
   const q = quality();
-  let text;
+  let text, ok;
   const minute = FINAL_MINUTES[f.scene];
   if (o.kind === 'shoot') {
-    const ok = chance(0.75 + q * 0.1);
-    if (ok) { f.us++; text = `TOOOR! Du verwandelst den Elfmeter ${o.label.toLowerCase()}!${celebrationText()}`; finalStat(f, 'goals'); queueFx('goal'); }
+    ok = chance(0.75 + q * 0.1 + (o.perk ? PERK_BONUS : 0));
+    if (ok) { f.us++; text = `${goalCry()} Du verwandelst den Elfmeter ${o.label.toLowerCase()}!${celebrationText()}`; finalStat(f, 'goals'); queueFx('goal'); }
     else text = 'Der Torwart hält deinen Elfmeter!';
   } else if (o.kind === 'save') {
-    const ok = chance(0.3 + q * 0.15);
+    ok = chance(0.3 + q * 0.15 + (o.perk ? PERK_BONUS : 0));
     if (ok) text = 'GEHALTEN! Du ahnst die Ecke!';
     else { f.them++; text = 'Der Elfmeter ist drin.'; }
   } else {
-    const ok = chance(o.p);
+    ok = chance(o.p);
     if (o.kind === 'goal') {
       if (ok) { f.us++; finalStat(f, 'goals'); text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${celebrationText()}`; queueFx('goal'); }
       else text = pickText(o.failText) || 'Knapp vorbei!';
@@ -76,11 +77,13 @@ function playFinalOption(i) {
     } else if (o.kind === 'foul') {
       text = ok ? 'Gelbe Karte, aber der Konter ist gestoppt.' : 'Rote Karte! Ihr müsst in Unterzahl weiterspielen.';
       if (!ok) f.ownStr -= 4;
+      ok = false;
     } else {
       if (ok) text = pickText(o.okText) || 'Gefahr gebannt!';
       else { f.them++; text = pickText(o.failText) || 'Gegentor.'; }
     }
   }
+  text += countPerk(o, ok);
   f.log.push(`${minute}'. ${o.label}: ${text.replace(/<[^>]+>/g, '')} (${f.us}:${f.them})`);
   c.result = text;
 }

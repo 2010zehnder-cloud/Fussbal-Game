@@ -431,3 +431,18 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .flow-chaos { box-shadow: inset 3px 0 0 var(--gold); }
 .flow span { color: var(--muted); font-size: 14px; }
 .oppstyle { font-size: 12px; color: var(--board-text); opacity: .8; margin-top: 2px; }
+
+/* Spezialfähigkeiten, Posteingang, Tagebuch */
+.tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.btn.tab { font-size: 11px; padding: 8px 1px; }
+.perks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.perk { background: var(--card2); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; opacity: .75; }
+.perk.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
+.perk small { color: var(--muted); }
+.perk .bar { grid-template-columns: 70px 1fr; font-size: 11px; }
+.mails { display: grid; gap: 10px; }
+.mail { background: var(--card2); border-radius: 12px; padding: 10px 12px; }
+.mail header { display: flex; justify-content: space-between; gap: 8px; }
+.mail header small { color: var(--muted); }
+.mail p { margin: 6px 0; }
+.diary p { max-width: 65ch; }
