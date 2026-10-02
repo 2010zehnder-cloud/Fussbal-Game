@@ -282,6 +282,7 @@ function startSeason() {
   const role = S.youth ? 'U19' : roleFor(p.rating, str, p.trust);
   S.season = { role, focus: 'balanced', devBonus: 0, injuredGames: 0, extraGoals: 0, extraAssists: 0, usedEvents: [], transferBoost: 0, scenes: [], step: 0 };
   genSeasonGoals();
+  S.season.flow = pickFlow();
   S.season.theme = pickTheme();
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
@@ -496,6 +497,7 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  flavorMatch(S.current, L);
 }
 
 function quality() {
@@ -567,6 +569,7 @@ function resolveMatch(i) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
   }
+  text += afterMatch(c, us, them, o);
   c.result = `<p>${text}</p>` + mod(eff);
 }
 
@@ -609,7 +612,8 @@ function endSeason() {
 
   // Alle Ligen simulieren
   const tables = {};
-  for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, bonus);
+  const teamBonus = bonus + (youth ? 0 : FLOWS[se.flow || 'normal'].bonus + (se.flowBonus || 0));
+  for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, teamBonus);
   const myTable = tables[L.id];
   applyDrama(myTable.rows);
   const pos = myTable.rows.findIndex(r => r.name === own) + 1;
@@ -621,7 +625,7 @@ function endSeason() {
   const trustAdj = (p.trust - 50) / 400;
   let leagueGames = youth ? randInt(20, 28) - Math.min(10, se.injuredGames) : Math.round(avail * clamp(rand(share[0], share[1]) + trustAdj, 0.03, 1));
   leagueGames = Math.max(0, leagueGames);
-  const cupRes = youth ? null : cupRun(own);
+  const cupRes = youth ? null : cupFromScene(own, () => cupRun(own));
   const cupGames = cupRes ? Math.round(cupRes.played * (se.role === 'Ergänzungsspieler' ? 0.5 : 0.9)) : 0;
   let euroRes = null, euroGames = 0;
   if (!youth && S.europe) {
@@ -710,6 +714,7 @@ function endSeason() {
   }
 
   S.titles.push(...res.titles.map(t => `${t} (${seasonLabel(S.year)})`));
+  S.titleLog = [...(S.titleLog || []), ...res.titles.map(t => ({ title: t, club: own }))];
   S.awards.push(...res.awards.map(a => `${a} (${seasonLabel(S.year)})`));
 
   // Vertrauen, Beliebtheit, Form
@@ -1167,7 +1172,7 @@ function render(keepScroll = false) {
   root.innerHTML = html;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
-  if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); }
+  if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); checkChallenge(); }
   if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) {
     S.seasonEnd.animated = true;
     animateRecap();
@@ -1184,7 +1189,9 @@ function renderStart() {
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
   </section>
   ${renderSlots()}
+  <section class="card"><div class="actions">${btn('🎲 Zufallskarriere starten<small>Land, Position und Startszenario per Zufall</small>', () => { if (startRandomCareer()) render(); }, 'primary')}</div></section>
   ${renderDailyCard()}
+  ${renderChallenges()}
   <section class="card howto">
     <h2>So funktioniert's</h2>
     <ol class="steps">
@@ -1200,7 +1207,9 @@ function renderStart() {
 }
 
 function renderCreate() {
-  const h = S.heir, dl = S.daily;
+  const h = S.heir, dl0 = S.daily;
+  const chal = typeof S.challenge === 'string' ? CHALLENGES.find(c => c.id === S.challenge) : null;
+  const dl = dl0 || (chal ? { nation: chal.nation, pos: chal.pos, goal: { text: chal.text }, club: chal.club || 'einem Verein deiner Wahl' } : null);
   const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : dl ? dl.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
   const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === (dl ? dl.pos : 'ST') ? ' selected' : ''}>${v.name}</option>`).join('');
   return `
@@ -1212,6 +1221,7 @@ function renderCreate() {
     <label>Nationalität<select id="f-nation"${dl ? ' disabled' : ''}>${natOpts}</select></label>
     <label>Position<select id="f-pos"${dl ? ' disabled' : ''}>${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
+    ${h || dl ? '' : `<label>Startszenario<select id="f-origin">${Object.entries(ORIGINS).map(([k, o]) => `<option value="${k}">${o.name} – ${o.desc}</option>`).join('')}</select></label>`}
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
     <div class="actions">
@@ -1221,9 +1231,13 @@ function renderCreate() {
         if (!name) { document.getElementById('f-err').textContent = 'Bitte gib einen Namen ein.'; return; }
         if (!(num >= 1 && num <= 99)) { document.getElementById('f-err').textContent = 'Die Rückennummer muss zwischen 1 und 99 liegen.'; return; }
         const fd = document.getElementById('f-diff');
-        const daily = S.daily;
+        const daily = dl;
+        const chalId = chal ? chal.id : null;
+        const fo = document.getElementById('f-origin');
         newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, daily ? daily.pos : document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
-        if (daily) applyDaily(daily);
+        if (dl0 && !chalId) applyDaily(dl0);
+        if (chalId) applyChallenge(chalId);
+        if (fo && fo.value !== 'academy') applyOrigin(fo.value);
         render();
       }, 'primary')}
       ${btn('Zurück', () => { S = h ? h.parentState : null; render(); })}
@@ -1315,6 +1329,7 @@ function renderPreseason() {
         () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
     }).join('')}</div>
     ${S.daily ? `<p class="note">🎯 Tagesziel: ${esc(S.daily.text)}${S.daily.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
+    ${S.challenge && S.challenge.text ? `<p class="note">🎯 Herausforderung: ${esc(S.challenge.text)}${S.challenge.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
     <div class="actions">${btn('Saison starten', () => {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
       nextStep(); render();
@@ -1326,7 +1341,7 @@ function renderPreseason() {
 function stepHeader() {
   const se = S.season;
   const dots = STEPS.map((s, i) => `<span class="dot ${i < se.step ? 'done' : i === se.step ? 'now' : ''}"></span>`).join('');
-  return `<div class="stephead"><span>${STEPS[se.step].label}</span><span class="dots">${dots}</span></div>`;
+  return renderFlow() + `<div class="stephead"><span>${STEPS[se.step].label}</span><span class="dots">${dots}</span></div>`;
 }
 
 function continueBtn() {
@@ -1354,7 +1369,7 @@ function renderMatch() {
   const c = S.current;
   const homeName = c.home ? S.clubId : c.opp, awayName = c.home ? c.opp : S.clubId;
   const score = c.final || (c.home ? `${c.a}:${c.b}` : `${c.b}:${c.a}`);
-  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}`, () => {
+  const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}`, () => {
     resolveMatch(i);
     render();
   })).join('');
@@ -1363,6 +1378,7 @@ function renderMatch() {
     ${stepHeader()}
     <div class="scoreboard">
       <div class="comp">${esc(c.comp)}</div>
+      ${c.style ? `<div class="oppstyle">Spielstil des Gegners: <b>${esc(c.style)}</b></div>` : ''}
       <div class="teams">
         <div class="team">${crest(homeName)}<span>${esc(homeName)}</span></div>
         <div class="score">${score}<small>${c.result ? 'Abpfiff' : c.minute + '. Minute'}</small></div>
@@ -1370,6 +1386,7 @@ function renderMatch() {
       </div>
     </div>
     <p class="situation">${esc(c.situation)}</p>
+    ${c.styleTip && !c.result ? `<p class="muted small">💡 ${esc(c.styleTip)}</p>` : ''}
     ${c.result ? `<div class="result"><p class="chosen">Deine Entscheidung: ${esc(c.options[c.chosen].label)}</p>${c.result}</div><div class="actions">${continueBtn()}</div>` : `<div class="choices">${opts}</div>`}
   </section>`;
 }

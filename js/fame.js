@@ -122,6 +122,7 @@ function grantFinalTitle(so, how) {
   const label = so.kind === 'nation' ? so.title : `${so.title} (${seasonLabel(S.year)})`;
   S.titles.push(label);
   res.titles.push(so.title);
+  S.titleLog = [...(S.titleLog || []), { title: so.title, club: so.kind === 'nation' ? S.player.nation : S.clubId }];
   res.lines.push(`🏆 ${so.title}! ${how}.`);
   const h = S.history[S.history.length - 1];
   if (h) h.titles++;
