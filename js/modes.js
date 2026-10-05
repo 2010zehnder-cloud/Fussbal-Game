@@ -305,15 +305,37 @@ EVENTS.push(...ORIGIN_EVENTS, ...FLOW_EVENTS, ...MORE_STORIES);
 
 // ---------- Herausforderungen ----------
 const CH_KEY = 'fussballkarriere-herausforderungen';
-const titleAt = (club, prefix) => (S.titleLog || []).some(t => t.club === club && t.title.startsWith(prefix));
+// Titel mit bestimmtem Verein gewonnen? Leerzeichen und Bindestriche gelten als gleich (alte Spielstände)
+const normTitle = t => t.replace(/ /g, '-');
+const titleAt = (club, prefix) => (S.titleLog || []).some(t => t.club === club && normTitle(t.title).startsWith(normTitle(prefix)));
 const CHALLENGES = [
   { id: 'hsv', name: 'Die Rothosen zurück an die Spitze', text: 'Werde mit dem Hamburger SV Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Hamburger SV', age: 19, rating: 64, test: () => titleAt('Hamburger SV', 'Deutscher Meister') },
   { id: 'fck', name: 'Das Wunder vom Betzenberg', text: 'Gewinne mit dem 1. FC Kaiserslautern die Champions League.', nation: 'Deutschland', pos: 'ZOM', club: '1. FC Kaiserslautern', age: 18, rating: 62, test: () => titleAt('1. FC Kaiserslautern', 'Champions-League-Sieger') },
   { id: 'gk', name: 'Der fliegende Torwart', text: "Gewinne als Torwart den Ballon d'Or.", nation: 'Österreich', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
-  { id: 'kosovo', name: 'Vom Kosovo nach ganz oben', text: 'Werde als Spieler aus dem Kosovo Champions-League-Sieger.', nation: 'Kosovo', pos: 'FL', club: null, age: 17, rating: 52, test: () => S.titles.some(t => t.startsWith('Champions-League-Sieger')) },
+  { id: 'kosovo', name: 'Vom Kosovo nach ganz oben', text: 'Werde als Spieler aus dem Kosovo Champions-League-Sieger.', nation: 'Kosovo', pos: 'FL', club: null, age: 17, rating: 52, test: () => S.titles.some(isCLTitle) },
   { id: 'iv', name: 'Torjäger in der Abwehr', text: 'Schieße als Innenverteidiger 100 Karrieretore.', nation: 'Spanien', pos: 'IV', club: null, age: 17, rating: 53, test: () => totals().goals >= 100 },
   { id: 'loyal', name: 'Ein Leben, ein Verein', text: 'Spiele die ganze Karriere beim FC St. Pauli und werde Vereinslegende.', nation: 'Deutschland', pos: 'ZM', club: 'FC St. Pauli', age: 17, rating: 55, academy: true, test: () => S.phase === 'retired' && S.clubsPlayed.length === 1 && S.clubsPlayed[0] === 'FC St. Pauli' && legends().length > 0 },
+  { id: 'muenster', name: 'Aus der 2. Liga zur Schale', text: 'Werde mit Preußen Münster Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Preußen Münster', age: 19, rating: 60, test: () => titleAt('Preußen Münster', 'Deutscher Meister') },
+  { id: 'derby', name: 'König des Reviers', text: 'Gewinne mit dem FC Schalke 04 zehn Derbys.', nation: 'Deutschland', pos: 'FL', club: 'FC Schalke 04', age: 19, rating: 63, test: () => !!(S.derbyStats && S.derbyStats.w >= 10) },
+  { id: 'triple', name: 'Das Triple', text: 'Gewinne in einer Saison Meisterschaft, Pokal und Champions League.', nation: 'Italien', pos: 'ZM', club: null, age: 17, rating: 54, test: () => hasTriple() },
+  { id: 'austria', name: 'Rot-Weiß-Rot an der Spitze', text: 'Werde mit Österreich Weltmeister.', nation: 'Österreich', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
+  { id: 'miami', name: 'Amerikanischer Traum', text: 'Gewinne mit Inter Miami die MLS und den CONCACAF Champions Cup.', nation: 'USA', pos: 'ST', club: 'Inter Miami', age: 19, rating: 64, test: () => titleAt('Inter Miami', 'MLS-Meister') && titleAt('Inter Miami', 'CONCACAF Champions Cup-Sieger') },
+  { id: 'wall', name: 'Die Mauer', text: 'Spiele als Torwart in einer Saison mindestens 25-mal zu null.', nation: 'Deutschland', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.history.some(h => !h.youth && h.cleanSheets >= 25) },
+  { id: 'forty', name: 'Ewige Jugend', text: 'Bestreite mit 40 Jahren noch mindestens 10 Pflichtspiele.', nation: 'Portugal', pos: 'ST', club: null, age: 17, rating: 55, test: () => S.history.some(h => h.age >= 40 && h.games >= 10) },
+  { id: 'billion', name: 'Der Milliardär', text: 'Besitze ein Vermögen von 1 Milliarde €.', nation: 'Saudi-Arabien', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.money >= 1000 },
+  { id: 'goldenboy', name: 'Das nächste große Ding', text: 'Gewinne den Golden Boy und später den Ballon d\'Or.', nation: 'Brasilien', pos: 'FL', club: null, age: 17, rating: 55, test: () => S.awards.some(a => a.startsWith('Golden Boy')) && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
+// Meisterschaft, nationaler Pokal und Champions League in derselben Saison
+function hasTriple() {
+  const champs = LEAGUES.map(L => L.champion), cups = LEAGUES.map(L => `${L.cup}-Sieger`);
+  const bySeason = {};
+  for (const t of S.titles) {
+    const m = t.match(/^(.*) \((\d{4}\/\d{2})\)$/);
+    if (m) (bySeason[m[2]] = bySeason[m[2]] || []).push(m[1]);
+  }
+  return Object.values(bySeason).some(list => list.some(t => champs.includes(t)) && list.some(t => cups.includes(t)) && list.some(isCLTitle));
+}
 function doneChallenges() { try { return JSON.parse(localStorage.getItem(CH_KEY) || '[]'); } catch (e) { return []; } }
 function startChallenge(ch) {
   pendingSlot = SLOT_COUNT;

@@ -208,7 +208,7 @@ function careerDiary() {
   // Höhepunkte
   const bd = S.awards.filter(a => a.startsWith("Ballon d'Or"));
   if (bd.length) parts.push(`Der größte Ruhm: ${bd.length === 1 ? 'der Ballon d\'Or' : `${bd.length} Ballon d'Ors`} (${bd.map(a => a.match(/\((.*)\)/)[1]).join(', ')}).`);
-  const big = S.titles.filter(t => /Weltmeister|Europameister|Champions-League-Sieger/.test(t));
+  const big = S.titles.filter(t => /Weltmeister|Europameister|Champions[- ]League-Sieger/.test(t));
   if (big.length) parts.push(`Unvergessen bleiben ${big.join(', ')}.`);
   if (S.milestones && S.milestones.length) parts.push(`Meilensteine: ${S.milestones.slice(0, 5).map(m => m.text).join(', ')}.`);
   if (S.derbyStats && (S.derbyStats.w + S.derbyStats.l + S.derbyStats.d)) parts.push(`In Derbys stand die Bilanz bei ${S.derbyStats.w} Siegen, ${S.derbyStats.d} Remis und ${S.derbyStats.l} Niederlagen.`);

@@ -93,7 +93,7 @@ function copyShare() {
 const ACH_KEY = 'fussballkarriere-erfolge';
 const ACHIEVEMENTS = [
   { id: 'firstTitle', name: 'Erster Pokal', desc: 'Gewinne deinen ersten Titel.', test: () => S.titles.length >= 1 },
-  { id: 'cl', name: 'Königsklasse', desc: 'Gewinne die Champions League.', test: () => S.titles.some(t => t.startsWith('Champions-League-Sieger')) },
+  { id: 'cl', name: 'Königsklasse', desc: 'Gewinne die Champions League.', test: () => S.titles.some(isCLTitle) },
   { id: 'world', name: 'Weltmeister', desc: 'Werde Weltmeister.', test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
   { id: 'ballon', name: 'Bester der Welt', desc: "Gewinne den Ballon d'Or.", test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
   { id: 'goals100', name: 'Torjäger', desc: 'Schieße 100 Karrieretore.', test: () => totals().goals >= 100 },

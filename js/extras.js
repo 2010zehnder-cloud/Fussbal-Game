@@ -243,7 +243,7 @@ const DAILY_GOALS = [
   { id: 'goals150', text: 'Schieße in deiner Karriere 150 Tore', test: () => totals().goals >= 150 },
   { id: 'caps30', text: 'Bestreite 30 Länderspiele', test: () => S.player.caps >= 30 },
   { id: 'rating88', text: 'Erreiche Stärke 88', test: () => S.peak >= 88 },
-  { id: 'cl', text: 'Gewinne die Champions League', test: () => S.titles.some(t => t.startsWith('Champions-League-Sieger')) },
+  { id: 'cl', text: 'Gewinne die Champions League', test: () => S.titles.some(isCLTitle) },
   { id: 'money50', text: 'Besitze 50 Mio. €', test: () => S.money >= 50 },
   { id: 'clubs4', text: 'Spiele für 4 verschiedene Vereine und gewinne einen Titel', test: () => S.clubsPlayed.length >= 4 && S.titles.length > 0 },
 ];

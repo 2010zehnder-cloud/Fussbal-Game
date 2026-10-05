@@ -59,7 +59,7 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Gegner mit Spielstil** (Pressing, Mauertaktik, Ballbesitz, Konter, körperbetont) und **wiederkehrende Gegenspieler**, die sich an deine Tricks erinnern.
 - **Pokal-Wunder und Blamagen** – das Pokalergebnis passt zur gespielten Szene.
 - **Weitere Geschichten:** Journalist, heimliche Promi-Beziehung, Fehde mit dem Präsidenten.
-- **Herausforderungs-Modus** mit 6 Szenarien und **Zufallskarriere**.
+- **Herausforderungs-Modus** mit 16 Szenarien und **Zufallskarriere**.
 - **Spezialfähigkeiten** (z. B. Freistoß-Spezialist, Kopfballmonster, Elfmeterkiller), die du durch erfolgreiche Aktionen freischaltest.
 - **Derbys** wie Revierderby, El Clásico oder Old Firm mit besonderer Stimmung und Schlagzeilen.
 - **Posteingang** mit Briefen von Fans, Familie, Berater, Mitspielern und Rivale – mit Antwortmöglichkeiten.

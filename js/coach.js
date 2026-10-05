@@ -28,7 +28,7 @@ function managerCups(club, ownStr, europe, lines, titles) {
     if (!chance(sigmoid((ownStr - (avg - 3)) / 3.5))) lines.push(`${name}: Aus in der Ligaphase.`);
     else {
       eu = knockout(ownStr, ['K.-o.-Playoffs', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'], ep, 4.5);
-      if (eu.won) titles.push(`${name}-Sieger`);
+      if (eu.won) titles.push(compTitle(name));
       else lines.push(`${name}: Aus in der Runde „${eu.reached}“ gegen ${eu.lostTo}.`);
     }
   }

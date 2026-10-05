@@ -37,6 +37,10 @@ const clubsIn = id => Object.keys(S.clubs).filter(n => S.clubs[n].league === id)
 const nation = () => NATIONS.find(n => n.name === S.player.nation);
 const confOf = L => L.conf || 'UEFA';
 const euroName = (club = S.clubId, comp = S.europe) => comp ? CLUB_COMPS[confOf(clubLeague(club))][comp] : null;
+// Titel internationaler Wettbewerbe einheitlich mit Bindestrichen (z. B. „Champions-League-Sieger“)
+const compTitle = name => `${name.replace(/ /g, '-')}-Sieger`;
+// Erkennt CL-Titel – auch alte Spielstände, in denen „Champions League-Sieger“ gespeichert ist
+const isCLTitle = t => /^Champions[- ]League-Sieger/.test(t);
 const seasonLabel = y => `${y}/${String((y + 1) % 100).padStart(2, '0')}`;
 
 function marketValue(p = S.player) {
@@ -640,7 +644,7 @@ function endSeason() {
   const games = leagueGames + cupGames + euroGames;
   const playStr = str + (se.role === 'Stammspieler' ? (p.rating - str) * 0.1 : 0);
   if (cupRes) queueLiveFinal(cupRes, 'cup', `${L.cup}-Sieger`, L.cup, playStr);
-  if (euroRes) queueLiveFinal(euroRes, 'euro', `${euroName()}-Sieger`, euroName(), playStr);
+  if (euroRes) queueLiveFinal(euroRes, 'euro', compTitle(euroName()), euroName(), playStr);
 
   // Tore, Vorlagen, Note
   const P = POSITIONS[p.pos];
@@ -677,7 +681,7 @@ function endSeason() {
   }
   if (euroRes) {
     const name = euroName();
-    if (euroRes.won) { res.titles.push(`${name}-Sieger`); res.lines.push(`🏆 ${name}-Sieger! Finale gegen ${euroRes.beat} gewonnen.`); }
+    if (euroRes.won) { res.titles.push(compTitle(name)); res.lines.push(`🏆 ${compTitle(name)}! Finale gegen ${euroRes.beat} gewonnen.`); }
     else if (euroRes.pending) res.lines.push(`🏟️ ${name}: Ihr steht im Finale gegen ${euroRes.lostTo}! Das Finale spielst du live.`);
     else res.lines.push(`${name}: Aus in der Runde „${euroRes.reached}“${euroRes.lostTo ? ` gegen ${euroRes.lostTo}` : ''}.`);
   }
