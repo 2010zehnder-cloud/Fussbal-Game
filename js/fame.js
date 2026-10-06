@@ -103,7 +103,7 @@ function saveHallOfFame() {
 
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
 function hofDetail(e) {
-  if (!e.titleList) return '<p class="muted">Für diese ältere Karriere wurden noch keine Details gespeichert.</p>';
+  if (!e.titleList) return '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
   const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4><ul class="lines">${list.map(x => `<li>${icon} ${esc(x)}</li>`).join('')}</ul>` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + block('Titel als Trainer', e.coachList || [], '📋') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
@@ -111,8 +111,31 @@ function hofDetail(e) {
     + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
-function renderHallOfFame() {
+// Ältere Einträge ohne Titel-Liste aus den Spielständen nachtragen (falls die Karriere noch gespeichert ist)
+function recoverHallOfFame() {
   const list = loadHallOfFame();
+  const missing = list.filter(e => !e.titleList);
+  if (!missing.length) return list;
+  const saves = [];
+  for (let n = 1; n <= SLOT_COUNT; n++) { const d = readSlot(n); if (d && d.player && d.titles) saves.push(d); }
+  if (S && S.player && S.titles && !saves.includes(S)) saves.push(S);
+  let changed = false;
+  missing.forEach(e => {
+    const d = saves.find(x => x.hofId === e.id)
+      || saves.find(x => x.player.name === e.name && x.player.nation === e.nation && x.player.pos === e.pos && (x.gen || 1) === (e.gen || 1));
+    if (!d) return;
+    const pro = (d.history || []).filter(h => !h.youth && !h.banned);
+    e.assists = pro.reduce((sum, h) => sum + (h.assists || 0), 0);
+    e.titleList = d.titles.slice(); e.awardList = (d.awards || []).slice(); e.caps = d.player.caps || 0;
+    e.coachList = d.coachDone ? d.coachDone.titles.slice() : []; e.ownerList = d.ownerDone ? d.ownerDone.titles.slice() : [];
+    changed = true;
+  });
+  if (changed) try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch (err) { /* ignorieren */ }
+  return list;
+}
+
+function renderHallOfFame() {
+  const list = recoverHallOfFame();
   if (!list.length) return '';
   return `
   <section class="card">
