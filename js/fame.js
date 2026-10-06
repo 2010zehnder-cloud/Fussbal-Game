@@ -89,7 +89,9 @@ function saveHallOfFame() {
   const t = totals();
   const [, title] = legacy();
   const entry = {
-    id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals,
+    id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
+    titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [],
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -99,18 +101,29 @@ function saveHallOfFame() {
   try { localStorage.setItem(HOF_KEY, JSON.stringify(list.slice(0, 50))); } catch (e) { /* ignorieren */ }
 }
 
+// Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
+function hofDetail(e) {
+  if (!e.titleList) return '<p class="muted">Für diese ältere Karriere wurden noch keine Details gespeichert.</p>';
+  const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4><ul class="lines">${list.map(x => `<li>${icon} ${esc(x)}</li>`).join('')}</ul>` : '';
+  const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
+    + block('Titel als Trainer', e.coachList || [], '📋') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
+  return `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
+    + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
+}
+
 function renderHallOfFame() {
   const list = loadHallOfFame();
   if (!list.length) return '';
   return `
   <section class="card">
     <h2>Ruhmeshalle</h2>
-    <p class="muted">Deine besten beendeten Karrieren auf diesem Gerät.</p>
-    <div class="scroll"><table>
-      <thead><tr><th>#</th><th>Spieler</th><th>Status</th><th>Sp</th><th>T</th><th>Titel</th><th>Stä</th></tr></thead>
-      <tbody>${list.slice(0, 10).map((e, i) => `<tr><td>${i + 1}</td>
-        <td class="club">${esc(e.name)}<small class="sub">${esc(e.nation)} · ${e.pos}${e.gen > 1 ? ` · Gen. ${e.gen}` : ''}${e.ballon ? ` · ${e.ballon}× Ballon d'Or` : ''}${e.doping ? ' · 💉' : ''}</small></td>
-        <td>${esc(e.title)}</td><td>${e.games}</td><td>${e.goals}</td><td>${e.titles}${e.coachTitles ? ` +${e.coachTitles}` : ''}</td><td>${e.peak}</td></tr>`).join('')}</tbody>
+    <p class="muted">Deine besten beendeten Karrieren auf diesem Gerät. Tippe auf eine Karriere für alle Titel und Auszeichnungen.</p>
+    <div class="scroll"><table class="hof">
+      <thead><tr><th>#</th><th>Spieler</th><th>Status</th><th>Sp</th><th>T</th><th>V</th><th>Titel</th><th>Stä</th></tr></thead>
+      <tbody>${list.slice(0, 10).map((e, i) => `<tr class="hof-row" data-hof="${i}"><td>${i + 1}</td>
+        <td class="club">▸ ${esc(e.name)}<small class="sub">${esc(e.nation)} · ${e.pos}${e.gen > 1 ? ` · Gen. ${e.gen}` : ''}${e.ballon ? ` · ${e.ballon}× Ballon d'Or` : ''}${e.doping ? ' · 💉' : ''}</small></td>
+        <td>${esc(e.title)}</td><td>${e.games}</td><td>${e.goals}</td><td>${e.assists ?? '–'}</td><td>${e.titles}${e.coachTitles ? ` +${e.coachTitles}` : ''}</td><td>${e.peak}</td></tr>
+        <tr class="hof-detail" hidden><td colspan="8"><div class="hof-box">${hofDetail(e)}</div></td></tr>`).join('')}</tbody>
     </table></div>
   </section>`;
 }

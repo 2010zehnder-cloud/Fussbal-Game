@@ -446,3 +446,13 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .mail header small { color: var(--muted); }
 .mail p { margin: 6px 0; }
 .diary p { max-width: 65ch; }
+
+/* Ruhmeshalle: aufklappbare Karrieren */
+table.hof .hof-row { cursor: pointer; }
+table.hof .hof-row:hover, table.hof .hof-row.open { background: rgba(61,220,132,.10); }
+table.hof .hof-row.open .club { font-weight: 700; }
+table.hof .hof-detail td { white-space: normal; padding: 6px 10px 12px; text-align: left; }
+table.hof .hof-box { position: sticky; left: 10px; width: min(560px, calc(100vw - 84px)); }
+table.hof .hof-box ul.lines { list-style: none; padding: 0; margin: 0; }
+table.hof .hof-box li { padding: 2px 0; }
+table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }

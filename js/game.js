@@ -1809,6 +1809,13 @@ function init() {
   if (sb) sb.addEventListener('click', toggleSound);
   applyTheme();
   app().addEventListener('click', e => {
+    const row = e.target.closest('.hof-row');
+    if (row) {
+      const d = row.nextElementSibling;
+      d.hidden = !d.hidden;
+      row.classList.toggle('open', !d.hidden);
+      return;
+    }
     const b = e.target.closest('[data-h]');
     if (!b) return;
     const fn = handlers[+b.dataset.h];
