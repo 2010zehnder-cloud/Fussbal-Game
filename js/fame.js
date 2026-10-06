@@ -101,10 +101,29 @@ function saveHallOfFame() {
   try { localStorage.setItem(HOF_KEY, JSON.stringify(list.slice(0, 50))); } catch (e) { /* ignorieren */ }
 }
 
+// Gleiche Titel zusammenfassen: „3× Deutscher Meister · 2040/41, 2041/42, 2042/43“
+function groupTitles(list) {
+  const groups = new Map();
+  list.forEach(x => {
+    const m = x.match(/^(.*) \(([^()]+)\)$/) || x.match(/^(.*) (\d{4})$/);
+    const name = m ? m[1] : x;
+    const key = name.replace(/-/g, ' '); // „Champions League-Sieger“ (alt) = „Champions-League-Sieger“
+    if (!groups.has(key)) groups.set(key, { name, years: [], n: 0 });
+    const g = groups.get(key);
+    g.name = name; // neueste Schreibweise anzeigen
+    g.n++;
+    if (m) g.years.push(m[2]);
+  });
+  return [...groups.values()];
+}
+function titleLines(list, icon) {
+  return `<ul class="lines">${groupTitles(list).map(g => `<li>${icon} <b>${g.n > 1 ? `${g.n}× ` : ''}${esc(g.name)}</b>${g.years.length ? ` <span class="muted">${esc(g.years.join(', '))}</span>` : ''}</li>`).join('')}</ul>`;
+}
+
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
 function hofDetail(e) {
   if (!e.titleList) return '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
-  const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4><ul class="lines">${list.map(x => `<li>${icon} ${esc(x)}</li>`).join('')}</ul>` : '';
+  const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + block('Titel als Trainer', e.coachList || [], '📋') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`

@@ -1675,8 +1675,8 @@ function renderHistory() {
         <thead><tr><th>Saison</th><th>Alter</th><th>Verein</th><th>Sp</th><th>T</th><th>V</th><th>Note</th><th>Stä</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
-      ${S.titles.length ? `<h3>Titel (${S.titles.length})</h3><ul class="lines">${S.titles.map(x => `<li>🏆 ${esc(x)}</li>`).join('')}</ul>` : ''}
-      ${S.awards.length ? `<h3>Auszeichnungen (${S.awards.length})</h3><ul class="lines">${S.awards.map(x => `<li>⭐ ${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${S.titles.length ? `<h3>Titel (${S.titles.length})</h3>${titleLines(S.titles, '🏆')}` : ''}
+      ${S.awards.length ? `<h3>Auszeichnungen (${S.awards.length})</h3>${titleLines(S.awards, '⭐')}` : ''}
       ${S.milestones && S.milestones.length ? `<h3>Meilensteine (${S.milestones.length})</h3><ul class="lines">${S.milestones.map(m => `<li>🎖️ ${esc(m.text)} (${seasonLabel(m.year)})</li>`).join('')}</ul>` : ''}
     </details>
   </section>`;
