@@ -139,7 +139,7 @@ function newGame(name, nationName, pos, number, heir = null, difficulty = 'norma
     // Die nächste Generation erbt Vermögen, Besitz, Bekanntheit und etwas Talent
     Object.assign(S, {
       year: heir.year, lastTables: heir.lastTables, money: heir.money, owned: heir.owned,
-      dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName,
+      dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName, parentLegacy: (heir.parentLegacy || []).map(x => ({ ...x, seen: false })),
     });
     S.player.popularity = clamp(20 + heir.fame, 0, 100);
     if (heir.talent >= 3) S.player.rating += 2;
@@ -169,7 +169,7 @@ function startHeir(child) {
     money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
-    parentState: S, slot: S.slot, diff: S.diff,
+    parentState: S, parentNumber: S.player.number, slot: S.slot, diff: S.diff, parentLegacy: [...(S.parentLegacy || []).filter(x => x.parent !== S.player.name), ...parentLegacy()],
     family: {
       parents: [
         { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
@@ -293,7 +293,7 @@ function startSeason() {
   S.current = null;
   S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   if (!S.clubsPlayed.includes(S.clubId)) S.clubsPlayed.push(S.clubId);
-  if (!S.youth) ensureTeam();
+  if (!S.youth) { ensureTeam(); legacyArrival(); }
 }
 
 function europeFor(club) {
@@ -498,7 +498,7 @@ function setupMatch() {
     type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
     drama: !!drama,
     situation: sceneIntro(a, b) + (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
-      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + scene.situation,
+      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
   maybeDerby(S.current, L);
@@ -575,7 +575,7 @@ function resolveMatch(i) {
     if (us > them) { S.rival.wins++; text += ` Du gewinnst das Duell gegen ${S.rival.name}!`; }
     else if (us < them) { S.rival.losses++; text += ` ${S.rival.name} grinst nach dem Spiel in die Kameras.`; }
   }
-  text += afterMatch(c, us, them, o);
+  text += afterMatch(c, us, them, o) + shirtSwap(c, us, them);
   const success = ['goal', 'assist', 'shoot'].includes(o.kind) ? us > c.a : ['stop', 'save', 'safe'].includes(o.kind) ? them === c.b : false;
   text += derbyResult(c, us, them) + countPerk(o, success);
   c.result = `<p>${text}</p>` + mod(eff);
@@ -1019,6 +1019,7 @@ function openTransfer() {
 }
 
 function acceptOffer(o) {
+  recordDecision(o);
   if (o) {
     if (o.loan) S.loan = { parent: S.clubId };
     else {
@@ -1230,7 +1231,7 @@ function renderCreate() {
     <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller" value="${h ? esc(`${h.childName} ${h.surname}`) : ''}"></label>
     <label>Nationalität<select id="f-nation"${dl ? ' disabled' : ''}>${natOpts}</select></label>
     <label>Position<select id="f-pos"${dl ? ' disabled' : ''}>${posOpts}</select></label>
-    <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${randInt(7, 30)}"></label>
+    <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${h && h.parentNumber ? h.parentNumber : randInt(7, 30)}"></label>${h && h.parentNumber ? `<p class="muted">Vorschlag: die #${h.parentNumber} von ${esc(h.parentName)}.</p>` : ''}
     ${h || dl ? '' : `<label>Startszenario<select id="f-origin">${Object.entries(ORIGINS).map(([k, o]) => `<option value="${k}">${o.name} – ${o.desc}</option>`).join('')}</select></label>`}
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
     <p class="err" id="f-err"></p>
@@ -1559,7 +1560,7 @@ function renderLife() {
         ${actBtn('date', 'Date ausgehen', money(dateCost), () => 'Ein schöner Abend zu zweit.' + mod({ rel: randInt(8, 15), money: -dateCost, form: 1 }))}
         ${actBtn('gift', 'Teures Geschenk', money(giftCost), () => `${pa.name} freut sich riesig.` + mod({ rel: randInt(14, 20), money: -giftCost }))}
         ${l.married ? '' : actBtn('propose', 'Heiratsantrag', `Chance ca. ${Math.round(clamp(pa.rel / 110, 0.05, 0.9) * 100)} %`, () => {
-          if (chance(clamp(pa.rel / 110, 0.05, 0.9))) { l.married = true; return `${pa.name} sagt JA! 💍 Ihr seid jetzt verheiratet.` + mod({ rel: 15, popularity: 4, money: -Math.max(0.02, Math.min(1, S.money * 0.05)) }); }
+          if (chance(clamp(pa.rel / 110, 0.05, 0.9))) { l.married = true; addPhoto('💍', `Hochzeit mit ${pa.name}`); return `${pa.name} sagt JA! 💍 Ihr seid jetzt verheiratet.` + mod({ rel: 15, popularity: 4, money: -Math.max(0.02, Math.min(1, S.money * 0.05)) }); }
           return `${pa.name} ist noch nicht so weit. Die Stimmung ist gedrückt.` + mod({ rel: -15 });
         })}
         ${l.children.length < 6 ? actBtn('family', 'Familie planen', pa.rel >= 40 ? 'Kinderwunsch' : 'Beziehung zu schwach', () => {
@@ -1772,8 +1773,14 @@ function renderRetired() {
     <p class="lead">${esc(p.name)} beendet die Karriere mit ${S.retireAge || p.age} Jahren. ${esc(S.retireReason || '')}</p>
     <p>${esc(text)}</p>
   </section>
+  ${renderFarewell()}
   ${renderAfterCareer()}
+  ${renderCareerCard()}
+  ${renderTrophyCabinet()}
   ${renderLegends()}
+  ${renderWhatIf()}
+  ${renderAlbum()}
+  ${renderShirts()}
   ${renderDiary()}
   ${S.after && !S.ownerDone ? renderClubPurchase() : ''}
   ${renderCoachHistory()}

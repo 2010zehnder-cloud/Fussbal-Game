@@ -98,10 +98,10 @@ function continueFinal() {
   const res = S.seasonEnd;
   if (f.us > f.them) {
     grantFinalTitle(f, `Finale gegen ${f.opp} mit ${f.us}:${f.them} gewonnen`);
-    f.verdict = `🏆 ${f.title}! Ihr gewinnt das Finale ${f.us}:${f.them}!`;
+    f.verdict = `🏆 ${f.title}! Ihr gewinnt das Finale ${f.us}:${f.them}!${shirtSwapFinal(f)}`;
     setHeadline(f.kind === 'nation' ? `${lastName()} MACHT ${S.player.nation.toUpperCase()} ZUM ${f.title.split(' ')[0].toUpperCase()}!` : `FINAL-HELD ${lastName()}! ${f.title.toUpperCase()}!`);
   } else if (f.us < f.them) {
-    f.verdict = `Ihr verliert das Finale ${f.us}:${f.them}. Bittere Tränen.`;
+    f.verdict = `Ihr verliert das Finale ${f.us}:${f.them}. Bittere Tränen.${shirtSwapFinal(f)}`;
     res.lines.push(`Finale gegen ${f.opp} mit ${f.us}:${f.them} verloren.`);
     queueFx('sad');
   } else {

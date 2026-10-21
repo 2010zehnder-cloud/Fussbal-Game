@@ -64,6 +64,14 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Derbys** wie Revierderby, El Clásico oder Old Firm mit besonderer Stimmung und Schlagzeilen.
 - **Posteingang** mit Briefen von Fans, Familie, Berater, Mitspielern und Rivale – mit Antwortmöglichkeiten.
 - **Lebensgeschichte:** automatisch geschriebenes Karriere-Tagebuch.
+- **Trophäenschrank** mit allen Pokalen und Auszeichnungen, gleiche Titel zusammengefasst (z. B. 3× Deutscher Meister mit Jahren).
+- **Trikot-Sammlung:** Nach großen Spielen, Finals und Rivalen-Duellen tauschst du Trikots mit Stars.
+- **Fotoalbum** mit den wichtigsten Momenten: erster Vertrag, Wechsel, Titel, Hochzeit, Kinder, Meilensteine.
+- **Abschiedsspiel** zum Karriereende: du und deine alten Mitspieler gegen eine Weltauswahl, drei spielbare Szenen.
+- **Erbe der Eltern:** Statue und gesperrte Rückennummer – dein Kind trifft beim Verein oder als Gegner darauf und kann die Nummer übernehmen.
+- **Spielerkarte** im Sammelkarten-Stil, als Bild speicherbar – auch für jede Karriere in der Ruhmeshalle.
+- **Was wäre wenn …:** Zum Karriereende ein Gedankenspiel, wie es bei der wichtigsten verpassten Wechselchance gelaufen wäre.
+- **Ruhmeshalle** mit Vorlagen und aufklappbaren Titeln, Auszeichnungen und Spielerkarte pro Karriere.
 - **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
 
@@ -87,6 +95,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
 - `js/extras.js` – Live-Finals, Drama am letzten Spieltag, Torjubel, Kindheitsfreund, Tagesherausforderung, Schlagzeilen, Rückblick, Schnellmodus, Rekorde
 - `js/depth.js` – Spezialfähigkeiten, Derbys, Posteingang, Lebensgeschichte
+- `js/memories.js` – Trophäenschrank, Trikot-Sammlung, Fotoalbum, Abschiedsspiel, Erbe der Eltern, Spielerkarte, Was wäre wenn
 - `js/modes.js` – Startszenarien, Saisonverläufe, Spielstile, Gegenspieler, Pokal-Drama, Geschichten, Herausforderungen, Zufallskarriere
 - `js/variety.js` – Geschichten, Karrierephasen, Saison-Themen, Weltereignisse, seltene Momente, Szenen-Abwechslung
 - `js/career.js` – Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha, Gericht

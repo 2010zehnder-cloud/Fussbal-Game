@@ -77,7 +77,7 @@ function renderLegends() {
     <h2>Vereinslegende</h2>
     ${ls.map(l => `<div class="legend">${crest(l.club)}<div><strong>${esc(l.club)}</strong>
       <small>${l.seasons} Saisons · ${l.games} Spiele · ${l.goals} Tore · ${l.titles} Titel</small>
-      <ul class="lines">${l.honors.map(h => `<li>${esc(h)}</li>`).join('')}</ul></div></div>`).join('')}
+      <ul class="lines">${l.honors.map(h => `<li>${h.startsWith('Statue') ? '🗿' : h.startsWith('Rückennummer') ? '🔢' : '👋'} ${esc(h)}</li>`).join('')}</ul></div></div>`).join('')}
   </section>`;
 }
 
@@ -91,7 +91,7 @@ function saveHallOfFame() {
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
     titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
-    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [],
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -122,11 +122,11 @@ function titleLines(list, icon) {
 
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
 function hofDetail(e) {
-  if (!e.titleList) return '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
+  if (!e.titleList) return renderCard(cardFromEntry(e)) + '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
   const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + block('Titel als Trainer', e.coachList || [], '📋') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
-  return `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
+  return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
     + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 

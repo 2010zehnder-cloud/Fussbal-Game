@@ -308,8 +308,8 @@ const EVENTS = [
     cond: () => life().partner && !life().married && S.player.age >= 22,
     text: () => `Du und ${life().partner.name} wollt heiraten. Wie groß soll die Feier werden?`,
     options: [
-      { label: 'Riesige Party auf Mallorca', run: () => { life().married = true; return 'Die Bilder gehen um die Welt. Unvergesslich – und teuer.' + mod({ popularity: 5, money: -Math.max(0.03, Math.min(1.5, S.money * 0.1)) }); } },
-      { label: 'Kleine Feier mit Familie', run: () => { life().married = true; return 'Ein wunderschöner Tag im kleinen Kreis.' + mod({ form: 2 }); } },
+      { label: 'Riesige Party auf Mallorca', run: () => { life().married = true; addPhoto('💍', `Hochzeit auf Mallorca mit ${life().partner ? life().partner.name : 'deiner großen Liebe'}`); return 'Die Bilder gehen um die Welt. Unvergesslich – und teuer.' + mod({ popularity: 5, money: -Math.max(0.03, Math.min(1.5, S.money * 0.1)) }); } },
+      { label: 'Kleine Feier mit Familie', run: () => { life().married = true; addPhoto('💍', `Hochzeit im kleinen Kreis mit ${life().partner ? life().partner.name : 'deiner großen Liebe'}`); return 'Ein wunderschöner Tag im kleinen Kreis.' + mod({ form: 2 }); } },
       { label: 'Noch warten', run: () => 'Ihr lasst euch noch Zeit.' + mod({}) },
     ],
   },
