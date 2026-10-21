@@ -6815,10 +6815,32 @@ function showCardImage(d) {
   el.className = 'card-overlay';
   el.innerHTML = `<div class="co-box"><img src="${url}" alt="Spielerkarte von ${esc(d.name)}">
     <p>Bild gedrückt halten oder Rechtsklick → „Bild speichern“.</p>
-    <div class="actions"><a class="btn primary small" download="spielerkarte-${esc(d.name.replace(/\s+/g, '-').toLowerCase())}.png" href="${url}">Herunterladen</a>
-    <button class="btn small co-close">Schließen</button></div></div>`;
-  el.addEventListener('click', e => { if (e.target === el || e.target.closest('.co-close')) el.remove(); });
+    <div class="actions"><button class="btn primary small co-save">Herunterladen</button>
+    <button class="btn small co-close">Schließen</button></div><p class="muted co-msg"></p></div>`;
+  const filename = `spielerkarte-${d.name.replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g, '-').toLowerCase()}.png`;
+  el.addEventListener('click', e => {
+    if (e.target === el || e.target.closest('.co-close')) el.remove();
+    else if (e.target.closest('.co-save')) saveCardFile(url, filename, el.querySelector('.co-msg'));
+  });
   document.body.appendChild(el);
+}
+
+// Speichern: auf claude.ai über die Download-Funktion der Seite, sonst über einen normalen Download-Link
+async function saveCardFile(url, filename, msg) {
+  const bin = atob(url.split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'image/png' });
+  const dl = window.claude && window.claude.use ? await window.claude.use('downloads').catch(() => null) : null;
+  if (dl) {
+    try { await dl.save({ filename, data: blob }); msg.textContent = 'Gespeichert!'; }
+    catch (e) { msg.textContent = e && e.code === 'declined' ? 'Abgebrochen.' : 'Speichern geht hier nicht – halte das Bild gedrückt oder nutze Rechtsklick.'; }
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
 // ---------- Was wäre wenn … ----------
