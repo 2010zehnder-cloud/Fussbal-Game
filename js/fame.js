@@ -215,6 +215,7 @@ function resolveShootout(dir) {
     S.player.popularity = clamp(S.player.popularity - 3, 0, 100);
   }
   so.done = ok ? 'won' : 'lost';
+  if (so.kind === 'nation') bracketResult('Finale', ok, null, null, true);
 }
 
 function renderShootout() {

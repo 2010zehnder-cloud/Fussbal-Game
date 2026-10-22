@@ -96,6 +96,8 @@ function continueFinal() {
   simChunk(f, FINAL_MINUTES[FINAL_MINUTES.length - 1], 90);
   f.done = true;
   const res = S.seasonEnd;
+  if (f.semi) { semiDone(f); return; }
+  if (f.kind === 'nation') bracketResult('Finale', f.us > f.them ? true : f.us < f.them ? false : null, f.us, f.them);
   if (f.us > f.them) {
     grantFinalTitle(f, `Finale gegen ${f.opp} mit ${f.us}:${f.them} gewonnen`);
     f.verdict = `🏆 ${f.title}! Ihr gewinnt das Finale ${f.us}:${f.them}!${shirtSwapFinal(f)}`;

@@ -139,7 +139,7 @@ function newGame(name, nationName, pos, number, heir = null, difficulty = 'norma
     // Die nächste Generation erbt Vermögen, Besitz, Bekanntheit und etwas Talent
     Object.assign(S, {
       year: heir.year, lastTables: heir.lastTables, money: heir.money, owned: heir.owned,
-      dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName, parentLegacy: (heir.parentLegacy || []).map(x => ({ ...x, seen: false })),
+      dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName, parentLegacy: (heir.parentLegacy || []).map(x => ({ ...x, seen: false })), parentSchool: heir.parentSchool || null,
     });
     S.player.popularity = clamp(20 + heir.fame, 0, 100);
     if (heir.talent >= 3) S.player.rating += 2;
@@ -169,7 +169,7 @@ function startHeir(child) {
     money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
-    parentState: S, parentNumber: S.player.number, slot: S.slot, diff: S.diff, parentLegacy: [...(S.parentLegacy || []).filter(x => x.parent !== S.player.name), ...parentLegacy()],
+    parentState: S, parentNumber: S.player.number, parentSchool: S.school || S.parentSchool || null, slot: S.slot, diff: S.diff, parentLegacy: [...(S.parentLegacy || []).filter(x => x.parent !== S.player.name), ...parentLegacy()],
     family: {
       parents: [
         { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
@@ -498,7 +498,7 @@ function setupMatch() {
     type: 'match', ctx: {}, result: null, comp, opp, home, minute, a, b, rivalMatch,
     drama: !!drama,
     situation: sceneIntro(a, b) + (drama ? drama.text : '') + (comp === 'Champions League' ? '🎶 Die Champions-League-Hymne ist verklungen, das Flutlicht strahlt. ' : '')
-      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + scene.situation,
+      + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + schoolMention(opp) + chantIntro() + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
   maybeDerby(S.current, L);
@@ -578,6 +578,7 @@ function resolveMatch(i) {
   text += afterMatch(c, us, them, o) + shirtSwap(c, us, them);
   const success = ['goal', 'assist', 'shoot'].includes(o.kind) ? us > c.a : ['stop', 'save', 'safe'].includes(o.kind) ? them === c.b : false;
   text += derbyResult(c, us, them) + countPerk(o, success);
+  noteGoal(c, o, success, text);
   c.result = `<p>${text}</p>` + mod(eff);
 }
 
@@ -806,6 +807,8 @@ function endSeason() {
   themeSeasonEnd(res);
   worldSeasonEvents(res);
   checkMilestones(res);
+  updateChant(res);
+  goalOfMonth(res);
   mailSeason(res);
   S.headline = seasonHeadline(res);
   updateRecords(res);
@@ -917,21 +920,24 @@ function tournament(res) {
   }
   const pool = NATIONS.filter(n => n.name !== nat.name && (wm || n.conf === nat.conf)).map(n => ({ name: n.name, str: n.str }));
   const rounds = wm ? ['Gruppenphase', 'Sechzehntelfinale', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'] : ['Gruppenphase', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'];
-  const r = knockout(nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0), rounds, pool, 5, true);
-  const games = starter ? 2 + r.played : randInt(1, 1 + r.played);
+  const ownStr = nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0);
+  // Turnierbaum: Gruppenphase und frühe K.-o.-Runden werden simuliert, Halbfinale und Finale live gespielt
+  const br = simTournament(ownStr, nat.name, pool, rounds);
+  out.bracket = br;
+  const played = 3 + br.ko.filter(m => !m.live).length;
+  const games = starter ? played : randInt(1, played);
   const rate = POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4);
   const goals = Math.round(games * rate * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;
   out.lines.push(`Du machst ${games} Spiele${goals ? ` und schießt ${goals} Tor${goals > 1 ? 'e' : ''}` : ''}.`);
-  if (queueLiveFinal(r, 'nation', `${title} ${summer}`, name, nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0))) {
-    out.lines.push(`🏟️ ${nat.name} steht im Finale gegen ${r.lostTo}! Das Finale spielst du live.`);
-  } else if (r.won) {
-    out.lines.push(`🏆 ${nat.name} ist ${title}! Finale gegen ${r.beat} gewonnen!`);
-    S.titles.push(`${title} ${summer}`);
-    p.popularity = clamp(p.popularity + 12, 0, 100);
-    out.won = true;
+  out.lines.push(`Gruppenphase: Platz ${br.group.pos} mit ${br.group.rows.find(r => r.me).pts} Punkten.`);
+  const semi = br.ko.find(m => m.live);
+  if (semi) {
+    queueNationSemi(semi, title, summer, name, ownStr);
+    out.lines.push(`🏟️ ${nat.name} steht im Halbfinale gegen ${semi.opp}! Halbfinale und Finale spielst du live.`);
   } else {
-    out.lines.push(`Aus in der Runde „${r.reached}“ gegen ${r.lostTo}.`);
+    const last = br.ko[br.ko.length - 1];
+    out.lines.push(last ? `Aus in der Runde „${last.round}“ gegen ${last.opp} (${last.us}:${last.them}${last.pens ? ', im Elfmeterschießen' : ''}).` : `Aus in der Gruppenphase.`);
   }
   return out;
 }
@@ -942,6 +948,7 @@ function openTransfer() {
   const msgs = [];
   if (S.ban) { S.phase = 'banned'; return; }
   if (p.age >= 41) { retire('Mit 41 Jahren ist Schluss – dein Körper macht nicht mehr mit.'); return; }
+  if (S.lastDance) { S.lastDance = false; retire('Nach deinem Comeback ist endgültig Schluss – diesmal für immer.'); return; }
   if (S.loan) {
     msgs.push(`Deine Leihe ist beendet. Du kehrst zu ${S.loan.parent} zurück.`);
     S.clubId = S.loan.parent;
@@ -1020,6 +1027,7 @@ function openTransfer() {
 
 function acceptOffer(o) {
   recordDecision(o);
+  if (o && !o.loan && o.club !== S.clubId) chantTransfer(S.clubId, o.club);
   if (o) {
     if (o.loan) S.loan = { parent: S.clubId };
     else {
@@ -1430,7 +1438,8 @@ function renderSeasonEnd() {
     <h3>Das Wichtigste</h3>
     <ul class="lines big">${highlights.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${r.milestones && r.milestones.length ? `<ul class="lines big">${r.milestones.map(m => `<li>🎖️ ${esc(m)}</li>`).join('')}</ul>` : ''}
-    ${t ? `<h3>Sommer ${t.summer}: ${esc(t.name)}</h3><ul class="lines">${t.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+    ${t ? `<h3>Sommer ${t.summer}: ${esc(t.name)}</h3><ul class="lines">${t.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>${renderBracket(t.bracket)}` : ''}
+    ${renderGoalVote(r)}
     <p class="moneyline">💰 Vermögen jetzt: <b>${money(S.money)}</b>${r.finance ? ` (${r.finance.total >= 0 ? '+' : ''}${money(r.finance.total)} diese Saison)` : ''}</p>
     <details class="more"><summary>Alle Details anzeigen</summary>
       ${others.length ? `<h3>Weitere Nachrichten</h3><ul class="lines">${others.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
@@ -1775,8 +1784,12 @@ function renderRetired() {
   </section>
   ${renderFarewell()}
   ${renderAfterCareer()}
+  ${renderComeback()}
+  ${renderSchool()}
+  ${renderDoc()}
   ${renderCareerCard()}
   ${renderTrophyCabinet()}
+  ${renderChant()}
   ${renderLegends()}
   ${renderWhatIf()}
   ${renderAlbum()}

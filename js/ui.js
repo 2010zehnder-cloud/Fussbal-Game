@@ -28,7 +28,7 @@ function renderHub() {
   else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
   else if (uiTab === 'mail') content = renderInbox();
-  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
+  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderChant() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }

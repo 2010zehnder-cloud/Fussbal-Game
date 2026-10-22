@@ -504,3 +504,39 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .card-overlay .co-box { background: var(--card); color: var(--text); border-radius: 14px; padding: 14px; max-width: 360px; width: 100%; text-align: center; }
 .card-overlay img { width: 100%; height: auto; border-radius: 10px; }
 .card-overlay .actions { justify-content: center; }
+
+/* Turnierbaum */
+.bracket { display: flex; gap: 10px; overflow-x: auto; padding: 6px 0 10px; margin: 6px 0 10px; align-items: center; }
+.br-col { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; min-width: 120px; position: relative; }
+.br-col + .br-col::before { content: ''; position: absolute; left: -10px; top: 50%; width: 10px; border-top: 2px solid var(--line); }
+.br-round { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.br-group { font-size: 12px; border-collapse: collapse; }
+.br-group td { padding: 2px 4px; }
+.br-group tr.through td:first-child { color: var(--accent); font-weight: 700; }
+.br-group tr.me { font-weight: 700; background: rgba(61,220,132,.12); }
+.br-col > small { font-size: 11px; max-width: 160px; }
+.br-match { display: grid; gap: 2px; padding: 6px 8px; border-radius: 8px; background: var(--card2); border: 2px solid var(--line); font-size: 12px; text-align: center; }
+.br-match b { font-size: 16px; }
+.br-match.win { border-color: var(--accent); }
+.br-match.loss { border-color: var(--red); }
+.br-match.empty { opacity: .5; border-style: dashed; }
+
+/* Tor des Monats */
+.votes { display: grid; gap: 6px; margin: 8px 0; }
+.vote { display: grid; grid-template-columns: minmax(90px, 1fr) 2fr auto; gap: 8px; align-items: center; font-size: 14px; }
+.vote .vbar { height: 10px; border-radius: 6px; background: var(--card2); overflow: hidden; }
+.vote .vbar i { display: block; height: 100%; background: var(--muted); }
+.vote.me { font-weight: 700; }
+.vote.me .vbar i { background: var(--accent); }
+
+/* Fangesang */
+.lines.chant li { font-style: italic; }
+
+/* Doku */
+.doc-poster { text-align: center; padding: 18px 12px; border-radius: 12px; margin-bottom: 12px; color: #f4efe2;
+  background: radial-gradient(circle at 50% 20%, #3a3a3a, #0b0b0b); }
+.doc-poster h2 { margin: 6px 0; font-family: var(--font-display); font-size: 28px; color: #f4efe2; }
+.doc-poster small { letter-spacing: 2px; font-size: 11px; opacity: .75; }
+.doc-ch { padding-left: 18px; margin: 0; }
+.doc-ch li { margin-bottom: 10px; }
+.doc-ch p { margin: 2px 0 0; }

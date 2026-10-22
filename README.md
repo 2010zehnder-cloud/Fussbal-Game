@@ -71,6 +71,12 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Erbe der Eltern:** Statue und gesperrte Rückennummer – dein Kind trifft beim Verein oder als Gegner darauf und kann die Nummer übernehmen.
 - **Spielerkarte** im Sammelkarten-Stil, als Bild speicherbar – auch für jede Karriere in der Ruhmeshalle.
 - **Was wäre wenn …:** Zum Karriereende ein Gedankenspiel, wie es bei der wichtigsten verpassten Wechselchance gelaufen wäre.
+- **WM und EM mit Turnierbaum:** Gruppentabelle und K.-o.-Runden als Turnierbaum, Halbfinale und Finale live.
+- **Tor des Monats:** Deine schönsten Treffer werden nominiert – mit Abstimmung und Foto im Album.
+- **Fangesang**, der mit deinen Erfolgen neue Strophen bekommt – bei Wechsel oder Skandal wird er umgedichtet.
+- **Comeback aus dem Ruhestand** für eine letzte Saison beim Heimatverein oder in der MLS.
+- **Eigene Fußballschule:** Ihre Talente werden Profis und begegnen deinem Kind als Mitspieler oder Gegner.
+- **Doku über deine Karriere** mit Filmtitel und Kapiteln wie Aufstieg, Absturz und Comeback.
 - **Ruhmeshalle** mit Vorlagen und aufklappbaren Titeln, Auszeichnungen und Spielerkarte pro Karriere.
 - **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.
 - **Gehalt & Vermögen:** Jeder Vertrag hat ein Jahresgehalt und eine Laufzeit. Dazu kommen Handgeld, Prämien und Werbeverträge (45 % Steuern). Von deinem Vermögen kaufst du Autos, Häuser, eine Yacht oder einen Privatjet, gründest eine Stiftung oder legst Geld in Fonds an. Achtung: Besitz kostet Unterhalt.
@@ -95,6 +101,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
 - `js/extras.js` – Live-Finals, Drama am letzten Spieltag, Torjubel, Kindheitsfreund, Tagesherausforderung, Schlagzeilen, Rückblick, Schnellmodus, Rekorde
 - `js/depth.js` – Spezialfähigkeiten, Derbys, Posteingang, Lebensgeschichte
+- `js/encore.js` – Turnierbaum, Tor des Monats, Fangesang, Comeback, Fußballschule, Karriere-Doku
 - `js/memories.js` – Trophäenschrank, Trikot-Sammlung, Fotoalbum, Abschiedsspiel, Erbe der Eltern, Spielerkarte, Was wäre wenn
 - `js/modes.js` – Startszenarien, Saisonverläufe, Spielstile, Gegenspieler, Pokal-Drama, Geschichten, Herausforderungen, Zufallskarriere
 - `js/variety.js` – Geschichten, Karrierephasen, Saison-Themen, Weltereignisse, seltene Momente, Szenen-Abwechslung
