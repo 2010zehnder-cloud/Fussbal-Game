@@ -16,6 +16,79 @@ function trophyLook(name) {
   return ['🏆', 'bronze'];
 }
 
+// Kleine Pokal-Bilder im Emoji-Stil (eigene Zeichnungen, keine Original-Logos)
+const TROPHY_DEFS = '<defs><linearGradient id="tg-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".45" stop-color="#e6b83f"/><stop offset="1" stop-color="#94660f"/></linearGradient>'
+  + '<linearGradient id="tg-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#c3cbd4"/><stop offset="1" stop-color="#6f7984"/></linearGradient></defs>';
+const BASE = '<rect x="21" y="53" width="22" height="8" rx="1.5" fill="#3a3f47"/><rect x="24" y="49" width="16" height="5" rx="1" fill="#565d67"/>';
+const goblet = m => `${BASE}<path d="M29 49 L30.5 39 H33.5 L35 49 Z" fill="url(#tg-${m})"/>
+  <path d="M18 14 C8 13 9 29 21 27 M46 14 C56 13 55 29 43 27" fill="none" stroke="url(#tg-${m})" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M16 9 H48 C48 27 41 38 32 39 C23 38 16 27 16 9 Z" fill="url(#tg-${m})" stroke="#00000033"/>
+  <ellipse cx="32" cy="9" rx="16" ry="2.6" fill="#fff" opacity=".55"/>`;
+const TROPHY_SVG = {
+  bigears: `${BASE}<path d="M28.5 49 L30 39 H34 L35.5 49 Z" fill="url(#tg-silver)"/>
+    <path d="M19 13 C2 9 2 37 25 33 M45 13 C62 9 62 37 39 33" fill="none" stroke="url(#tg-silver)" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M18 9 H46 C46 26 40 37 32 39 C24 37 18 26 18 9 Z" fill="url(#tg-silver)" stroke="#00000033"/>
+    <ellipse cx="32" cy="9" rx="14" ry="2.4" fill="#fff" opacity=".7"/>`,
+  shale: (() => {
+    let gems = '';
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; gems += `<circle cx="${(32 + Math.cos(a) * 22).toFixed(1)}" cy="${(32 + Math.sin(a) * 22).toFixed(1)}" r="2.2" fill="#3f8f4f"/>`; }
+    return `<circle cx="32" cy="32" r="28" fill="url(#tg-silver)" stroke="#6f7984" stroke-width="1.5"/>
+      <circle cx="32" cy="32" r="18" fill="none" stroke="#8a939d" stroke-width="1.5"/>${gems}
+      <circle cx="32" cy="32" r="10" fill="url(#tg-gold)" stroke="#94660f"/><circle cx="28" cy="27" r="9" fill="#fff" opacity=".25"/>`;
+  })(),
+  worldcup: `<rect x="21" y="49" width="22" height="12" rx="2" fill="url(#tg-gold)"/><rect x="21" y="52" width="22" height="2.2" fill="#1f7a3d"/><rect x="21" y="56.5" width="22" height="2.2" fill="#1f7a3d"/>
+    <path d="M24 49 C24 40 19 33 20 25 C21 17 26 21 32 21 C38 21 43 17 44 25 C45 33 40 40 40 49 Z" fill="url(#tg-gold)" stroke="#94660f80"/>
+    <path d="M26 46 C31 38 22 32 28 25 M38 46 C33 38 42 32 36 25" fill="none" stroke="#94660f" stroke-width="1.6"/>
+    <circle cx="32" cy="15" r="10" fill="url(#tg-gold)" stroke="#94660f"/><path d="M23 13 C28 17 36 17 41 13 M32 5 C28 10 28 20 32 25" fill="none" stroke="#94660f" stroke-width="1.2"/>`,
+  euro: m => `${BASE}<rect x="29" y="44" width="6" height="6" fill="url(#tg-${m})"/>
+    <path d="M21 6 H43 L41 12 C41 26 39 40 32 44 C25 40 23 26 23 12 Z" fill="url(#tg-${m})" stroke="#00000033"/>
+    <path d="M23 12 C15 12 15 24 24 26 M41 12 C49 12 49 24 40 26" fill="none" stroke="url(#tg-${m})" stroke-width="2.5"/>
+    <ellipse cx="32" cy="6" rx="11" ry="2" fill="#fff" opacity=".6"/>`,
+  europa: `${BASE}<path d="M24 5 H40 C40 12 47 18 47 28 C47 41 39 47 32 47 C25 47 17 41 17 28 C17 18 24 12 24 5 Z" fill="url(#tg-silver)" stroke="#00000033"/>
+    <path d="M22 22 C28 26 36 26 42 22" fill="none" stroke="#8a939d" stroke-width="1.5"/><ellipse cx="32" cy="5" rx="8" ry="1.8" fill="#fff" opacity=".7"/>`,
+  ballon: `${BASE}<path d="M27 49 L29 42 H35 L37 49 Z" fill="url(#tg-gold)"/>
+    <circle cx="32" cy="24" r="18" fill="url(#tg-gold)" stroke="#94660f"/>
+    <path d="M32 16 L39 21 L36.5 29 H27.5 L25 21 Z" fill="#b8860b" opacity=".8"/>
+    <path d="M32 16 V7 M39 21 L48 18 M36.5 29 L42 37 M27.5 29 L22 37 M25 21 L16 18" stroke="#94660f" stroke-width="1.4"/>`,
+  boot: `<rect x="8" y="55" width="48" height="6" rx="1.5" fill="#3a3f47"/>
+    <path d="M8 44 L10 24 C10 19 14 16 19 16 H27 C29 23 34 28 43 30 C51 32 57 36 57 42 V45 H8 Z" fill="url(#tg-gold)" stroke="#94660f"/>
+    <path d="M7 45 H58 V48 H7 Z" fill="#6b4a0a"/>
+    <rect x="11" y="48" width="4" height="4" fill="#6b4a0a"/><rect x="20" y="48" width="4" height="4" fill="#6b4a0a"/><rect x="38" y="48" width="4" height="4" fill="#6b4a0a"/><rect x="49" y="48" width="4" height="4" fill="#6b4a0a"/>
+    <path d="M29 24 L33 21 M32 27 L36 24 M35 29 L39 26" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+    <path d="M12 38 C24 36 40 38 54 40" fill="none" stroke="#94660f" stroke-width="1.2"/>`,
+  glove: `<rect x="22" y="50" width="22" height="11" rx="3" fill="#3a3f47"/>
+    <rect x="20" y="9" width="6" height="22" rx="3" fill="url(#tg-gold)"/><rect x="27" y="5" width="6" height="25" rx="3" fill="url(#tg-gold)"/>
+    <rect x="34" y="6" width="6" height="24" rx="3" fill="url(#tg-gold)"/><rect x="41" y="11" width="5.5" height="20" rx="2.75" fill="url(#tg-gold)"/>
+    <path d="M20 24 H46.5 V42 C46.5 48 41 51 33 51 C25 51 20 47 20 41 Z" fill="url(#tg-gold)" stroke="#94660f"/>
+    <path d="M21 34 C14 30 11 22 15 20 C18 19 21 26 24 30 Z" fill="url(#tg-gold)" stroke="#94660f"/>`,
+  medal: m => `<path d="M20 3 H30 L36 24 H26 Z" fill="#c8342f"/><path d="M44 3 H34 L28 24 H38 Z" fill="#2f5fc8"/>
+    <circle cx="32" cy="40" r="17" fill="url(#tg-${m})" stroke="#00000040"/><circle cx="32" cy="40" r="12" fill="none" stroke="#00000030"/>
+    <path d="M32 31 L34.6 37.2 L41.2 37.6 L36.1 41.8 L37.8 48.2 L32 44.6 L26.2 48.2 L27.9 41.8 L22.8 37.6 L29.4 37.2 Z" fill="#fff" opacity=".85"/>`,
+};
+
+function trophyType(name) {
+  if (/^Ballon d'Or/.test(name)) return 'ballon';
+  if (/Schuh|Torschützenkönig|Torjäger|Pichichi|Capocannoniere|Boot/i.test(name)) return 'boot';
+  if (/Jaschin/.test(name)) return 'glove';
+  if (/Golden Boy/.test(name)) return 'medal-gold';
+  if (/Spieler der Saison/.test(name)) return 'medal-silver';
+  if (/Weltmeister|Klub-WM/.test(name)) return 'worldcup';
+  if (/Europameister/.test(name)) return 'euro-silver';
+  if (/Copa-América|Afrikameister|Asienmeister|Gold-Cup|Libertadores|CONCACAF/.test(name)) return 'euro-gold';
+  if (/Champions/.test(name)) return 'bigears';
+  if (/Europa|Conference/.test(name)) return 'europa';
+  if (/^(Deutscher|Zweitliga)-? ?Meister$/.test(name)) return 'shale';
+  if (/Meister$/.test(name)) return 'goblet-silver';
+  return 'goblet-gold';
+}
+
+function trophyIcon(name, cls = 'ti-svg') {
+  const [kind, metal] = trophyType(name).split('-');
+  const t = TROPHY_SVG[kind] || goblet;
+  const body = kind === 'goblet' ? goblet(metal) : typeof t === 'function' ? t(metal) : t;
+  return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">${TROPHY_DEFS}${body}</svg>`;
+}
+
 function renderTrophyCabinet(titles = S.titles, awards = S.awards) {
   const items = [...groupTitles(titles), ...groupTitles(awards)];
   if (!items.length) return '';
@@ -25,9 +98,9 @@ function renderTrophyCabinet(titles = S.titles, awards = S.awards) {
   <section class="card">
     <h2>Trophäenschrank</h2>
     <div class="cabinet">${items.map(g => {
-      const [icon, tier] = trophyLook(g.name);
+      const tier = trophyLook(g.name)[1];
       return `<div class="trophy ${tier}" title="${esc(g.years.join(', '))}">
-        <div class="cup">${icon}${g.n > 1 ? `<span class="cnt">${g.n}×</span>` : ''}</div>
+        <div class="cup">${trophyIcon(g.name, 'ti-big')}${g.n > 1 ? `<span class="cnt">${g.n}×</span>` : ''}</div>
         <span>${esc(g.name)}</span></div>`;
     }).join('')}</div>
   </section>`;

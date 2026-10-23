@@ -117,7 +117,7 @@ function groupTitles(list) {
   return [...groups.values()];
 }
 function titleLines(list, icon) {
-  return `<ul class="lines">${groupTitles(list).map(g => `<li>${icon} <b>${g.n > 1 ? `${g.n}× ` : ''}${esc(g.name)}</b>${g.years.length ? ` <span class="muted">${esc(g.years.join(', '))}</span>` : ''}</li>`).join('')}</ul>`;
+  return `<ul class="lines tlist">${groupTitles(list).map(g => `<li>${trophyIcon(g.name)} <b>${g.n > 1 ? `${g.n}× ` : ''}${esc(g.name)}</b>${g.years.length ? ` <span class="muted">${esc(g.years.join(', '))}</span>` : ''}</li>`).join('')}</ul>`;
 }
 
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen

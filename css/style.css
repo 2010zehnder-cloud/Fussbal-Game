@@ -540,3 +540,8 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .doc-ch { list-style: none; padding-left: 0; margin: 0; }
 .doc-ch li { margin-bottom: 10px; }
 .doc-ch p { margin: 2px 0 0; }
+
+/* Pokal-Bilder */
+.ti-svg { width: 1.5em; height: 1.5em; vertical-align: -0.4em; margin-right: 2px; flex: none; }
+.ti-big { width: 42px; height: 42px; }
+.lines.tlist li { list-style: none; }
