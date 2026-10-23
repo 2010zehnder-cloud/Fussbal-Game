@@ -363,3 +363,104 @@ function renderDoc() {
     <ol class="doc-ch">${d.chapters.map((c, i) => `<li><b>Kapitel ${i + 1}: ${esc(c.head)}</b> <span class="muted">${seasonLabel(c.year)}</span><p>${esc(c.text)}</p></li>`).join('')}</ol>
   </section>`;
 }
+
+// ---------- Halbzeitansprache ----------
+// Liegt ihr zur Pause hinten, darfst du in der Kabine das Wort ergreifen
+function maybeHalftime(c) {
+  if (S.youth || c.drama || c.b <= c.a || !chance(0.45)) return;
+  c.halftime = { text: null };
+}
+
+const HALFTIME_SPEECHES = [
+  { label: 'Laut werden', sub: 'riskant – weckt auf oder geht nach hinten los' },
+  { label: 'Motivieren', sub: 'sicher – macht Mut' },
+  { label: 'Schweigen und vorangehen', sub: 'du willst es selbst richten' },
+];
+
+function giveSpeech(i) {
+  const c = S.current, ht = c.halftime;
+  const captain = S.captainAt === S.clubId;
+  let delta = () => 0, text, eff = {};
+  if (i === 0) {
+    if (chance(0.45 + (captain ? 0.2 : 0) + S.player.trust / 400)) {
+      delta = () => 0.08; eff = { trust: 2 };
+      text = `Du trittst gegen die Getränkekiste und stauchst alle zusammen. Totenstille – dann klatscht ${captain ? 'die ganze Mannschaft' : 'der Kapitän'}. Ihr kommt wie verwandelt aus der Kabine!`;
+    } else {
+      delta = () => -0.05; eff = { trust: -3 };
+      text = 'Du brüllst herum, aber keiner hört dir zu. Der Trainer zieht dich zur Seite: „Das ist mein Job.“ Die Stimmung ist im Keller.';
+    }
+  } else if (i === 1) {
+    delta = () => 0.04; eff = { form: 1 };
+    text = '„Wir haben noch 45 Minuten! Wir glauben an uns!“ Ein paar nicken, die Köpfe gehen wieder hoch.';
+  } else {
+    delta = o => (o.kind === 'goal' || o.kind === 'shoot' || o.kind === 'save' || o.kind === 'stop' ? 0.07 : 0);
+    text = 'Du sagst kein Wort, ziehst die Schuhe fester und gehst als Erster zurück auf den Platz. Du willst dieses Spiel allein drehen.';
+  }
+  c.options = c.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p + delta(o), 0.05, 0.92) : undefined }));
+  ht.text = text;
+  ht.chips = mod(eff);
+}
+
+function renderHalftime(c) {
+  const homeName = c.home ? S.clubId : c.opp, awayName = c.home ? c.opp : S.clubId;
+  const score = c.home ? `${c.a}:${c.b}` : `${c.b}:${c.a}`;
+  return `
+  <section class="card">
+    ${stepHeader()}
+    <div class="scoreboard">
+      <div class="comp">${esc(c.comp)}</div>
+      <div class="teams">
+        <div class="team">${crest(homeName)}<span>${esc(homeName)}</span></div>
+        <div class="score">${score}<small>Halbzeit</small></div>
+        <div class="team">${crest(awayName)}<span>${esc(awayName)}</span></div>
+      </div>
+    </div>
+    <p class="situation">🗣️ Halbzeit. Ihr liegt hinten, in der Kabine ist es still. Alle schauen zu Boden. ${S.captainAt === S.clubId ? 'Als Kapitän erwarten alle, dass du etwas sagst.' : 'Du könntest jetzt das Wort ergreifen.'}</p>
+    <div class="choices">${HALFTIME_SPEECHES.map((sp, i) => btn(`${sp.label}<small>${sp.sub}</small>`, () => { giveSpeech(i); render(true); })).join('')}</div>
+  </section>`;
+}
+
+// ---------- Fan-Momente ----------
+const FAN_EVENTS = [
+  {
+    id: 'fanPitch', title: 'Platzsturm für ein Selfie',
+    cond: () => !S.youth && S.player.popularity >= 30,
+    text: () => 'Kurz vor Schluss sprintet ein Fan an den Ordnern vorbei auf den Platz, direkt auf dich zu – das Handy schon in der Hand.',
+    options: [
+      { label: 'Schnell ein Selfie machen', run: () => 'Das Foto geht um die Welt, die Fans lieben dich dafür. Der Verband findet es weniger lustig und ermahnt den Verein.' + mod({ popularity: 5, trust: -2 }) },
+      { label: 'Umarmen und zu den Ordnern bringen', run: () => 'Du nimmst ihn in den Arm und bringst ihn freundlich zurück. Applaus im ganzen Stadion.' + mod({ popularity: 3, trust: 1 }) },
+      { label: 'Wegschubsen', run: () => 'Die Szene sieht im Fernsehen hässlich aus. „Arrogant“, schreiben die Zeitungen.' + mod({ popularity: -5 }) },
+    ],
+  },
+  {
+    id: 'sickKid', title: 'Ein Brief aus dem Kinderkrankenhaus',
+    cond: () => !S.youth,
+    text: () => 'Die Mutter eines schwer kranken Jungen schreibt dir: Du bist sein großes Idol, er spricht jeden Tag von dir. Ob du vielleicht einmal vorbeikommen könntest?',
+    options: [
+      { label: 'Ihn im Krankenhaus besuchen', run: () => { addPhoto('🧸', 'Besuch im Kinderkrankenhaus'); return 'Du bringst ein signiertes Trikot mit und bleibst zwei Stunden. Sein Lachen vergisst du nie. Im nächsten Spiel widmest du ihm deine Leistung.' + mod({ popularity: 5, form: 2 }); } },
+      { label: 'Eine Videobotschaft schicken', run: () => 'Der Junge schaut sich dein Video hundertmal an. Seine Mutter bedankt sich überglücklich.' + mod({ popularity: 2, form: 1 }) },
+      { label: 'Keine Zeit', run: () => 'Die Geschichte landet in der Zeitung: „Star lässt kranken Fan im Stich.“' + mod({ popularity: -5 }) },
+    ],
+  },
+  {
+    id: 'shirtKid', title: 'Das Schild im Fanblock',
+    cond: () => !S.youth,
+    text: () => 'Nach dem Abpfiff entdeckst du einen kleinen Jungen mit einem selbstgemalten Schild: „Bekomme ich dein Trikot? Bitte!“',
+    options: [
+      { label: 'Trikot über den Zaun reichen', run: () => { addPhoto('👕', 'Trikot für einen kleinen Fan'); return 'Er bricht in Tränen aus und zieht es sofort über – es geht ihm bis zu den Knien. Das Video wird millionenfach geklickt.' + mod({ popularity: 4 }); } },
+      { label: 'Ihn zum Mannschaftsfoto holen', run: () => 'Er steht strahlend zwischen euch auf dem Foto. Der Zeugwart schimpft, weil er die Ordner überzeugen musste.' + mod({ popularity: 5, trust: -1 }) },
+      { label: 'Einfach in die Kabine gehen', run: () => 'Du hast das Schild übersehen. Das Internet nicht.' + mod({ popularity: -3 }) },
+    ],
+  },
+  {
+    id: 'fanTattoo', title: 'Dein Gesicht auf dem Arm',
+    cond: () => !S.youth && S.player.popularity >= 55,
+    text: () => 'Ein Fan hat sich dein Gesicht riesengroß auf den Oberarm tätowieren lassen – inklusive Rückennummer. Das Foto geht gerade viral.',
+    options: [
+      { label: 'Ihn zum Training einladen', run: () => 'Ihr macht ein gemeinsames Foto, Arm neben Gesicht. Die Fans feiern die Aktion.' + mod({ popularity: 4 }) },
+      { label: 'Witzig kommentieren', run: () => { addFollowers({ mul: 1.08, add: 2000 }); return '„Die Nase ist besser als meine echte.“ Dein Kommentar wird zum Meme.' + mod({ popularity: 3 }); } },
+      { label: 'Ignorieren', run: () => 'Du sagst nichts dazu. Ein paar Fans sind enttäuscht.' + mod({ popularity: -1 }) },
+    ],
+  },
+];
+EVENTS.push(...FAN_EVENTS);

@@ -76,6 +76,7 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Fangesang**, der mit deinen Erfolgen neue Strophen bekommt – bei Wechsel oder Skandal wird er umgedichtet.
 - **Comeback aus dem Ruhestand** für eine letzte Saison beim Heimatverein oder in der MLS.
 - **Eigene Fußballschule:** Ihre Talente werden Profis und begegnen deinem Kind als Mitspieler oder Gegner.
+- **Halbzeitansprache**, wenn ihr zur Pause hinten liegt, und **Fan-Momente** (Platzsturm-Selfie, Krankenhausbesuch, Trikot für kleine Fans, Fan-Tattoo).
 - **Doku über deine Karriere** mit Filmtitel und Kapiteln wie Aufstieg, Absturz und Comeback.
 - **Ruhmeshalle** mit Vorlagen und aufklappbaren Titeln, Auszeichnungen und Spielerkarte pro Karriere.
 - **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.

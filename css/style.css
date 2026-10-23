@@ -545,3 +545,7 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .ti-svg { width: 1.5em; height: 1.5em; vertical-align: -0.4em; margin-right: 2px; flex: none; }
 .ti-big { width: 42px; height: 42px; }
 .lines.tlist li { list-style: none; }
+
+/* Halbzeitansprache */
+.halftime-res { margin: 10px 0; padding: 8px 12px; border-radius: 10px; background: var(--card2); border-left: 4px solid var(--gold); }
+.halftime-res p { margin: 0 0 4px; }

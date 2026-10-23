@@ -504,6 +504,7 @@ function setupMatch() {
   maybeDerby(S.current, L);
   flavorMatch(S.current, L);
   applyPerks(S.current);
+  maybeHalftime(S.current);
 }
 
 function quality() {
@@ -1388,6 +1389,7 @@ function renderEvent() {
 
 function renderMatch() {
   const c = S.current;
+  if (c.halftime && !c.halftime.text) return renderHalftime(c);
   const homeName = c.home ? S.clubId : c.opp, awayName = c.home ? c.opp : S.clubId;
   const score = c.final || (c.home ? `${c.a}:${c.b}` : `${c.b}:${c.a}`);
   const opts = c.result ? '' : c.options.map((o, i) => btn(`${esc(o.label)}${o.p !== undefined ? `<small>${Math.round(o.p * 100)} % Erfolg</small>` : ''}${o.remembered ? `<small>⚠️ ${esc(o.remembered)} kennt diesen Trick</small>` : ''}${o.perk ? `<small>⭐ ${esc(o.perk)}</small>` : ''}`, () => {
@@ -1406,6 +1408,7 @@ function renderMatch() {
         <div class="team">${crest(awayName)}<span>${esc(awayName)}</span></div>
       </div>
     </div>
+    ${c.halftime && !c.result ? `<div class="halftime-res"><p>🗣️ ${esc(c.halftime.text)}</p>${c.halftime.chips || ''}</div>` : ''}
     <p class="situation">${esc(c.situation)}</p>
     ${c.styleTip && !c.result ? `<p class="muted small">💡 ${esc(c.styleTip)}</p>` : ''}
     ${c.result ? `<div class="result"><p class="chosen">Deine Entscheidung: ${esc(c.options[c.chosen].label)}</p>${c.result}</div><div class="actions">${continueBtn()}</div>` : `<div class="choices">${opts}</div>`}
