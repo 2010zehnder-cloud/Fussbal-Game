@@ -1189,6 +1189,8 @@ function render(keepScroll = false) {
     else if (S.phase === 'retired') html = renderRetired();
   }
   root.innerHTML = html;
+  const mb = document.getElementById('home-btn');
+  if (mb) mb.hidden = !S;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
   if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); checkChallenge(); }
@@ -1819,8 +1821,21 @@ function renderRetired() {
   ${renderHistory()}`;
 }
 
+// Zurück zum Hauptmenü – die laufende Karriere bleibt im Spielstand gespeichert
+function goHome() {
+  if (!S) return;
+  if (S.phase !== 'create') save();
+  if (typeof closeRecap === 'function' && document.querySelector('.recap-overlay')) closeRecap();
+  document.querySelectorAll('.card-overlay').forEach(e => e.remove());
+  S = null;
+  uiHelp = false;
+  render();
+}
+
 // ---------- Start ----------
 function init() {
+  const mb = document.getElementById('home-btn');
+  if (mb) mb.addEventListener('click', goHome);
   const hb = document.getElementById('help-btn');
   if (hb) hb.addEventListener('click', toggleHelp);
   const tb = document.getElementById('theme-btn');

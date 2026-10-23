@@ -350,7 +350,7 @@ details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top:
 .rehabbar span { width: 32px; height: 32px; border-radius: 50%; background: var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; }
 .rehabbar span.done { background: var(--accent-dark); color: var(--on-accent); }
 .rehabbar span.now { box-shadow: 0 0 0 3px var(--accent); }
-@media (max-width: 420px) { .slot { grid-template-columns: 30px 1fr; } .slot .shopbtns { grid-column: 1 / -1; justify-content: flex-end; } .top > span:first-child { font-size: 15px; } .helpbtn { padding: 6px 10px; } }
+@media (max-width: 420px) { .slot { grid-template-columns: 30px 1fr; } .slot .shopbtns { grid-column: 1 / -1; justify-content: flex-end; } .top > span:first-child { font-size: 15px; } .helpbtn { padding: 6px 10px; } .hl { display: none; } .hbtns { gap: 4px; } }
 
 /* Live-Finale, Schlagzeile, Rückblick */
 .card.final { border-color: var(--gold); }
