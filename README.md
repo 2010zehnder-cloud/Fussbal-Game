@@ -77,6 +77,10 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Comeback aus dem Ruhestand** für eine letzte Saison beim Heimatverein oder in der MLS.
 - **Eigene Fußballschule:** Ihre Talente werden Profis und begegnen deinem Kind als Mitspieler oder Gegner.
 - **Halbzeitansprache**, wenn ihr zur Pause hinten liegt, und **Fan-Momente** (Platzsturm-Selfie, Krankenhausbesuch, Trikot für kleine Fans, Fan-Tattoo).
+- **Ballon-d'Or-Gala live:** Umschläge öffnen, Platz 3 bis 1 enthüllen, Dankesrede oder Reaktion wählen.
+- **Videospiel-Wertung** vor jeder Saison – freuen oder öffentlich beschweren.
+- **Weihnachten, Boxing Day und Silvester** als Ereignisse im Dezember.
+- **Medizincheck** bei großen Wechseln: Der Transfer kann platzen oder nur zu schlechteren Bedingungen klappen.
 - **Doku über deine Karriere** mit Filmtitel und Kapiteln wie Aufstieg, Absturz und Comeback.
 - **Ruhmeshalle** mit Vorlagen und aufklappbaren Titeln, Auszeichnungen und Spielerkarte pro Karriere.
 - **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.
@@ -102,6 +106,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/meta.js` – Spielstände, Schwierigkeit, Teilen, Erfolge, Sound, Konfetti, Diagramm, Design
 - `js/extras.js` – Live-Finals, Drama am letzten Spieltag, Torjubel, Kindheitsfreund, Tagesherausforderung, Schlagzeilen, Rückblick, Schnellmodus, Rekorde
 - `js/depth.js` – Spezialfähigkeiten, Derbys, Posteingang, Lebensgeschichte
+- `js/gala.js` – Ballon-d'Or-Gala, Videospiel-Wertung, Feiertage, Medizincheck
 - `js/encore.js` – Turnierbaum, Tor des Monats, Fangesang, Comeback, Fußballschule, Karriere-Doku
 - `js/memories.js` – Trophäenschrank, Trikot-Sammlung, Fotoalbum, Abschiedsspiel, Erbe der Eltern, Spielerkarte, Was wäre wenn
 - `js/modes.js` – Startszenarien, Saisonverläufe, Spielstile, Gegenspieler, Pokal-Drama, Geschichten, Herausforderungen, Zufallskarriere

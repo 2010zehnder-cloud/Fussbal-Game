@@ -549,3 +549,23 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 /* Halbzeitansprache */
 .halftime-res { margin: 10px 0; padding: 8px 12px; border-radius: 10px; background: var(--card2); border-left: 4px solid var(--gold); }
 .halftime-res p { margin: 0 0 4px; }
+
+/* Ballon-d'Or-Gala */
+.gala-head { text-align: center; padding: 14px 10px; border-radius: 12px; margin-bottom: 12px; color: #f6edd2;
+  background: radial-gradient(circle at 50% 0%, #4a3b12, #120d03); }
+.gala-head h2 { color: #f3d36b; margin: 4px 0 6px; }
+.gala-head small { letter-spacing: 2px; font-size: 11px; opacity: .8; }
+.gala-head p { margin: 0; font-size: 14px; }
+.gala-list { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 8px; }
+.gala-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--card2); border: 1px solid var(--line); }
+.gala-list li span { color: var(--muted); font-size: 13px; }
+.gala-list li.hidden b { opacity: .6; }
+.gala-list li.first { border-color: var(--gold); box-shadow: 0 0 12px rgba(232,197,71,.35); }
+.gala-list li.me b { color: var(--accent); }
+.gala-win { text-align: center; font-weight: 800; font-size: 18px; color: var(--gold); }
+
+/* Videospiel-Wertung */
+.vg-row { display: flex; gap: 12px; align-items: center; }
+.vg-row p { margin: 2px 0 0; }
+.vg-badge { flex: none; width: 54px; height: 54px; border-radius: 12px; display: grid; place-items: center; font: 800 26px var(--font-display);
+  color: #2a1d05; background: linear-gradient(150deg, #f3d36b, #a8801c); }

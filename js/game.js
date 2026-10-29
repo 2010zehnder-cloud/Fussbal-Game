@@ -274,9 +274,9 @@ function doDope() {
 const STEPS = [
   { type: 'event', label: 'August – Saisonstart' },
   { type: 'match', label: 'September – Topspiel' },
-  { type: 'event', label: 'November – Herbst' },
-  { type: 'match', label: 'Dezember – Pokal & Europa' },
-  { type: 'event', label: 'Februar – Rückrunde' },
+  { type: 'event', label: 'Dezember – Winterzeit' },
+  { type: 'match', label: 'Februar – Pokal & Europa' },
+  { type: 'event', label: 'März – Rückrunde' },
   { type: 'match', label: 'Mai – Saisonfinale' },
 ];
 
@@ -293,7 +293,7 @@ function startSeason() {
   S.current = null;
   S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   if (!S.clubsPlayed.includes(S.clubId)) S.clubsPlayed.push(S.clubId);
-  if (!S.youth) { ensureTeam(); legacyArrival(); }
+  if (!S.youth) { ensureTeam(); legacyArrival(); videoGameRating(); }
 }
 
 function europeFor(club) {
@@ -813,7 +813,7 @@ function endSeason() {
   mailSeason(res);
   S.headline = seasonHeadline(res);
   updateRecords(res);
-  if (res.titles.length || res.awards.includes("Ballon d'Or")) queueFx('fanfare', 'confetti');
+  if (res.titles.length || (res.awards.includes("Ballon d'Or") && !res.gala)) queueFx('fanfare', 'confetti');
 
   p.age++;
   S.seasonEnd = res;
@@ -883,14 +883,18 @@ function awards(res, L, leagueGoals) {
   res.bdScore = score;
   const rivalScore = rivalBallonScore();
   const wins = score >= 101 && chance(0.85) || score >= 99 && chance(0.45);
+  let place = null, winner = null;
   if (wins && rivalScore > score) {
     S.rival.ballon++;
+    place = 2; winner = S.rival.name;
     res.lines.push(`😤 Der Ballon d'Or geht an deinen Rivalen ${S.rival.name}. Du wirst Zweiter!`);
-  } else if (wins) { res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
+  } else if (wins) { place = 1; res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
   else {
-    if (rivalScore >= 97.5 && chance(0.5)) { S.rival.ballon++; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
-    if (score >= 95.5) res.lines.push(`Ballon d'Or: Platz ${clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20)}.`);
+    if (rivalScore >= 97.5 && chance(0.5)) { S.rival.ballon++; winner = S.rival.name; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    if (score >= 95.5) { place = clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20); res.lines.push(`Ballon d'Or: Platz ${place}.`); }
   }
+  // Nominiert: die Gala wird live gezeigt
+  if (place) res.gala = makeGala(place, winner);
 }
 
 function tournament(res) {
@@ -1027,6 +1031,7 @@ function openTransfer() {
 }
 
 function acceptOffer(o) {
+  if (o && medicalCheck(o)) return;
   recordDecision(o);
   if (o && !o.loan && o.club !== S.clubId) chantTransfer(S.clubId, o.club);
   if (o) {
@@ -1194,8 +1199,10 @@ function render(keepScroll = false) {
   if (mb) mb.hidden = !S;
   if (S && S.phase !== 'create' && !uiHelp) save();
   if (!keepScroll) window.scrollTo({ top: 0 });
-  if (S && S.player && S.phase !== 'create') { checkAchievements(); checkDaily(); checkChallenge(); }
-  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated) {
+  // Während der Gala nichts verraten: Erfolge erst nach der Enthüllung prüfen
+  const galaPending = S && S.phase === 'seasonEnd' && S.seasonEnd && S.seasonEnd.gala && !S.seasonEnd.gala.done;
+  if (S && S.player && S.phase !== 'create' && !galaPending) { checkAchievements(); checkDaily(); checkChallenge(); }
+  if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated && !(S.seasonEnd.gala && !S.seasonEnd.gala.done)) {
     S.seasonEnd.animated = true;
     animateRecap();
     if (!prefs().noRecap) openRecap();
@@ -1332,6 +1339,7 @@ function renderPreseason() {
   }[se.role];
   return `
   ${renderHeadline()}
+  ${renderGameRating()}
   <section class="card">
     <h2>Saisonvorschau ${seasonLabel(S.year)}</h2>
     ${renderTheme()}
@@ -1417,6 +1425,7 @@ function renderMatch() {
 
 function renderSeasonEnd() {
   const r = S.seasonEnd;
+  if (r.gala && !r.gala.done) return renderGala(r.gala);
   const diff = r.ratingAfter - r.ratingBefore;
   const gk = S.player.pos === 'TW' || r.cleanSheets > 0;
   const table = r.role === 'U19' ? '' : `
@@ -1470,6 +1479,7 @@ function renderTransfer() {
     if (of.superclub) tags.push(['good', '✨ Das Angebot deines Lebens']);
     if (of.dream) tags.push(['good', '⭐ Traumverein!']);
     if (of.loan) tags.push(['good', '🔁 Leihe: Spielpraxis sammeln']);
+    if (of.medNote) tags.push(['bad', '🩺 Nach Medizincheck nachverhandelt']);
     if (!o.released && rank[role] > rank[curRole]) tags.push(['good', '⏱️ Mehr Spielzeit']);
     if (!o.released && rank[role] < rank[curRole]) tags.push(['bad', '⚠️ Weniger Spielzeit']);
     if (str >= curStr + 3) tags.push(['good', '📈 Stärkerer Verein']);
