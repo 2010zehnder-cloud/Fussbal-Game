@@ -569,3 +569,6 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .vg-row p { margin: 2px 0 0; }
 .vg-badge { flex: none; width: 54px; height: 54px; border-radius: 12px; display: grid; place-items: center; font: 800 26px var(--font-display);
   color: #2a1d05; background: linear-gradient(150deg, #f3d36b, #a8801c); }
+
+/* Echte Vereinslogos (nur private Version) */
+img.crest.logo { border-radius: 0; background: none; object-fit: contain; padding: 0; box-shadow: none; }

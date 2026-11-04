@@ -66,7 +66,11 @@ function sponsorIncome() {
 }
 function ownedCount(id) { return (S.owned && S.owned[id]) || 0; }
 
+// Vereinslogos gibt es nur in der privaten Version (werden beim Bauen eingefügt, nicht im öffentlichen Code)
+const CLUB_LOGOS = (typeof window !== 'undefined' && window.CLUB_LOGOS) || {};
+
 function crest(name) {
+  if (CLUB_LOGOS[name]) return `<img class="crest logo" src="${CLUB_LOGOS[name]}" alt="" loading="lazy">`;
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
   const words = name.replace(/[0-9.]/g, '').split(/\s+/).filter(w => w.length > 2 && !['FC', 'SC', 'SV', 'AC', 'AS', 'CF'].includes(w));

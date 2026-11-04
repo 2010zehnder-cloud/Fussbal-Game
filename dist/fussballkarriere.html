@@ -574,6 +574,9 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .vg-badge { flex: none; width: 54px; height: 54px; border-radius: 12px; display: grid; place-items: center; font: 800 26px var(--font-display);
   color: #2a1d05; background: linear-gradient(150deg, #f3d36b, #a8801c); }
 
+/* Echte Vereinslogos (nur private Version) */
+img.crest.logo { border-radius: 0; background: none; object-fit: contain; padding: 0; box-shadow: none; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -950,7 +953,11 @@ function sponsorIncome() {
 }
 function ownedCount(id) { return (S.owned && S.owned[id]) || 0; }
 
+// Vereinslogos gibt es nur in der privaten Version (werden beim Bauen eingefügt, nicht im öffentlichen Code)
+const CLUB_LOGOS = (typeof window !== 'undefined' && window.CLUB_LOGOS) || {};
+
 function crest(name) {
+  if (CLUB_LOGOS[name]) return `<img class="crest logo" src="${CLUB_LOGOS[name]}" alt="" loading="lazy">`;
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
   const words = name.replace(/[0-9.]/g, '').split(/\s+/).filter(w => w.length > 2 && !['FC', 'SC', 'SV', 'AC', 'AS', 'CF'].includes(w));
