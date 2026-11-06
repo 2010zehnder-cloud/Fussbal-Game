@@ -5,7 +5,8 @@
 // ---------- Ballon-d'Or-Gala ----------
 function makeGala(place, winner) {
   const rival = S.rival && S.rival.name;
-  const pool = [rival, randomName(), randomName(), randomName()].filter((x, i, a) => x && a.indexOf(x) === i && x !== winner);
+  const stars = (S.bdStars || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0)).map(s => s.name);
+  const pool = [...stars, rival, randomName(), randomName()].filter((x, i, a) => x && a.indexOf(x) === i && x !== winner);
   const top = [];
   if (place === 1) top.push(S.player.name);
   else top.push(winner || pool.shift());

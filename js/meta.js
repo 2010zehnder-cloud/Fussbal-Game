@@ -53,6 +53,7 @@ const DIFFICULTY = {
   easy: { name: 'Einfach', desc: 'Mehr Talent, weniger Verletzungen.', rating: 3, potential: 3, injury: 5, growth: 1.15 },
   normal: { name: 'Normal', desc: 'Das ausgewogene Spiel.', rating: 0, potential: 0, injury: 8, growth: 1 },
   legend: { name: 'Legende', desc: 'Weniger Talent, mehr Verletzungen, strengere Kontrollen.', rating: -2, potential: -3, injury: 12, growth: 0.9 },
+  world: { name: 'Weltklasse', desc: "Für Profis: langsameres Wachstum, wählerische Topklubs, ein hart umkämpfter Ballon d'Or.", rating: -3, potential: -5, injury: 13, growth: 0.82, ballon: 3, transfer: 3 },
 };
 const diff = () => DIFFICULTY[(S && S.diff) || 'normal'];
 

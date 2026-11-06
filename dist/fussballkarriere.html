@@ -589,6 +589,11 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .lines.stations .crest { width: 20px; height: 20px; font-size: 8px; }
 .lines.stations .muted { width: 100%; padding-left: 26px; font-size: 13px; }
 
+/* Ballon-d'Or-Konkurrenz */
+.lines.stars-race li { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 4px 0; }
+.lines.stars-race li.me b { color: var(--accent); }
+.lines.stars-race .muted { width: 100%; padding-left: 36px; font-size: 13px; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -1406,6 +1411,7 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + schoolMention(opp) + chantIntro() + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  lateScene(S.current);
   maybeDerby(S.current, L);
   flavorMatch(S.current, L);
   applyPerks(S.current);
@@ -1418,6 +1424,7 @@ function quality() {
 }
 
 function resolveMatch(i) {
+  if (chainStart(i)) return;
   const c = S.current, o = c.options[i], p = S.player;
   let us = c.a, them = c.b, text, eff;
   if (o.kind === 'shoot') {
@@ -1440,8 +1447,10 @@ function resolveMatch(i) {
         : `Du springst in die falsche Ecke, der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`;
       eff = { form: -1 };
     }
+  } else if (o.kind === 'var') {
+    ({ us, them, text, eff } = resolveVar(c, o, us, them));
   } else {
-    const ok = chance(o.p);
+    const ok = c.forceFail ? false : chance(o.p);
     if (o.kind === 'goal') {
       if (ok) { us++; text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${o.bonus ? crowdLine() : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
       else { text = `${pickText(o.failText) || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
@@ -1600,7 +1609,7 @@ function endSeason() {
 
   // Dopingkontrolle
   if (se.doped) {
-    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' ? 0.1 : 0);
+    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' || S.diff === 'world' ? 0.1 : 0);
     if (chance(caughtP)) {
       const prison = chance(0.35);
       const years = prison ? randInt(1, 3) : (S.dopeCaught ? 4 : 2);
@@ -1785,9 +1794,12 @@ function awards(res, L, leagueGoals) {
   else if (res.euroRes && S.europe === 'cl' && uefa && ['Halbfinale', 'Finale'].includes(res.euroRes.reached)) score += 1.5;
   if (res.titles.includes(L.champion)) score += 1.5;
   if (!stamm) score -= 6;
+  score -= diff().ballon || 0;
   res.bdScore = score;
   const rivalScore = rivalBallonScore();
-  const wins = score >= 101 && chance(0.85) || score >= 99 && chance(0.45);
+  // Die größten Stars der Welt kämpfen mit um den Ballon d'Or
+  const top = ballonContest();
+  const wins = (score >= 101 && chance(0.85) || score >= 99 && chance(0.45)) && score > top.score;
   let place = null, winner = null;
   if (wins && rivalScore > score) {
     S.rival.ballon++;
@@ -1795,7 +1807,8 @@ function awards(res, L, leagueGoals) {
     res.lines.push(`😤 Der Ballon d'Or geht an deinen Rivalen ${S.rival.name}. Du wirst Zweiter!`);
   } else if (wins) { place = 1; res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
   else {
-    if (rivalScore >= 97.5 && chance(0.5)) { S.rival.ballon++; winner = S.rival.name; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    if (rivalScore >= 97.5 && rivalScore > top.score && chance(0.5)) { S.rival.ballon++; winner = S.rival.name; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    else { top.ballon++; winner = top.name; res.lines.push(`Der Ballon d'Or geht an ${top.name} (${top.nation}, ${top.club}).`); }
     if (score >= 95.5) { place = clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20); res.lines.push(`Ballon d'Or: Platz ${place}.`); }
   }
   // Nominiert: die Gala wird live gezeigt
@@ -1876,7 +1889,7 @@ function openTransfer() {
   if (released && !msgs.length) msgs.push(`${S.clubId} verlängert deinen Vertrag nicht. Du musst dir einen neuen Verein suchen.`);
 
   const perf = res.note === null ? 0 : (3.2 - res.note);
-  const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0);
+  const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0) - (diff().transfer || 0);
   const lo = p.rating - (released ? 22 : 12);
   const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi
     && (!S.fugitive || clubLeague(n).country !== nation().country))
@@ -4465,7 +4478,7 @@ function renderHub() {
   else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
   else if (uiTab === 'mail') content = renderInbox();
-  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderChant() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
+  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderBallonRace() + renderChant() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -4604,6 +4617,7 @@ const DIFFICULTY = {
   easy: { name: 'Einfach', desc: 'Mehr Talent, weniger Verletzungen.', rating: 3, potential: 3, injury: 5, growth: 1.15 },
   normal: { name: 'Normal', desc: 'Das ausgewogene Spiel.', rating: 0, potential: 0, injury: 8, growth: 1 },
   legend: { name: 'Legende', desc: 'Weniger Talent, mehr Verletzungen, strengere Kontrollen.', rating: -2, potential: -3, injury: 12, growth: 0.9 },
+  world: { name: 'Weltklasse', desc: "Für Profis: langsameres Wachstum, wählerische Topklubs, ein hart umkämpfter Ballon d'Or.", rating: -3, potential: -5, injury: 13, growth: 0.82, ballon: 3, transfer: 3 },
 };
 const diff = () => DIFFICULTY[(S && S.diff) || 'normal'];
 
@@ -6406,6 +6420,10 @@ const CHALLENGES = [
   { id: 'forty', name: 'Ewige Jugend', text: 'Bestreite mit 40 Jahren noch mindestens 10 Pflichtspiele.', nation: 'Portugal', pos: 'ST', club: null, age: 17, rating: 55, test: () => S.history.some(h => h.age >= 40 && h.games >= 10) },
   { id: 'billion', name: 'Der Milliardär', text: 'Besitze ein Vermögen von 1 Milliarde €.', nation: 'Saudi-Arabien', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.money >= 1000 },
   { id: 'goldenboy', name: 'Das nächste große Ding', text: 'Gewinne den Golden Boy und später den Ballon d\'Or.', nation: 'Brasilien', pos: 'FL', club: null, age: 17, rating: 55, test: () => S.awards.some(a => a.startsWith('Golden Boy')) && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'werder', level: 'Einfach', name: 'Pokalheld an der Weser', text: 'Gewinne mit Werder Bremen den DFB-Pokal.', nation: 'Deutschland', pos: 'ZOM', club: 'SV Werder Bremen', age: 19, rating: 64, test: () => titleAt('SV Werder Bremen', 'DFB-Pokal-Sieger') },
+  { id: 'torino', level: 'Mittel', name: 'Der Stier von Turin', text: 'Gewinne mit dem FC Turin die Coppa Italia und bestreite 100 Spiele für den Verein.', nation: 'Italien', pos: 'ST', club: 'FC Turin', age: 19, rating: 63, test: () => titleAt('FC Turin', 'Coppa Italia-Sieger') && clubStats().some(c => c.club === 'FC Turin' && c.games >= 100) },
+  { id: 'worldclass', level: 'Schwer', name: 'Weltklasse im Weltklasse-Modus', text: "Gewinne den Ballon d'Or im Schwierigkeitsgrad Weltklasse.", nation: 'Deutschland', pos: 'ST', club: null, age: 17, rating: 52, diff: 'world', test: () => S.diff === 'world' && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'fifty', level: 'Schwer', name: 'Die 50-Tore-Saison', text: 'Schieße in einer einzigen Saison mindestens 50 Tore.', nation: 'Norwegen', pos: 'ST', club: null, age: 17, rating: 53, test: () => S.history.some(h => !h.youth && h.goals >= 50) },
   { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Meisterschaft, nationaler Pokal und Champions League in derselben Saison
@@ -6426,6 +6444,7 @@ function startChallenge(ch) {
 function applyChallenge(id) {
   const ch = CHALLENGES.find(c => c.id === id);
   S.challenge = { id: ch.id, text: ch.text, done: false };
+  if (ch.diff) S.diff = ch.diff;
   S.player.rating = ch.rating;
   S.peak = ch.rating;
   if (ch.club && !ch.academy) {
@@ -6460,7 +6479,7 @@ function renderChallenges() {
     <details><summary>🎯 Herausforderungen · ${done.length} von ${CHALLENGES.length} geschafft</summary>
       <p class="muted small">Fertige Szenarien mit festem Start. Sie nutzen Spielstand ${SLOT_COUNT}.</p>
       <div class="offers">${CHALLENGES.map(ch => `
-        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}</strong><small>${esc(ch.text)}</small>
+        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}${ch.level ? ` <span class="tag ${ch.level === 'Schwer' ? 'bad' : 'good'}">${ch.level}</span>` : ''}</strong><small>${esc(ch.text)}</small>
         <small>${esc(ch.nation)} · ${esc(POSITIONS[ch.pos].name)}${ch.club ? ` · ${esc(ch.club)}` : ''}</small></div>
         ${btn('Starten', () => { startChallenge(ch); render(); }, 'primary small')}</div>`).join('')}</div>
     </details>
@@ -7688,7 +7707,8 @@ EVENTS.push(...FAN_EVENTS);
 // ---------- Ballon-d'Or-Gala ----------
 function makeGala(place, winner) {
   const rival = S.rival && S.rival.name;
-  const pool = [rival, randomName(), randomName(), randomName()].filter((x, i, a) => x && a.indexOf(x) === i && x !== winner);
+  const stars = (S.bdStars || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0)).map(s => s.name);
+  const pool = [...stars, rival, randomName(), randomName()].filter((x, i, a) => x && a.indexOf(x) === i && x !== winner);
   const top = [];
   if (place === 1) top.push(S.player.name);
   else top.push(winner || pool.shift());
@@ -7844,6 +7864,133 @@ function medicalCheck(o) {
     offers.msgs.unshift(`🩺 Medizincheck bei ${o.club}: kleiner Befund ${part}. ${o.club} will dich trotzdem – aber nur noch für ${money(o.salary)} pro Jahr und höchstens 2 Jahre. Tippe erneut auf „Wechseln“, wenn du einverstanden bist.`);
   }
   return true;
+}
+
+'use strict';
+
+// Ballon-d'Or-Konkurrenten, Kettenszenen, Szenen passend zum Spielstand, VAR-Drama
+
+// ---------- Konkurrenten um den Ballon d'Or ----------
+function newStar(young) {
+  const clubs = Object.keys(S.clubs).filter(n => clubStr(n) >= 84);
+  const nats = NATIONS.filter(n => n.str >= 80);
+  return {
+    name: randomName(), nation: pick(nats).name, club: pick(clubs),
+    age: young ? randInt(19, 21) : randInt(21, 29), rating: young ? randInt(85, 88) : randInt(87, 93) + (S.diff === 'world' ? 2 : 0),
+    ballon: 0, year: S.year,
+  };
+}
+function ballonStars() {
+  if (!S.bdStars) S.bdStars = Array.from({ length: 4 }, () => newStar(false));
+  return S.bdStars;
+}
+
+// Einmal pro Saison: Stars entwickeln sich, wechseln, hören auf. Gibt den stärksten Konkurrenten zurück.
+function ballonContest() {
+  const stars = ballonStars();
+  stars.forEach((s, i) => {
+    if (s.year === S.year) return;
+    s.year = S.year; s.age++;
+    s.rating = clamp(s.rating + (s.age <= 26 ? rand(0, 2) : s.age <= 30 ? rand(-1, 1) : -rand(1, 3)), 75, 97);
+    if (chance(0.15)) s.club = pick(Object.keys(S.clubs).filter(n => clubStr(n) >= 84));
+    if (s.age >= 35 || s.rating < 82) stars[i] = newStar(true);
+  });
+  stars.forEach(s => { s.score = s.rating + rand(0, 4) + (S.diff === 'world' ? 1.5 : 0); });
+  return stars.slice().sort((a, b) => b.score - a.score)[0];
+}
+
+function renderBallonRace() {
+  if (S.youth || !S.bdStars) return '';
+  const me = { name: S.player.name, nation: S.player.nation, club: S.clubId, rating: Math.round(S.player.rating), ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, me: true };
+  const rows = [...S.bdStars.map(s => ({ ...s, rating: Math.round(s.rating) })), me].sort((a, b) => b.rating - a.rating);
+  return `
+  <section class="card">
+    <h2>🏅 Kampf um den Ballon d'Or</h2>
+    <p class="muted">Die größten Stars der Welt – sie wollen den Ballon d'Or genauso wie du.</p>
+    <ul class="lines stars-race">${rows.map(r => `<li class="${r.me ? 'me' : ''}">${crest(r.club)} <b>${esc(r.name)}${r.me ? ' (du)' : ''}</b>
+      <span class="muted">${esc(r.nation)} · ${esc(r.club)} · Stärke ${r.rating}${r.ballon ? ` · ${r.ballon}× 🏅` : ''}</span></li>`).join('')}</ul>
+  </section>`;
+}
+
+// ---------- Kettenszenen ----------
+// Ein gelungenes Dribbling führt zu einer zweiten Entscheidung
+function chainStart(i) {
+  const c = S.current, o = c.options[i];
+  if (o.kind !== 'goal' || !o.bonus || c.chained || S.youth || !chance(0.6)) return false;
+  c.chained = true;
+  if (!chance(clamp(o.p + 0.18, 0.1, 0.9))) { c.forceFail = true; return false; }
+  const q = quality();
+  c.situation = pick([
+    'Du lässt den ersten Gegner stehen, dann den zweiten! Plötzlich bist du allein im Strafraum – noch eine Entscheidung:',
+    'Übersteiger, Haken – der Verteidiger liegt am Boden! Der Torwart kommt dir entgegen. Was jetzt?',
+    'Du tanzt durch die Abwehr, das Stadion steht! Rechts läuft ein Mitspieler mit. Jetzt zählt es:',
+  ]);
+  c.options = [
+    { label: 'Eiskalt abschließen', kind: 'goal', p: clamp(0.5 + q * 0.25, 0.1, 0.9), okText: ['Flach ins Eck – unhaltbar!', 'Du schiebst den Ball cool am Torwart vorbei!'], failText: 'Der Torwart wirft sich in deinen Schuss.' },
+    { label: 'Querlegen auf den freien Mitspieler', kind: 'assist', p: clamp(0.65 + q * 0.15, 0.1, 0.92), okText: 'Du legst quer, dein Mitspieler muss nur noch einschieben!', failText: 'Ein Verteidiger grätscht im letzten Moment dazwischen.' },
+    { label: 'Den Torwart auch noch umkurven', kind: 'goal', bonus: true, p: clamp(0.3 + q * 0.3, 0.05, 0.85), okText: ['Du umkurvst auch noch den Torwart und schiebst ins leere Tor. Was für ein Solo!'], failText: 'Der Torwart spitzelt dir den Ball vom Fuß. Zu verspielt!' },
+  ];
+  return true;
+}
+
+// ---------- Szenen passend zum Spielstand und VAR ----------
+function lateScene(c) {
+  if (S.youth || c.drama) return;
+  const q = quality(), gk = POSITIONS[S.player.pos].group === 'gk';
+  if (!gk && chance(0.07)) {
+    c.var = true;
+    c.situation = `${c.minute}. Minute. Du triffst! Du drehst jubelnd ab – doch der Schiri hält sich die Hand ans Ohr. 📺 VAR-Check: Stand dein Fuß im Abseits?`;
+    c.options = [
+      { label: 'Ruhig abwarten', kind: 'var', p: 0.6 },
+      { label: 'Zum Schiri laufen und diskutieren', kind: 'var', p: 0.62, argue: true },
+      { label: 'Schon mal mit den Fans feiern', kind: 'var', p: 0.6, party: true },
+    ];
+    return;
+  }
+  if (!chance(0.3)) return;
+  c.minute = randInt(88, 90);
+  if (c.a > c.b) {
+    c.situation = `${c.minute}. Minute, ihr führt ${c.a}:${c.b}. Die Gegner werfen alles nach vorne. Du hast den Ball – jetzt nur nichts mehr anbrennen lassen.`;
+    c.options = [
+      { label: 'Ball an der Eckfahne festmachen', kind: 'safe', p: clamp(0.6 + q * 0.25, 0.1, 0.92), okText: 'Du schirmst den Ball ab, holst Einwurf um Einwurf heraus – die Zeit läuft ab!', failText: 'Der Verteidiger spitzelt dir den Ball weg, Konter – der Ausgleich!' },
+      { label: 'Den Konter selbst laufen', kind: 'goal', p: clamp(0.28 + q * 0.3, 0.05, 0.9), okText: 'Du rennst allein aufs Tor zu und machst den Deckel drauf!', failText: 'Der Torwart pariert – aber die Uhr ist fast abgelaufen.' },
+      { label: 'Lange am Boden liegen bleiben', kind: 'safe', p: 0.5, okText: 'Pfiffe von den Rängen, aber wertvolle Sekunden sind weg. Abpfiff!', failText: 'Der Schiri lässt nachspielen – und in der Nachspielzeit fällt der Ausgleich.' },
+    ];
+  } else if (c.b > c.a && gk) {
+    c.situation = `${c.minute}. Minute, ihr liegt ${c.a}:${c.b} hinten. Letzte Ecke! Der Trainer winkt hektisch: Du sollst als Torwart mit nach vorne!`;
+    c.options = [
+      { label: 'Zum Kopfball hochsteigen', kind: 'goal', bonus: true, p: clamp(0.1 + q * 0.15, 0.05, 0.4), okText: 'DER TORWART KÖPFT DEN AUSGLEICH! Das Stadion explodiert!', failText: 'Knapp drüber! Jetzt schnell zurück ins Tor.' },
+      { label: 'Am Elfmeterpunkt lauern', kind: 'goal', p: clamp(0.12 + q * 0.12, 0.05, 0.4), okText: 'Der Abpraller fällt dir vor die Füße – drin! Der Torwart trifft!', failText: 'Der Ball kommt nie bei dir an.' },
+      { label: 'Doch lieber im Tor bleiben', kind: 'safe', p: 0.8, okText: 'Du bleibst hinten. Es bleibt bei der knappen Niederlage – aber wenigstens kein Gegentor mehr.', failText: 'Konter über das halbe Feld – noch ein Gegentor.' },
+    ];
+  } else if (c.b > c.a) {
+    c.situation = `${c.minute}. Minute, ihr liegt ${c.a}:${c.b} hinten. Alles nach vorne – sogar euer Torwart rennt mit in den Strafraum!`;
+    c.options = [
+      { label: 'Flanke auf den mitgelaufenen Torwart', kind: 'assist', p: clamp(0.25 + q * 0.2, 0.05, 0.7), okText: 'Euer Torwart steigt am höchsten und köpft ein! Wahnsinn!', failText: 'Die Flanke segelt ins Aus. Abpfiff.' },
+      { label: 'Selbst aus 25 Metern abziehen', kind: 'goal', p: clamp(0.15 + q * 0.3, 0.05, 0.7), okText: 'Aus 25 Metern in den Winkel – in letzter Sekunde!', failText: 'Drüber. Das war die letzte Chance.' },
+      { label: 'Ins Dribbling in den Strafraum', kind: 'goal', bonus: true, p: clamp(0.2 + q * 0.3, 0.05, 0.75), okText: ['Du setzt dich gegen drei Mann durch und triffst. Was für ein Solo!'], failText: 'Du bleibst hängen. Der Schiri pfeift ab.' },
+    ];
+  }
+}
+
+// VAR-Entscheidung: Tor zählt oder wird zurückgenommen
+function resolveVar(c, o, us, them) {
+  const counts = chance(o.p);
+  const eff = counts ? { form: 3, trust: 2, popularity: 4, goals: 1 } : { form: -1 };
+  let text;
+  if (counts) {
+    us++;
+    text = `Minutenlanges Warten … dann zeigt der Schiri zur Mitte: Das Tor zählt! ${goalCry()}`;
+    if (o.party) { text += ' Und du hattest schon längst mit den Fans gefeiert.'; eff.popularity += 2; }
+  } else {
+    text = 'Die Linie wird gezogen … eine Zehenspitze im Abseits. Das Tor wird zurückgenommen!';
+    if (o.party) { text += ' Peinlich – du hattest schon mit den Fans gefeiert. Die Bilder gehen viral.'; eff.popularity = -3; }
+  }
+  if (o.argue) {
+    if (chance(0.4)) { text += ' Wegen deines Protests siehst du Gelb.'; eff.trust = (eff.trust || 0) - 2; }
+    else text += ' Der Schiri hört dir sogar zu.';
+  }
+  return { us, them, text: `${text} Endstand ${us}:${them}.`, eff };
 }
 
 </script>

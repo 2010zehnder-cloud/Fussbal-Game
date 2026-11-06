@@ -507,6 +507,7 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + schoolMention(opp) + chantIntro() + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  lateScene(S.current);
   maybeDerby(S.current, L);
   flavorMatch(S.current, L);
   applyPerks(S.current);
@@ -519,6 +520,7 @@ function quality() {
 }
 
 function resolveMatch(i) {
+  if (chainStart(i)) return;
   const c = S.current, o = c.options[i], p = S.player;
   let us = c.a, them = c.b, text, eff;
   if (o.kind === 'shoot') {
@@ -541,8 +543,10 @@ function resolveMatch(i) {
         : `Du springst in die falsche Ecke, der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`;
       eff = { form: -1 };
     }
+  } else if (o.kind === 'var') {
+    ({ us, them, text, eff } = resolveVar(c, o, us, them));
   } else {
-    const ok = chance(o.p);
+    const ok = c.forceFail ? false : chance(o.p);
     if (o.kind === 'goal') {
       if (ok) { us++; text = `${goalCry()} ${pickText(o.okText) || 'Du triffst!'}${o.bonus ? crowdLine() : ''}${celebrationText()} Endstand ${us}:${them}.`; eff = { form: 3, trust: 3, popularity: o.bonus ? 7 : 4, goals: 1 }; }
       else { text = `${pickText(o.failText) || 'Knapp vorbei!'} Endstand ${us}:${them}.`; eff = { form: -1, trust: o.bonus ? -3 : -1 }; }
@@ -701,7 +705,7 @@ function endSeason() {
 
   // Dopingkontrolle
   if (se.doped) {
-    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' ? 0.1 : 0);
+    const caughtP = 0.3 + 0.1 * ((S.dopeCount || 1) - 1) + (p.rating >= 85 ? 0.1 : 0) + (S.diff === 'legend' || S.diff === 'world' ? 0.1 : 0);
     if (chance(caughtP)) {
       const prison = chance(0.35);
       const years = prison ? randInt(1, 3) : (S.dopeCaught ? 4 : 2);
@@ -886,9 +890,12 @@ function awards(res, L, leagueGoals) {
   else if (res.euroRes && S.europe === 'cl' && uefa && ['Halbfinale', 'Finale'].includes(res.euroRes.reached)) score += 1.5;
   if (res.titles.includes(L.champion)) score += 1.5;
   if (!stamm) score -= 6;
+  score -= diff().ballon || 0;
   res.bdScore = score;
   const rivalScore = rivalBallonScore();
-  const wins = score >= 101 && chance(0.85) || score >= 99 && chance(0.45);
+  // Die größten Stars der Welt kämpfen mit um den Ballon d'Or
+  const top = ballonContest();
+  const wins = (score >= 101 && chance(0.85) || score >= 99 && chance(0.45)) && score > top.score;
   let place = null, winner = null;
   if (wins && rivalScore > score) {
     S.rival.ballon++;
@@ -896,7 +903,8 @@ function awards(res, L, leagueGoals) {
     res.lines.push(`😤 Der Ballon d'Or geht an deinen Rivalen ${S.rival.name}. Du wirst Zweiter!`);
   } else if (wins) { place = 1; res.awards.push("Ballon d'Or"); res.lines.push("🏅 BALLON D'OR! Du bist der beste Fußballer der Welt!"); }
   else {
-    if (rivalScore >= 97.5 && chance(0.5)) { S.rival.ballon++; winner = S.rival.name; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    if (rivalScore >= 97.5 && rivalScore > top.score && chance(0.5)) { S.rival.ballon++; winner = S.rival.name; res.lines.push(`😤 Dein Rivale ${S.rival.name} gewinnt den Ballon d'Or.`); }
+    else { top.ballon++; winner = top.name; res.lines.push(`Der Ballon d'Or geht an ${top.name} (${top.nation}, ${top.club}).`); }
     if (score >= 95.5) { place = clamp(Math.round(2 + (101 - score) * 1.5 + rand(0, 2)), 2, 20); res.lines.push(`Ballon d'Or: Platz ${place}.`); }
   }
   // Nominiert: die Gala wird live gezeigt
@@ -977,7 +985,7 @@ function openTransfer() {
   if (released && !msgs.length) msgs.push(`${S.clubId} verlängert deinen Vertrag nicht. Du musst dir einen neuen Verein suchen.`);
 
   const perf = res.note === null ? 0 : (3.2 - res.note);
-  const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0);
+  const hi = p.rating + 3 + (perf > 0.6 ? 3 : 0) + (p.popularity > 70 ? 2 : 0) - (diff().transfer || 0);
   const lo = p.rating - (released ? 22 : 12);
   const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi
     && (!S.fugitive || clubLeague(n).country !== nation().country))

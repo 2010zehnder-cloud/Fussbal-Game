@@ -324,6 +324,10 @@ const CHALLENGES = [
   { id: 'forty', name: 'Ewige Jugend', text: 'Bestreite mit 40 Jahren noch mindestens 10 Pflichtspiele.', nation: 'Portugal', pos: 'ST', club: null, age: 17, rating: 55, test: () => S.history.some(h => h.age >= 40 && h.games >= 10) },
   { id: 'billion', name: 'Der Milliardär', text: 'Besitze ein Vermögen von 1 Milliarde €.', nation: 'Saudi-Arabien', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.money >= 1000 },
   { id: 'goldenboy', name: 'Das nächste große Ding', text: 'Gewinne den Golden Boy und später den Ballon d\'Or.', nation: 'Brasilien', pos: 'FL', club: null, age: 17, rating: 55, test: () => S.awards.some(a => a.startsWith('Golden Boy')) && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'werder', level: 'Einfach', name: 'Pokalheld an der Weser', text: 'Gewinne mit Werder Bremen den DFB-Pokal.', nation: 'Deutschland', pos: 'ZOM', club: 'SV Werder Bremen', age: 19, rating: 64, test: () => titleAt('SV Werder Bremen', 'DFB-Pokal-Sieger') },
+  { id: 'torino', level: 'Mittel', name: 'Der Stier von Turin', text: 'Gewinne mit dem FC Turin die Coppa Italia und bestreite 100 Spiele für den Verein.', nation: 'Italien', pos: 'ST', club: 'FC Turin', age: 19, rating: 63, test: () => titleAt('FC Turin', 'Coppa Italia-Sieger') && clubStats().some(c => c.club === 'FC Turin' && c.games >= 100) },
+  { id: 'worldclass', level: 'Schwer', name: 'Weltklasse im Weltklasse-Modus', text: "Gewinne den Ballon d'Or im Schwierigkeitsgrad Weltklasse.", nation: 'Deutschland', pos: 'ST', club: null, age: 17, rating: 52, diff: 'world', test: () => S.diff === 'world' && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'fifty', level: 'Schwer', name: 'Die 50-Tore-Saison', text: 'Schieße in einer einzigen Saison mindestens 50 Tore.', nation: 'Norwegen', pos: 'ST', club: null, age: 17, rating: 53, test: () => S.history.some(h => !h.youth && h.goals >= 50) },
   { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Meisterschaft, nationaler Pokal und Champions League in derselben Saison
@@ -344,6 +348,7 @@ function startChallenge(ch) {
 function applyChallenge(id) {
   const ch = CHALLENGES.find(c => c.id === id);
   S.challenge = { id: ch.id, text: ch.text, done: false };
+  if (ch.diff) S.diff = ch.diff;
   S.player.rating = ch.rating;
   S.peak = ch.rating;
   if (ch.club && !ch.academy) {
@@ -378,7 +383,7 @@ function renderChallenges() {
     <details><summary>🎯 Herausforderungen · ${done.length} von ${CHALLENGES.length} geschafft</summary>
       <p class="muted small">Fertige Szenarien mit festem Start. Sie nutzen Spielstand ${SLOT_COUNT}.</p>
       <div class="offers">${CHALLENGES.map(ch => `
-        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}</strong><small>${esc(ch.text)}</small>
+        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}${ch.level ? ` <span class="tag ${ch.level === 'Schwer' ? 'bad' : 'good'}">${ch.level}</span>` : ''}</strong><small>${esc(ch.text)}</small>
         <small>${esc(ch.nation)} · ${esc(POSITIONS[ch.pos].name)}${ch.club ? ` · ${esc(ch.club)}` : ''}</small></div>
         ${btn('Starten', () => { startChallenge(ch); render(); }, 'primary small')}</div>`).join('')}</div>
     </details>

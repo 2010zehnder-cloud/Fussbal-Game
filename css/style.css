@@ -584,3 +584,8 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .lines.stations li { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .lines.stations .crest { width: 20px; height: 20px; font-size: 8px; }
 .lines.stations .muted { width: 100%; padding-left: 26px; font-size: 13px; }
+
+/* Ballon-d'Or-Konkurrenz */
+.lines.stars-race li { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 4px 0; }
+.lines.stars-race li.me b { color: var(--accent); }
+.lines.stars-race .muted { width: 100%; padding-left: 36px; font-size: 13px; }
