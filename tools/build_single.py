@@ -19,7 +19,8 @@ if logos_path:
     logos = json.loads(Path(logos_path).read_text(encoding='utf-8'))
     js = f'window.CLUB_LOGOS = {json.dumps(logos)};\n' + js
 
-html = f"""<title>Fußballkarriere</title>
+html = f"""<meta charset="utf-8">
+<title>Fußballkarriere</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600;700&display=swap">
 <style>

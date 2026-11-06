@@ -172,6 +172,13 @@ input, select {
 .rating.gold { background: linear-gradient(160deg, #f6e27a, var(--gold)); }
 .rating.silver { background: linear-gradient(160deg, #eef1f4, var(--silver)); }
 .rating.bronze { background: linear-gradient(160deg, #e5b17d, var(--bronze)); }
+.rating.diamond { position: relative; overflow: hidden; color: #0b2a3d;
+  background: linear-gradient(135deg, #f2fdff 0%, #a6e6f8 30%, #ecfbff 48%, #64bce8 72%, #cdf3ff 100%); box-shadow: 0 0 14px rgba(100,190,235,.55); }
+/* Diamant: wandernder Glanz */
+.rating.diamond::after, .pcard.diamond::after { content: ''; position: absolute; inset: -50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.75) 50%, transparent 58%); animation: diamond-shine 3.2s ease-in-out infinite; }
+@keyframes diamond-shine { 0% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+@media (prefers-reduced-motion: reduce) { .rating.diamond::after, .pcard.diamond::after { animation: none; display: none; } }
 .pinfo h2 { margin-bottom: 2px; }
 .pinfo p { margin: 0; color: var(--muted); font-size: 14px; }
 .pinfo .clubline { color: var(--text); margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -486,7 +493,8 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 .pcard-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 8px 0; }
 .pcard { width: 230px; padding: 16px 16px 12px; border-radius: 22px; color: #2a1d05; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.3);
   background: linear-gradient(150deg, #f3d36b, #a8801c); border: 3px solid rgba(255,255,255,.55); }
-.pcard.icon { background: linear-gradient(150deg, #f6e7b0, #b8892a); }
+.pcard.diamond { position: relative; overflow: hidden; color: #0b2a3d; border-color: rgba(255,255,255,.85);
+  background: linear-gradient(135deg, #f2fdff 0%, #a6e6f8 28%, #ecfbff 44%, #64bce8 68%, #cdf3ff 100%); box-shadow: 0 8px 28px rgba(80,190,240,.45); }
 .pcard.silver { background: linear-gradient(150deg, #e4e9ee, #8e99a4); color: #1b2229; }
 .pcard.bronze { background: linear-gradient(150deg, #e3a873, #8a5428); color: #2a1608; }
 .pc-top { display: flex; justify-content: space-between; align-items: flex-start; }

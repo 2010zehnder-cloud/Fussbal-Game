@@ -1320,7 +1320,7 @@ function renderPlayerCard() {
   const L = club ? clubLeague(club) : null;
   return `
   <section class="player">
-    <div class="rating ${r >= 85 ? 'gold' : r >= 75 ? 'silver' : 'bronze'}"><b>${r}</b><small>${p.pos}</small></div>
+    <div class="rating ${r > 87 ? 'diamond' : r >= 85 ? 'gold' : r >= 75 ? 'silver' : 'bronze'}"><b>${r}</b><small>${p.pos}</small></div>
     <div class="pinfo">
       <h2>${esc(p.name)} <span class="num">#${p.number}</span></h2>
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>

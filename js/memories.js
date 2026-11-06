@@ -334,7 +334,7 @@ function legacyOpponent(opp) {
 }
 
 // ---------- Spielerkarte ----------
-function cardTier(peak) { return peak >= 90 ? 'icon' : peak >= 80 ? 'gold' : peak >= 70 ? 'silver' : 'bronze'; }
+function cardTier(peak) { return peak > 87 ? 'diamond' : peak >= 80 ? 'gold' : peak >= 70 ? 'silver' : 'bronze'; }
 
 function cardData() {
   const t = totals();
@@ -381,7 +381,7 @@ function cardImage(d) {
   const W = 600, H = 860, c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
-  const colors = { icon: ['#f6e7b0', '#b8892a', '#2a1d05'], gold: ['#f3d36b', '#a8801c', '#2a1d05'], silver: ['#e4e9ee', '#8e99a4', '#1b2229'], bronze: ['#e3a873', '#8a5428', '#2a1608'] }[cardTier(d.peak)];
+  const colors = { diamond: ['#e9fbff', '#5fb8e6', '#0b2a3d'], gold: ['#f3d36b', '#a8801c', '#2a1d05'], silver: ['#e4e9ee', '#8e99a4', '#1b2229'], bronze: ['#e3a873', '#8a5428', '#2a1608'] }[cardTier(d.peak)];
   const grad = g.createLinearGradient(0, 0, W, H);
   grad.addColorStop(0, colors[0]); grad.addColorStop(1, colors[1]);
   g.fillStyle = grad;
