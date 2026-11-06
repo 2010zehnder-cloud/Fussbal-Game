@@ -1256,15 +1256,15 @@ function renderCreate() {
   const chal = typeof S.challenge === 'string' ? CHALLENGES.find(c => c.id === S.challenge) : null;
   const dl = dl0 || (chal ? { nation: chal.nation, pos: chal.pos, goal: { text: chal.text }, club: chal.club || 'einem Verein deiner Wahl' } : null);
   const natOpts = NATIONS.map(n => `<option${n.name === (h ? h.nation : dl ? dl.nation : 'Deutschland') ? ' selected' : ''}>${esc(n.name)}</option>`).join('');
-  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === (dl ? dl.pos : 'ST') ? ' selected' : ''}>${v.name}</option>`).join('');
+  const posOpts = Object.entries(POSITIONS).map(([k, v]) => `<option value="${k}"${k === ((dl && dl.pos) || 'ST') ? ' selected' : ''}>${v.name}</option>`).join('');
   return `
   <section class="card">
     <h2>${h ? 'Die nächste Generation' : dl ? '🎯 Herausforderung des Tages' : 'Dein Spieler'}</h2>
-    ${dl ? `<p><b>Ziel: ${esc(dl.goal.text)}.</b> Nationalität und Position sind vorgegeben, du startest in der Jugend von ${esc(dl.club)}.</p>` : ''}
+    ${dl ? `<p><b>Ziel: ${esc(dl.goal.text)}.</b> ${dl.pos ? 'Nationalität und Position sind vorgegeben' : 'Die Nationalität ist vorgegeben, die Position wählst du selbst'}, du startest in der Jugend von ${esc(dl.club)}.</p>` : ''}
     ${h ? `<p>Du spielst jetzt als Kind von ${esc(h.parentName)}. Es ist das Jahr ${h.year}, du bist 17 und hast das Talent geerbt${h.talent > 0 ? ' – die Scouts sind begeistert' : ''}. Dazu erbst du ${money(h.money)} und den berühmten Nachnamen.</p>` : ''}
     <label>Name<input id="f-name" maxlength="30" placeholder="z. B. Max Müller" value="${h ? esc(`${h.childName} ${h.surname}`) : ''}"></label>
     <label>Nationalität<select id="f-nation"${dl ? ' disabled' : ''}>${natOpts}</select></label>
-    <label>Position<select id="f-pos"${dl ? ' disabled' : ''}>${posOpts}</select></label>
+    <label>Position<select id="f-pos"${dl && dl.pos ? ' disabled' : ''}>${posOpts}</select></label>
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${h && h.parentNumber ? h.parentNumber : randInt(7, 30)}"></label>${h && h.parentNumber ? `<p class="muted">Vorschlag: die #${h.parentNumber} von ${esc(h.parentName)}.</p>` : ''}
     ${h || dl ? '' : `<label>Startszenario<select id="f-origin">${Object.entries(ORIGINS).map(([k, o]) => `<option value="${k}">${o.name} – ${o.desc}</option>`).join('')}</select></label>`}
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
@@ -1279,7 +1279,7 @@ function renderCreate() {
         const daily = dl;
         const chalId = chal ? chal.id : null;
         const fo = document.getElementById('f-origin');
-        newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, daily ? daily.pos : document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
+        newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, (daily && daily.pos) || document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
         if (dl0 && !chalId) applyDaily(dl0);
         if (chalId) applyChallenge(chalId);
         if (fo && fo.value !== 'academy') applyOrigin(fo.value);

@@ -328,6 +328,8 @@ const CHALLENGES = [
   { id: 'torino', level: 'Mittel', name: 'Der Stier von Turin', text: 'Gewinne mit dem FC Turin die Coppa Italia und bestreite 100 Spiele für den Verein.', nation: 'Italien', pos: 'ST', club: 'FC Turin', age: 19, rating: 63, test: () => titleAt('FC Turin', 'Coppa Italia-Sieger') && clubStats().some(c => c.club === 'FC Turin' && c.games >= 100) },
   { id: 'worldclass', level: 'Schwer', name: 'Weltklasse im Weltklasse-Modus', text: "Gewinne den Ballon d'Or im Schwierigkeitsgrad Weltklasse.", nation: 'Deutschland', pos: 'ST', club: null, age: 17, rating: 52, diff: 'world', test: () => S.diff === 'world' && S.awards.some(a => a.startsWith("Ballon d'Or")) },
   { id: 'fifty', level: 'Schwer', name: 'Die 50-Tore-Saison', text: 'Schieße in einer einzigen Saison mindestens 50 Tore.', nation: 'Norwegen', pos: 'ST', club: null, age: 17, rating: 53, test: () => S.history.some(h => !h.youth && h.goals >= 50) },
+  { id: 'napoleon', level: 'Schwer', name: 'Napoleon', text: 'Erobere Europa: Gewinne in einer Karriere die Champions League, die Europa League und die Conference League.', nation: 'Frankreich', pos: null, club: null, age: 17, rating: 54,
+    test: () => S.titles.some(isCLTitle) && S.titles.some(t => /^Europa[- ]League-Sieger/.test(t)) && S.titles.some(t => /^Conference[- ]League-Sieger/.test(t)) },
   { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Meisterschaft, nationaler Pokal und Champions League in derselben Saison
@@ -384,7 +386,7 @@ function renderChallenges() {
       <p class="muted small">Fertige Szenarien mit festem Start. Sie nutzen Spielstand ${SLOT_COUNT}.</p>
       <div class="offers">${CHALLENGES.map(ch => `
         <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}${ch.level ? ` <span class="tag ${ch.level === 'Schwer' ? 'bad' : 'good'}">${ch.level}</span>` : ''}</strong><small>${esc(ch.text)}</small>
-        <small>${esc(ch.nation)} · ${esc(POSITIONS[ch.pos].name)}${ch.club ? ` · ${esc(ch.club)}` : ''}</small></div>
+        <small>${esc(ch.nation)} · ${ch.pos ? esc(POSITIONS[ch.pos].name) : 'Position frei wählbar'}${ch.club ? ` · ${esc(ch.club)}` : ''}</small></div>
         ${btn('Starten', () => { startChallenge(ch); render(); }, 'primary small')}</div>`).join('')}</div>
     </details>
   </section>`;
