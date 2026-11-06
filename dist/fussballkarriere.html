@@ -1031,6 +1031,8 @@ function newGame(name, nationName, pos, number, heir = null, difficulty = 'norma
     Object.assign(S, {
       year: heir.year, lastTables: heir.lastTables, money: heir.money, owned: heir.owned,
       dynasty: heir.dynasty, gen: heir.gen, parentName: heir.parentName, parentLegacy: (heir.parentLegacy || []).map(x => ({ ...x, seen: false })), parentSchool: heir.parentSchool || null,
+      // Herausforderungen über mehrere Generationen (z. B. „Die goldene Familie“) laufen beim Kind weiter
+      ...(heir.challenge ? { challenge: heir.challenge } : {}),
     });
     S.player.popularity = clamp(20 + heir.fame, 0, 100);
     if (heir.talent >= 3) S.player.rating += 2;
@@ -1060,7 +1062,7 @@ function startHeir(child) {
     money: S.money, owned: S.owned, dynasty: [...(S.dynasty || []), record], gen: (S.gen || 1) + 1,
     fame: clamp(Math.round((S.peak - 70) * 1.2 + S.titles.length), 0, 45),
     talent: clamp(Math.round((S.peak - 75) / 3), -2, 6),
-    parentState: S, parentNumber: S.player.number, parentSchool: S.school || S.parentSchool || null, slot: S.slot, diff: S.diff, parentLegacy: [...(S.parentLegacy || []).filter(x => x.parent !== S.player.name), ...parentLegacy()],
+    parentState: S, parentNumber: S.player.number, challenge: S.challenge && typeof S.challenge === 'object' ? { ...S.challenge } : null, parentSchool: S.school || S.parentSchool || null, slot: S.slot, diff: S.diff, parentLegacy: [...(S.parentLegacy || []).filter(x => x.parent !== S.player.name), ...parentLegacy()],
     family: {
       parents: [
         { role: 'Elternteil', name: S.player.name, age: S.player.age, alive: true, rel: 80 },
@@ -6311,6 +6313,11 @@ function applyChallenge(id) {
   }
 }
 function checkChallenge() {
+  // Ältere Spielstände: Die Herausforderung ging beim Weiterspielen als Kind verloren
+  if (S && !S.challenge && S.slot === SLOT_COUNT && (S.gen || 1) >= 2 && S.player && S.player.nation === 'Niederlande') {
+    const ch = CHALLENGES.find(c => c.id === 'dynasty');
+    S.challenge = { id: ch.id, text: ch.text, done: false };
+  }
   if (!S || !S.challenge || S.challenge.done) return;
   const ch = CHALLENGES.find(c => c.id === S.challenge.id);
   if (!ch || !ch.test()) return;

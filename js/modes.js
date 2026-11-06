@@ -357,6 +357,11 @@ function applyChallenge(id) {
   }
 }
 function checkChallenge() {
+  // Ältere Spielstände: Die Herausforderung ging beim Weiterspielen als Kind verloren
+  if (S && !S.challenge && S.slot === SLOT_COUNT && (S.gen || 1) >= 2 && S.player && S.player.nation === 'Niederlande') {
+    const ch = CHALLENGES.find(c => c.id === 'dynasty');
+    S.challenge = { id: ch.id, text: ch.text, done: false };
+  }
   if (!S || !S.challenge || S.challenge.done) return;
   const ch = CHALLENGES.find(c => c.id === S.challenge.id);
   if (!ch || !ch.test()) return;
