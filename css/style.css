@@ -633,3 +633,15 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.potm-ligue1 { background: linear-gradient(160deg, #1d2633 0%, #0b0f16 70%); color: #dafa3c; border-color: #dafa3c; }
 .vg-card.potm-ligue1 em, .vg-card.potm-ligue1 .vg-league { color: #dafa3c; }
 .vg-card.potm-other { background: linear-gradient(160deg, #1fa37a 0%, #0c5a43 60%, #06281e 100%); }
+
+/* Ballon-d'Or-Karte: Gold mit Diamanten */
+.vg-card.ballon { color: #3a2604; border: 2px solid #fff3c4;
+  background: linear-gradient(135deg, #fff6c8 0%, #f0c53e 30%, #fff2b0 48%, #c8921a 70%, #ffe78a 100%);
+  box-shadow: 0 0 16px rgba(240,197,62,.7), inset 0 0 10px rgba(255,255,255,.6); }
+.vg-card.ballon em { color: #3a2604; }
+.vg-card.ballon::after { content: ''; position: absolute; inset: -50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.8) 50%, transparent 58%); animation: diamond-shine 2.6s ease-in-out infinite; }
+.vg-gem { position: absolute; font-size: 9px; top: 5px; left: 6px; filter: drop-shadow(0 0 2px #fff); animation: vg-twinkle 2s ease-in-out infinite; }
+.vg-gem.s2 { left: auto; right: 6px; animation-delay: .7s; }
+.vg-gem.s3 { top: 40px; left: 5px; font-size: 7px; animation-delay: 1.3s; }
+@media (prefers-reduced-motion: reduce) { .vg-card.ballon::after, .vg-gem { animation: none; } }

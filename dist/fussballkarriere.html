@@ -639,6 +639,18 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.potm-ligue1 em, .vg-card.potm-ligue1 .vg-league { color: #dafa3c; }
 .vg-card.potm-other { background: linear-gradient(160deg, #1fa37a 0%, #0c5a43 60%, #06281e 100%); }
 
+/* Ballon-d'Or-Karte: Gold mit Diamanten */
+.vg-card.ballon { color: #3a2604; border: 2px solid #fff3c4;
+  background: linear-gradient(135deg, #fff6c8 0%, #f0c53e 30%, #fff2b0 48%, #c8921a 70%, #ffe78a 100%);
+  box-shadow: 0 0 16px rgba(240,197,62,.7), inset 0 0 10px rgba(255,255,255,.6); }
+.vg-card.ballon em { color: #3a2604; }
+.vg-card.ballon::after { content: ''; position: absolute; inset: -50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.8) 50%, transparent 58%); animation: diamond-shine 2.6s ease-in-out infinite; }
+.vg-gem { position: absolute; font-size: 9px; top: 5px; left: 6px; filter: drop-shadow(0 0 2px #fff); animation: vg-twinkle 2s ease-in-out infinite; }
+.vg-gem.s2 { left: auto; right: 6px; animation-delay: .7s; }
+.vg-gem.s3 { top: 40px; left: 5px; font-size: 7px; animation-delay: 1.3s; }
+@media (prefers-reduced-motion: reduce) { .vg-card.ballon::after, .vg-gem { animation: none; } }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -7816,23 +7828,23 @@ function videoGameRating() {
   const old = S.vg ? S.vg.rating : null;
   // Sonderkarte für die Erfolge der letzten Saison: Team des Jahres (Ballon d'Or / Spieler der Saison) oder Weg ins Finale (Champions League)
   const last = `(${seasonLabel(S.year - 1)})`;
-  const toty = S.awards.some(a => a.endsWith(last) && a.startsWith("Ballon d'Or"));
+  const ballon = S.awards.some(a => a.endsWith(last) && a.startsWith("Ballon d'Or"));
+  const toty = S.awards.some(a => a.endsWith(last) && a.startsWith('Spieler der Saison'));
   const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
   // Nur Meister geworden: Karte im Stil der jeweiligen Liga
-  // Meister geworden oder Spieler der Saison der Liga: Karte im Stil der jeweiligen Liga
-  const potmAward = S.awards.find(a => a.endsWith(last) && a.startsWith('Spieler der Saison'));
-  const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`))
-    || (potmAward && LEAGUES.find(l => potmAward.startsWith(`Spieler der Saison (${l.name})`)));
-  const special = toty ? 'toty' : rttf ? 'rttf' : champ ? 'potm' : null;
-  const bonus = special === 'potm' ? 1 : special ? 2 : 0;
+  // Meister geworden: Karte im Stil der jeweiligen Liga
+  const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
+  const special = ballon ? 'ballon' : toty ? 'toty' : rttf ? 'rttf' : champ ? 'potm' : null;
+  const bonus = { ballon: 3, toty: 2, rttf: 2, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
 }
 
 const VG_SPECIAL = {
-  toty: { label: 'TEAM DES JAHRES', text: "Für den Ballon d'Or bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!" },
+  ballon: { label: "BALLON D'OR", text: "Für den Ballon d'Or bekommst du die goldene Diamant-Karte – mit +3 auf deine Wertung!" },
+  toty: { label: 'TEAM DES JAHRES', text: 'Als Spieler der Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!' },
   rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
-  potm: { label: 'SPIELER DES MONATS', text: 'Für deine starke Saison in der Liga bekommst du eine Sonderkarte „Spieler des Monats“ – mit +1 auf deine Wertung!' },
+  potm: { label: 'SPIELER DES MONATS', text: 'Für die Meisterschaft bekommst du eine Sonderkarte „Spieler des Monats“ deiner Liga – mit +1 auf deine Wertung!' },
 };
 // Ligen mit eigenem Kartendesign, alle anderen bekommen ein neutrales Meister-Design
 const POTM_LEAGUES = ['bl', 'bl2', 'pl', 'laliga', 'seriea', 'ligue1'];
@@ -7842,7 +7854,7 @@ function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp || 'base';
   return `<div class="vg-card ${cls}">
-    ${sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
     <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
