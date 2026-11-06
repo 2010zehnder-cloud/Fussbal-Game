@@ -581,3 +581,6 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .coach-club .crest { width: 18px; height: 18px; font-size: 7px; }
 .coach-picker label { display: block; margin: 6px 0; font-size: 14px; }
 .coach-picker select { margin-left: 6px; max-width: 220px; }
+.lines.stations li { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.lines.stations .crest { width: 20px; height: 20px; font-size: 8px; }
+.lines.stations .muted { width: 100%; padding-left: 26px; font-size: 13px; }

@@ -91,7 +91,7 @@ function saveHallOfFame() {
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
     titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
-    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -127,16 +127,38 @@ function hofDetail(e) {
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
-    + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
+    + renderStations(e.stations) + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
-// Ältere Einträge ohne Titel-Liste aus den Spielständen nachtragen (falls die Karriere noch gespeichert ist)
+// Stationen als Spieler in zeitlicher Reihenfolge (für die Ruhmeshalle)
+function playerStations() {
+  const legendClubs = new Set(legends().map(l => l.club));
+  const out = [];
+  for (const h of S.history) {
+    if (h.banned) continue;
+    let st = out.find(x => x.club === h.club);
+    if (!st) { st = { club: h.club, from: h.year, to: h.year, seasons: 0, games: 0, goals: 0, assists: 0, titles: 0, youth: true, loan: true }; out.push(st); }
+    st.to = h.year; st.seasons++; st.games += h.games; st.goals += h.goals; st.assists += h.assists || 0; st.titles += h.titles;
+    if (!h.youth) st.youth = false;
+    if (!h.loan) st.loan = false;
+  }
+  return out.map(x => ({ ...x, legend: legendClubs.has(x.club) }));
+}
+
+function renderStations(list) {
+  if (!list || !list.length) return '';
+  return `<h4>Stationen als Spieler</h4><ul class="lines stations">${list.map(x => `<li>${crest(x.club)} <b>${esc(x.club)}</b>${x.legend ? ' 🏛️' : ''}
+    <span class="muted">${x.from === x.to ? seasonLabel(x.from) : `${x.from}–${x.to + 1}`}${x.youth ? ' · Jugend' : x.loan ? ' · Leihe' : ''} · ${x.games} Sp · ${x.goals} T · ${x.assists} V${x.titles ? ` · ${x.titles} Titel` : ''}</span></li>`).join('')}</ul>
+    ${list.some(x => x.legend) ? '<p class="muted small">🏛️ = Vereinslegende</p>' : ''}`;
+}
+
 // Trainerstationen: in welcher Saison bei welchem Verein (für „Bester Trainer“)
 function coachClubData(d) {
   if (!d.coachDone) return {};
   return { coachClubs: d.coachDone.clubs || [], coachSeasons: ((d.coach && d.coach.seasons) || []).map(x => [x.year, x.club]) };
 }
 
+// Ältere Einträge ohne Titel-Liste aus den Spielständen nachtragen (falls die Karriere noch gespeichert ist)
 function recoverHallOfFame() {
   const list = loadHallOfFame();
   const missing = list.filter(e => !e.titleList || ((e.coachList || []).length && !e.coachClubs));
