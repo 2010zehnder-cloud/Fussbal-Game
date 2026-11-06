@@ -67,7 +67,25 @@ function videoGameRating() {
   const form = h && h.note !== null && h.note !== undefined ? (3 - h.note) * 1.5 : 0;
   const r = clamp(Math.round(p.rating + (p.popularity - 50) / 25 + form), 40, 99);
   const old = S.vg ? S.vg.rating : null;
-  S.vg = { rating: r, year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
+  // Sonderkarte für die Erfolge der letzten Saison: Team des Jahres (Ballon d'Or / Spieler der Saison) oder Weg ins Finale (Champions League)
+  const last = `(${seasonLabel(S.year - 1)})`;
+  const toty = S.awards.some(a => a.endsWith(last) && (a.startsWith("Ballon d'Or") || a.startsWith('Spieler der Saison')));
+  const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
+  const special = toty ? 'toty' : rttf ? 'rttf' : null;
+  S.vg = { rating: special ? Math.min(99, r + 2) : r, base: r, special, year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
+}
+
+const VG_SPECIAL = {
+  toty: { label: 'TEAM DES JAHRES', text: "Für deine überragende Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!" },
+  rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
+};
+
+// Kleine Karte im Videospiel-Stil
+function vgCard(v) {
+  const sp = v.special;
+  return `<div class="vg-card ${sp || 'base'}">
+    ${sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
 function reactRating(kind) {
@@ -88,8 +106,9 @@ function renderGameRating() {
   const d = v.old === null ? null : v.rating - v.old;
   return `
   <section class="card vgame">
-    <div class="vg-row"><div class="vg-badge">${v.rating}</div>
-      <div><b>🎮 ${esc(v.title)}: deine neue Wertung</b>
+    <div class="vg-row">${vgCard(v)}
+      <div><b>🎮 ${esc(v.title)}: ${v.special ? 'deine Sonderkarte' : 'deine neue Wertung'}</b>
+        ${v.special ? `<p class="vg-special">${VG_SPECIAL[v.special].text}</p>` : ''}
         <p>${d === null ? `Du bist zum ersten Mal im Videospiel – mit einer Wertung von ${v.rating}!` : d > 0 ? `${v.old} → ${v.rating} – ein Upgrade um ${d}!` : d < 0 ? `${v.old} → ${v.rating} – abgewertet um ${-d}.` : `Unverändert bei ${v.rating}.`}</p></div></div>
     ${v.reacted ? `<div class="result"><p>${v.msg}</p></div>` : `<div class="choices">${btn('Freuen und teilen', () => { reactRating('share'); render(true); })}${btn('Öffentlich beschweren', () => { reactRating('complain'); render(true); })}</div>`}
   </section>`;

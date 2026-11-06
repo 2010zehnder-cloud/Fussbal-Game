@@ -597,3 +597,25 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .lines.stars-race li { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 4px 0; }
 .lines.stars-race li.me b { color: var(--accent); }
 .lines.stars-race .muted { width: 100%; padding-left: 36px; font-size: 13px; }
+
+/* Videospiel-Karten: normal, Team des Jahres, Weg ins Finale */
+.vg-card { position: relative; overflow: hidden; flex: none; width: 74px; height: 96px; border-radius: 10px 10px 18px 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 18px; box-sizing: border-box; line-height: 1; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.vg-card b { font: 800 30px var(--font-display); }
+.vg-card small { font-weight: 800; font-size: 12px; margin-top: 2px; }
+.vg-card em { position: absolute; bottom: 5px; left: 0; right: 0; text-align: center; font: 700 6.5px/1.1 var(--font-body); font-style: normal; letter-spacing: 0; padding: 0 2px; white-space: nowrap; }
+.vg-card.base { color: #2a1d05; background: linear-gradient(150deg, #f3d36b, #a8801c); }
+.vg-card.toty { color: #f5d26b; border: 2px solid #d9b44a;
+  background: radial-gradient(circle at 50% 25%, #2c5bd6 0%, #10265f 55%, #070f2b 100%); box-shadow: 0 0 14px rgba(80,130,255,.55); }
+.vg-card.toty em { color: #f5d26b; }
+.vg-card.rttf { color: #ffffff; border: 2px solid #c9d6ff;
+  background: linear-gradient(160deg, #0b1a4a 0%, #1d3fa8 45%, #050a24 100%); box-shadow: 0 0 14px rgba(120,160,255,.45); }
+.vg-card.rttf em { color: #c9d6ff; }
+.vg-sparkle { position: absolute; color: #f5d26b; font-size: 11px; top: 6px; left: 7px; animation: vg-twinkle 1.8s ease-in-out infinite; }
+.vg-sparkle.s2 { top: 30px; left: auto; right: 6px; font-size: 8px; animation-delay: .9s; }
+.vg-star { position: absolute; color: rgba(255,255,255,.55); font-size: 9px; top: 6px; left: 8px; }
+.vg-star.s2 { top: 12px; left: auto; right: 9px; font-size: 7px; }
+.vg-star.s3 { top: 26px; left: 6px; font-size: 6px; }
+@keyframes vg-twinkle { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .vg-sparkle { animation: none; } }
+.vg-special { font-weight: 700; color: var(--gold); }
