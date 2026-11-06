@@ -625,6 +625,20 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @media (prefers-reduced-motion: reduce) { .vg-sparkle { animation: none; } }
 .vg-special { font-weight: 700; color: var(--gold); }
 
+/* Spieler des Monats: Design je Liga */
+.vg-card.potm { color: #fff; border: 2px solid rgba(255,255,255,.7); }
+.vg-card.potm em { color: rgba(255,255,255,.9); }
+.vg-league { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 6px/1 var(--font-body); letter-spacing: .3px; opacity: .9; white-space: nowrap; overflow: hidden; }
+.vg-card.potm-bl { background: linear-gradient(160deg, #e2001a 0%, #9c0012 55%, #1b1b1b 100%); }
+.vg-card.potm-bl2 { background: linear-gradient(160deg, #b5121b 0%, #5e0a10 55%, #2b2b2b 100%); }
+.vg-card.potm-pl { background: linear-gradient(160deg, #e90052 0%, #7a1d8c 45%, #3d195b 100%); border-color: #04f5ff; }
+.vg-card.potm-pl em, .vg-card.potm-pl .vg-league { color: #04f5ff; }
+.vg-card.potm-laliga { background: linear-gradient(160deg, #ff6b3d 0%, #ee2523 50%, #7a0f12 100%); }
+.vg-card.potm-seriea { background: linear-gradient(160deg, #1f6fff 0%, #0b2f8a 55%, #06183f 100%); border-color: #61e3ff; }
+.vg-card.potm-ligue1 { background: linear-gradient(160deg, #1d2633 0%, #0b0f16 70%); color: #dafa3c; border-color: #dafa3c; }
+.vg-card.potm-ligue1 em, .vg-card.potm-ligue1 .vg-league { color: #dafa3c; }
+.vg-card.potm-other { background: linear-gradient(160deg, #1fa37a 0%, #0c5a43 60%, #06281e 100%); }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -7804,20 +7818,29 @@ function videoGameRating() {
   const last = `(${seasonLabel(S.year - 1)})`;
   const toty = S.awards.some(a => a.endsWith(last) && (a.startsWith("Ballon d'Or") || a.startsWith('Spieler der Saison')));
   const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
-  const special = toty ? 'toty' : rttf ? 'rttf' : null;
-  S.vg = { rating: special ? Math.min(99, r + 2) : r, base: r, special, year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
+  // Nur Meister geworden: Karte im Stil der jeweiligen Liga
+  const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
+  const special = toty ? 'toty' : rttf ? 'rttf' : champ ? 'potm' : null;
+  const bonus = special === 'potm' ? 1 : special ? 2 : 0;
+  S.vg = { rating: Math.min(99, r + bonus), base: r, special, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
+    year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
 }
 
 const VG_SPECIAL = {
   toty: { label: 'TEAM DES JAHRES', text: "Für deine überragende Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!" },
   rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
+  potm: { label: 'SPIELER DES MONATS', text: 'Für die Meisterschaft bekommst du eine Sonderkarte „Spieler des Monats“ deiner Liga – mit +1 auf deine Wertung!' },
 };
+// Ligen mit eigenem Kartendesign, alle anderen bekommen ein neutrales Meister-Design
+const POTM_LEAGUES = ['bl', 'bl2', 'pl', 'laliga', 'seriea', 'ligue1'];
 
 // Kleine Karte im Videospiel-Stil
 function vgCard(v) {
   const sp = v.special;
-  return `<div class="vg-card ${sp || 'base'}">
+  const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp || 'base';
+  return `<div class="vg-card ${cls}">
     ${sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
     <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 

@@ -619,3 +619,17 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @keyframes vg-twinkle { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .vg-sparkle { animation: none; } }
 .vg-special { font-weight: 700; color: var(--gold); }
+
+/* Spieler des Monats: Design je Liga */
+.vg-card.potm { color: #fff; border: 2px solid rgba(255,255,255,.7); }
+.vg-card.potm em { color: rgba(255,255,255,.9); }
+.vg-league { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 6px/1 var(--font-body); letter-spacing: .3px; opacity: .9; white-space: nowrap; overflow: hidden; }
+.vg-card.potm-bl { background: linear-gradient(160deg, #e2001a 0%, #9c0012 55%, #1b1b1b 100%); }
+.vg-card.potm-bl2 { background: linear-gradient(160deg, #b5121b 0%, #5e0a10 55%, #2b2b2b 100%); }
+.vg-card.potm-pl { background: linear-gradient(160deg, #e90052 0%, #7a1d8c 45%, #3d195b 100%); border-color: #04f5ff; }
+.vg-card.potm-pl em, .vg-card.potm-pl .vg-league { color: #04f5ff; }
+.vg-card.potm-laliga { background: linear-gradient(160deg, #ff6b3d 0%, #ee2523 50%, #7a0f12 100%); }
+.vg-card.potm-seriea { background: linear-gradient(160deg, #1f6fff 0%, #0b2f8a 55%, #06183f 100%); border-color: #61e3ff; }
+.vg-card.potm-ligue1 { background: linear-gradient(160deg, #1d2633 0%, #0b0f16 70%); color: #dafa3c; border-color: #dafa3c; }
+.vg-card.potm-ligue1 em, .vg-card.potm-ligue1 .vg-league { color: #dafa3c; }
+.vg-card.potm-other { background: linear-gradient(160deg, #1fa37a 0%, #0c5a43 60%, #06281e 100%); }
