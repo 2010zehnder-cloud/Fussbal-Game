@@ -103,7 +103,7 @@ function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
-    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? '<span class="vg-euro-stripes"></span>' : ''}
+    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
     <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${sp === 'euro' && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
