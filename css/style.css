@@ -666,3 +666,13 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-euro-ring i { position: absolute; left: -4px; top: -5px; font-style: normal; font-size: 8px; color: #e0b43a; opacity: .9; transform-origin: 4px 5px; }
 .vg-euro-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #0a2a6e, #1d4fb8, #0a2a6e); }
 .vg-card.euro em { color: #fff; z-index: 1; }
+
+/* Kontinental-Karte (Copa América, Afrika-Cup, Asienmeisterschaft, Gold Cup): Smaragdgrün mit goldener Sonne */
+.vg-card.cont { color: #ffd76a; border: 2px solid #e6b94a;
+  background: radial-gradient(circle at 50% 38%, #138a6a 0%, #075240 55%, #032a21 100%); box-shadow: 0 0 14px rgba(230,185,74,.5); }
+.vg-card.cont b, .vg-card.cont small { position: relative; z-index: 1; }
+.vg-cont-sun { position: absolute; left: 50%; top: 40px; width: 110px; height: 110px; margin: -55px 0 0 -55px; opacity: .35;
+  background: repeating-conic-gradient(from 0deg, #ffd76a 0deg 6deg, transparent 6deg 24deg); border-radius: 50%;
+  -webkit-mask: radial-gradient(circle, transparent 18px, #000 19px); mask: radial-gradient(circle, transparent 18px, #000 19px); }
+.vg-cont-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #8a5a12, #e6b94a, #8a5a12); }
+.vg-card.cont em { color: #2a1a02; z-index: 1; }

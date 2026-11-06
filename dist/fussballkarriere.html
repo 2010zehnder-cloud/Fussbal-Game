@@ -672,6 +672,16 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-euro-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #0a2a6e, #1d4fb8, #0a2a6e); }
 .vg-card.euro em { color: #fff; z-index: 1; }
 
+/* Kontinental-Karte (Copa América, Afrika-Cup, Asienmeisterschaft, Gold Cup): Smaragdgrün mit goldener Sonne */
+.vg-card.cont { color: #ffd76a; border: 2px solid #e6b94a;
+  background: radial-gradient(circle at 50% 38%, #138a6a 0%, #075240 55%, #032a21 100%); box-shadow: 0 0 14px rgba(230,185,74,.5); }
+.vg-card.cont b, .vg-card.cont small { position: relative; z-index: 1; }
+.vg-cont-sun { position: absolute; left: 50%; top: 40px; width: 110px; height: 110px; margin: -55px 0 0 -55px; opacity: .35;
+  background: repeating-conic-gradient(from 0deg, #ffd76a 0deg 6deg, transparent 6deg 24deg); border-radius: 50%;
+  -webkit-mask: radial-gradient(circle, transparent 18px, #000 19px); mask: radial-gradient(circle, transparent 18px, #000 19px); }
+.vg-cont-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #8a5a12, #e6b94a, #8a5a12); }
+.vg-card.cont em { color: #2a1a02; z-index: 1; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -7880,14 +7890,15 @@ function videoGameRating() {
   const cont = S.titles.find(t => t.endsWith(` ${S.year}`) && /^(Europameister|Copa-América-Sieger|Afrikameister|Asienmeister|Gold-Cup-Sieger) /.test(t));
   // Meister geworden: Karte im Stil der jeweiligen Liga
   const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
-  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? 'euro' : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
-  const bonus = { wm: 3, ballon: 3, euro: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
+  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? (cont.startsWith('Europameister') ? 'euro' : 'cont') : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
+  const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
 }
 
 const VG_SPECIAL = {
   wm: { label: 'WELTMEISTER', text: 'Für den WM-Titel bekommst du die Weltmeister-Karte – mit +3 auf deine Wertung!' },
+  cont: { label: 'KONTINENTALMEISTER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Kontinental-Karte – mit +2 auf deine Wertung!' },
   euro: { label: 'TURNIERSIEGER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Turnier-Karte – mit +2 auf deine Wertung!' },
   ballon: { label: "BALLON D'OR", text: "Für den Ballon d'Or bekommst du die goldene Diamant-Karte – mit +3 auf deine Wertung!" },
   toty: { label: 'TEAM DES JAHRES', text: 'Als Spieler der Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!' },
@@ -7904,10 +7915,10 @@ function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
-    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : ''}
+    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
-    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${sp === 'euro' && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
+    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
 function reactRating(kind) {
