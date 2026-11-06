@@ -577,6 +577,15 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 /* Echte Vereinslogos (nur private Version) */
 img.crest.logo { border-radius: 0; background: none; object-fit: contain; padding: 0; box-shadow: none; }
 
+/* Bester Trainer in der Ruhmeshalle */
+.best-coach { margin: 10px 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--card2); border: 1px solid var(--gold); }
+.best-coach h3 { margin: 0 0 4px; }
+.best-coach p { margin: 0 0 6px; }
+.coach-club { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; margin-left: 4px; }
+.coach-club .crest { width: 18px; height: 18px; font-size: 7px; }
+.coach-picker label { display: block; margin: 6px 0; font-size: 14px; }
+.coach-picker select { margin-left: 6px; max-width: 220px; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -4155,7 +4164,7 @@ function saveHallOfFame() {
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
     titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
-    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -4189,15 +4198,21 @@ function hofDetail(e) {
   if (!e.titleList) return renderCard(cardFromEntry(e)) + '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
   const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
-    + block('Titel als Trainer', e.coachList || [], '📋') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
+    + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
     + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
 // Ältere Einträge ohne Titel-Liste aus den Spielständen nachtragen (falls die Karriere noch gespeichert ist)
+// Trainerstationen: in welcher Saison bei welchem Verein (für „Bester Trainer“)
+function coachClubData(d) {
+  if (!d.coachDone) return {};
+  return { coachClubs: d.coachDone.clubs || [], coachSeasons: ((d.coach && d.coach.seasons) || []).map(x => [x.year, x.club]) };
+}
+
 function recoverHallOfFame() {
   const list = loadHallOfFame();
-  const missing = list.filter(e => !e.titleList);
+  const missing = list.filter(e => !e.titleList || ((e.coachList || []).length && !e.coachClubs));
   if (!missing.length) return list;
   const saves = [];
   for (let n = 1; n <= SLOT_COUNT; n++) { const d = readSlot(n); if (d && d.player && d.titles) saves.push(d); }
@@ -4207,14 +4222,99 @@ function recoverHallOfFame() {
     const d = saves.find(x => x.hofId === e.id)
       || saves.find(x => x.player.name === e.name && x.player.nation === e.nation && x.player.pos === e.pos && (x.gen || 1) === (e.gen || 1));
     if (!d) return;
+    if (e.titleList) { Object.assign(e, coachClubData(d)); changed = true; return; }
     const pro = (d.history || []).filter(h => !h.youth && !h.banned);
     e.assists = pro.reduce((sum, h) => sum + (h.assists || 0), 0);
     e.titleList = d.titles.slice(); e.awardList = (d.awards || []).slice(); e.caps = d.player.caps || 0;
     e.coachList = d.coachDone ? d.coachDone.titles.slice() : []; e.ownerList = d.ownerDone ? d.ownerDone.titles.slice() : [];
+    Object.assign(e, coachClubData(d));
     changed = true;
   });
   if (changed) try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch (err) { /* ignorieren */ }
   return list;
+}
+
+// Land eines Vereins bzw. eines nationalen Titels (aus den Ligadaten)
+function clubCountry(club) {
+  const L = LEAGUES.find(l => l.clubs.some(c => c[0] === club));
+  return L ? L.country : null;
+}
+function titleCountry(name) {
+  const L = LEAGUES.find(l => name === l.champion || name === `${l.cup}-Sieger`);
+  return L ? L.country : null;
+}
+
+// Mit welchem Verein wurde ein Trainertitel gewonnen?
+function coachTitleClub(e, label) {
+  const m = label.match(/^(.*) \((\d{4})\/\d\d\)$/);
+  if (!m) return null;
+  const name = m[1], year = +m[2];
+  const st = (e.coachSeasons || []).find(x => x[0] === year);
+  if (st) return st[1];
+  const clubs = e.coachClubs || [];
+  const byCountry = c => { const cs = clubs.filter(cl => clubCountry(cl) === c); return cs.length === 1 ? cs[0] : null; };
+  const own = titleCountry(name);
+  if (own) return byCountry(own);
+  // Internationaler Titel: Verein über den nationalen Titel derselben (oder der nächsten) Saison bestimmen
+  const dom = (e.coachList || []).map(t => t.match(/^(.*) \((\d{4})\/\d\d\)$/)).filter(x => x && titleCountry(x[1]))
+    .map(x => ({ year: +x[2], club: byCountry(titleCountry(x[1])) })).filter(x => x.club)
+    .sort((a, b) => Math.abs(a.year - year) - Math.abs(b.year - year));
+  return dom.length ? dom[0].club : (clubs.length === 1 ? clubs[0] : null);
+}
+
+// Trainertitel nach Titel und Verein gruppiert
+function coachTitleLines(e) {
+  const groups = new Map();
+  for (const label of e.coachList || []) {
+    const m = label.match(/^(.*) \(([^()]+)\)$/);
+    const name = m ? m[1] : label, club = coachTitleClub(e, label);
+    const key = `${name.replace(/-/g, ' ')}|${club || ''}`;
+    if (!groups.has(key)) groups.set(key, { name, club, years: [] });
+    groups.get(key).years.push(m ? m[2] : '');
+  }
+  const list = [...groups.values()].sort((a, b) => b.years.length - a.years.length);
+  return `<ul class="lines tlist">${list.map(g => `<li>${trophyIcon(g.name)} <b>${g.years.length > 1 ? `${g.years.length}× ` : ''}${esc(g.name)}</b>${g.club ? ` <span class="coach-club">${crest(g.club)} ${esc(g.club)}</span>` : ''}
+    <span class="muted">${esc(g.years.filter(Boolean).join(', '))}</span></li>`).join('')}</ul>`;
+}
+
+// Ältere Karrieren ohne gespeicherte Trainer-Vereine: Vereine pro Land selbst nachtragen
+function renderCoachClubPicker(e) {
+  const countries = [...new Set((e.coachList || []).map(t => titleCountry(t.replace(/ \([^()]+\)$/, ''))).filter(Boolean))];
+  if (!countries.length) return '';
+  const names = { de: 'Deutschland', en: 'England', es: 'Spanien', it: 'Italien', fr: 'Frankreich', nl: 'Niederlande', pt: 'Portugal', at: 'Österreich', ch: 'Schweiz', tr: 'Türkei', be: 'Belgien', sco: 'Schottland', sa: 'Saudi-Arabien', us: 'USA', br: 'Brasilien', ar: 'Argentinien' };
+  const opts = c => LEAGUES.filter(l => l.country === c).flatMap(l => l.clubs.map(x => x[0])).sort((a, b) => a.localeCompare(b, 'de'))
+    .map(n => `<option>${esc(n)}</option>`).join('');
+  return `<div class="coach-picker"><p class="muted">Für diese ältere Karriere ist nicht gespeichert, bei welchen Vereinen du Trainer warst. Trag sie hier nach:</p>
+    ${countries.map(c => `<label>${esc(names[c] || c)}: <select data-coach-country="${c}"><option value="">– Verein wählen –</option>${opts(c)}</select></label>`).join('')}
+    <div class="actions">${btn('Vereine speichern', () => saveCoachClubs(e.id), 'small primary')}</div></div>`;
+}
+
+function saveCoachClubs(id) {
+  const clubs = [...document.querySelectorAll('[data-coach-country]')].map(x => x.value).filter(Boolean);
+  if (!clubs.length) return;
+  const list = loadHallOfFame();
+  const e = list.find(x => x.id === id);
+  if (!e) return;
+  e.coachClubs = clubs;
+  try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch (err) { /* ignorieren */ }
+  render(true);
+}
+
+// Hervorgehobene Karriere mit den meisten Titeln als Trainer
+function renderBestCoach(list) {
+  const best = list.filter(e => (e.coachList || []).length).sort((a, b) => b.coachList.length - a.coachList.length)[0];
+  if (!best) return '';
+  const clubs = [...new Set((best.coachList || []).map(t => coachTitleClub(best, t)).filter(Boolean))];
+  return `
+    <div class="best-coach">
+      <h3>🧠 Bester Trainer: ${esc(best.name)}</h3>
+      <p class="muted">${best.coachList.length} Titel als Trainer${clubs.length ? ` · mit ${clubs.map(esc).join(' und ')}` : ''}</p>
+      <details><summary>Spielerkarte und alle Trainertitel anzeigen</summary>
+        ${renderCard(cardFromEntry(best))}
+        ${coachTitleLines(best)}
+        ${clubs.length ? '' : renderCoachClubPicker(best)}
+      </details>
+    </div>`;
 }
 
 function renderHallOfFame() {
@@ -4224,6 +4324,7 @@ function renderHallOfFame() {
   <section class="card">
     <h2>Ruhmeshalle</h2>
     <p class="muted">Deine besten beendeten Karrieren auf diesem Gerät. Tippe auf eine Karriere für alle Titel und Auszeichnungen.</p>
+    ${renderBestCoach(list)}
     <div class="scroll"><table class="hof">
       <thead><tr><th>#</th><th>Spieler</th><th>Status</th><th>Sp</th><th>T</th><th>V</th><th>Titel</th><th>Stä</th></tr></thead>
       <tbody>${list.slice(0, 10).map((e, i) => `<tr class="hof-row" data-hof="${i}"><td>${i + 1}</td>

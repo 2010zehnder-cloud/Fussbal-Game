@@ -572,3 +572,12 @@ table.hof .hof-detail h4 { margin: 10px 0 4px; font-size: 14px; }
 
 /* Echte Vereinslogos (nur private Version) */
 img.crest.logo { border-radius: 0; background: none; object-fit: contain; padding: 0; box-shadow: none; }
+
+/* Bester Trainer in der Ruhmeshalle */
+.best-coach { margin: 10px 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--card2); border: 1px solid var(--gold); }
+.best-coach h3 { margin: 0 0 4px; }
+.best-coach p { margin: 0 0 6px; }
+.coach-club { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; margin-left: 4px; }
+.coach-club .crest { width: 18px; height: 18px; font-size: 7px; }
+.coach-picker label { display: block; margin: 6px 0; font-size: 14px; }
+.coach-picker select { margin-left: 6px; max-width: 220px; }
