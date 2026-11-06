@@ -294,6 +294,7 @@ function startSeason() {
   genSeasonGoals();
   S.season.flow = pickFlow();
   S.season.theme = pickTheme();
+  S.eclPlayoff = null;
   S.europe = S.youth ? null : europeFor(S.clubId);
   S.phase = 'preseason';
   S.current = null;
@@ -310,8 +311,16 @@ function europeFor(club) {
   const C = CLUB_COMPS[confOf(L)];
   if (idx < L.cl) return 'cl';
   if (C.el && idx < L.cl + L.el) return 'el';
-  // Conference League: der nächste Platz nach den Europa-League-Plätzen (nur in Ligen mit Europapokal-Plätzen)
-  if (C.ecl && L.el > 0 && idx < L.cl + L.el + (L.ecl ?? 1)) return 'ecl';
+  // Conference League: ein fester Platz nach den Europa-League-Plätzen, der Platz danach spielt Playoffs
+  if (C.ecl && L.el > 0) {
+    const fixed = L.cl + L.el + (L.ecl ?? 1);
+    if (idx < fixed) return 'ecl';
+    if (idx === fixed) {
+      const won = chance(clamp(0.35 + (clubStr(club) - 70) * 0.03, 0.25, 0.8));
+      S.eclPlayoff = { club, won, year: S.year };
+      return won ? 'ecl' : null;
+    }
+  }
   return null;
 }
 
@@ -1355,6 +1364,9 @@ function renderPreseason() {
   }[se.role];
   return `
   ${renderHeadline()}
+  ${S.eclPlayoff && S.eclPlayoff.club === S.clubId && S.eclPlayoff.year === S.year ? `<section class="card"><p>${S.eclPlayoff.won
+    ? `🟢 <b>Conference-League-Playoffs gewonnen!</b> ${esc(S.clubId)} setzt sich in Hin- und Rückspiel durch und spielt diese Saison in der Conference League.`
+    : `❌ <b>Conference-League-Playoffs verloren.</b> ${esc(S.clubId)} scheidet in der Qualifikation aus – diese Saison kein Europapokal.`}</p></section>` : ''}
   ${renderGameRating()}
   <section class="card">
     <h2>Saisonvorschau ${seasonLabel(S.year)}</h2>
