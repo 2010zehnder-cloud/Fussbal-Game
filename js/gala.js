@@ -67,23 +67,27 @@ function videoGameRating() {
   const form = h && h.note !== null && h.note !== undefined ? (3 - h.note) * 1.5 : 0;
   const r = clamp(Math.round(p.rating + (p.popularity - 50) / 25 + form), 40, 99);
   const old = S.vg ? S.vg.rating : null;
-  // Sonderkarte für die Erfolge der letzten Saison: Team des Jahres (Ballon d'Or / Spieler der Saison) oder Weg ins Finale (Champions League)
+  // Sonderkarte für die Erfolge der letzten Saison (inklusive Turnier im Sommer davor)
   const last = `(${seasonLabel(S.year - 1)})`;
   const ballon = S.awards.some(a => a.endsWith(last) && a.startsWith("Ballon d'Or"));
   const toty = S.awards.some(a => a.endsWith(last) && a.startsWith('Spieler der Saison'));
   const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
   const el = S.titles.some(t => t.endsWith(last) && /^Europa[- ]League-Sieger/.test(t));
   const ecl = S.titles.some(t => t.endsWith(last) && /^Conference[- ]League-Sieger/.test(t));
-  // Nur Meister geworden: Karte im Stil der jeweiligen Liga
+  // Turniere mit der Nationalmannschaft werden mit der Jahreszahl des Sommers gespeichert (z. B. „Weltmeister 2034“)
+  const wm = S.titles.includes(`Weltmeister ${S.year}`);
+  const cont = S.titles.find(t => t.endsWith(` ${S.year}`) && /^(Europameister|Copa-América-Sieger|Afrikameister|Asienmeister|Gold-Cup-Sieger) /.test(t));
   // Meister geworden: Karte im Stil der jeweiligen Liga
   const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
-  const special = ballon ? 'ballon' : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
-  const bonus = { ballon: 3, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
-  S.vg = { rating: Math.min(99, r + bonus), base: r, special, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
+  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? 'euro' : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
+  const bonus = { wm: 3, ballon: 3, euro: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
+  S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
 }
 
 const VG_SPECIAL = {
+  wm: { label: 'WELTMEISTER', text: 'Für den WM-Titel bekommst du die Weltmeister-Karte – mit +3 auf deine Wertung!' },
+  euro: { label: 'TURNIERSIEGER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Turnier-Karte – mit +2 auf deine Wertung!' },
   ballon: { label: "BALLON D'OR", text: "Für den Ballon d'Or bekommst du die goldene Diamant-Karte – mit +3 auf deine Wertung!" },
   toty: { label: 'TEAM DES JAHRES', text: 'Als Spieler der Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!' },
   rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
@@ -99,9 +103,10 @@ function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
+    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? '<span class="vg-euro-stripes"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
-    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${VG_SPECIAL[sp].label}</em>` : ''}</div>`;
+    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${sp === 'euro' && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
 function reactRating(kind) {
