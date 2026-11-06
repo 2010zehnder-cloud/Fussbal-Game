@@ -46,6 +46,10 @@ const TROPHY_SVG = {
     <ellipse cx="32" cy="6" rx="11" ry="2" fill="#fff" opacity=".6"/>`,
   europa: `${BASE}<path d="M24 5 H40 C40 12 47 18 47 28 C47 41 39 47 32 47 C25 47 17 41 17 28 C17 18 24 12 24 5 Z" fill="url(#tg-silver)" stroke="#00000033"/>
     <path d="M22 22 C28 26 36 26 42 22" fill="none" stroke="#8a939d" stroke-width="1.5"/><ellipse cx="32" cy="5" rx="8" ry="1.8" fill="#fff" opacity=".7"/>`,
+  conference: `${BASE}<rect x="29" y="40" width="6" height="10" fill="url(#tg-silver)"/>
+    <path d="M24 6 H40 L37 38 C36 42 28 42 27 38 Z" fill="url(#tg-silver)" stroke="#00000033"/>
+    <path d="M23 18 C17 16 15 26 25 28 M41 18 C47 16 49 26 39 28" fill="none" stroke="url(#tg-silver)" stroke-width="2.5"/>
+    <rect x="25" y="20" width="14" height="4" rx="1" fill="#2fbf71"/><ellipse cx="32" cy="6" rx="8" ry="1.8" fill="#fff" opacity=".7"/>`,
   ballon: `${BASE}<path d="M27 49 L29 42 H35 L37 49 Z" fill="url(#tg-gold)"/>
     <circle cx="32" cy="24" r="18" fill="url(#tg-gold)" stroke="#94660f"/>
     <path d="M32 16 L39 21 L36.5 29 H27.5 L25 21 Z" fill="#b8860b" opacity=".8"/>
@@ -76,7 +80,8 @@ function trophyType(name) {
   if (/Europameister/.test(name)) return 'euro-silver';
   if (/Copa-América|Afrikameister|Asienmeister|Gold-Cup|Libertadores|CONCACAF/.test(name)) return 'euro-gold';
   if (/Champions/.test(name)) return 'bigears';
-  if (/Europa|Conference/.test(name)) return 'europa';
+  if (/Conference/.test(name)) return 'conference';
+  if (/Europa/.test(name)) return 'europa';
   if (/^(Deutscher|Zweitliga)-? ?Meister$/.test(name)) return 'shale';
   if (/Meister$/.test(name)) return 'goblet-silver';
   return 'goblet-gold';

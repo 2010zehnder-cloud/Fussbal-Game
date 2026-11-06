@@ -48,6 +48,7 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Sound, Konfetti** bei Toren und Titeln (Ton abschaltbar) und **Hell/Dunkel-Umschalter**.
 - **Live-Finals:** Jedes erreichte Finale spielst du live mit drei Szenen, Spielstand und Ticker – bei Unentschieden folgt das Elfmeterschießen.
 - **Drama am letzten Spieltag:** Abstiegskampf, Aufstiegsrennen oder Titelentscheidung hängen von deiner letzten Szene ab.
+- **Conference League** als dritter Europapokal (Platz nach den Europa-League-Plätzen).
 - **Champions-League-Nächte** mit Hymne und mehr Beliebtheit bei Siegen.
 - **Torjubel** wählen, der bei vielen Toren Kult wird.
 - **Bester Freund aus der Kindheit** – hält dich auf dem Boden oder bringt dich in Schwierigkeiten.

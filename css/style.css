@@ -645,3 +645,9 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-gem.s2 { left: auto; right: 6px; animation-delay: .7s; }
 .vg-gem.s3 { top: 40px; left: 5px; font-size: 7px; animation-delay: 1.3s; }
 @media (prefers-reduced-motion: reduce) { .vg-card.ballon::after, .vg-gem { animation: none; } }
+
+/* Weg ins Finale: Europa League (Orange) und Conference League (Grün) */
+.vg-card.rttf-el { color: #ff8a00; border-color: #ff8a00; background: linear-gradient(160deg, #2a2a2a 0%, #141414 50%, #3a1a00 100%); box-shadow: 0 0 14px rgba(255,138,0,.45); }
+.vg-card.rttf-el em { color: #ff8a00; }
+.vg-card.rttf-ecl { color: #2fe08a; border-color: #2fe08a; background: linear-gradient(160deg, #0f2a1f 0%, #07140e 55%, #04241a 100%); box-shadow: 0 0 14px rgba(47,224,138,.4); }
+.vg-card.rttf-ecl em { color: #2fe08a; }

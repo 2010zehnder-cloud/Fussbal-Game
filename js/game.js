@@ -310,6 +310,8 @@ function europeFor(club) {
   const C = CLUB_COMPS[confOf(L)];
   if (idx < L.cl) return 'cl';
   if (C.el && idx < L.cl + L.el) return 'el';
+  // Conference League: der nächste Platz nach den Europa-League-Plätzen (nur in Ligen mit Europapokal-Plätzen)
+  if (C.ecl && L.el > 0 && idx < L.cl + L.el + (L.ecl ?? 1)) return 'ecl';
   return null;
 }
 
@@ -841,7 +843,7 @@ function cupRun(club) {
 // Mögliche Gegner im internationalen Wettbewerb des eigenen Kontinentalverbands
 function euroPool(club, comp) {
   const L = clubLeague(club), conf = confOf(L), C = CLUB_COMPS[conf];
-  const min = comp === 'cl' ? C.clMin : C.elMin, maxS = comp === 'cl' ? 99 : C.elMax;
+  const min = comp === 'cl' ? C.clMin : comp === 'ecl' ? C.eclMin : C.elMin, maxS = comp === 'cl' ? 99 : comp === 'ecl' ? C.eclMax : C.elMax;
   // In Europa trifft man keine Klubs aus der eigenen Liga; anderswo gibt es zu wenige spielbare Ligen dafür
   const pool = Object.keys(S.clubs).filter(n => n !== club && confOf(clubLeague(n)) === conf
     && (conf !== 'UEFA' || S.clubs[n].league !== L.id) && clubStr(n) >= min && clubStr(n) <= maxS)

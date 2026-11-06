@@ -651,6 +651,12 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-gem.s3 { top: 40px; left: 5px; font-size: 7px; animation-delay: 1.3s; }
 @media (prefers-reduced-motion: reduce) { .vg-card.ballon::after, .vg-gem { animation: none; } }
 
+/* Weg ins Finale: Europa League (Orange) und Conference League (Grün) */
+.vg-card.rttf-el { color: #ff8a00; border-color: #ff8a00; background: linear-gradient(160deg, #2a2a2a 0%, #141414 50%, #3a1a00 100%); box-shadow: 0 0 14px rgba(255,138,0,.45); }
+.vg-card.rttf-el em { color: #ff8a00; }
+.vg-card.rttf-ecl { color: #2fe08a; border-color: #2fe08a; background: linear-gradient(160deg, #0f2a1f 0%, #07140e 55%, #04241a 100%); box-shadow: 0 0 14px rgba(47,224,138,.4); }
+.vg-card.rttf-ecl em { color: #2fe08a; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -902,7 +908,7 @@ const LEAGUE_WAGE = {
 
 // Internationale Klubwettbewerbe je Kontinentalverband
 const CLUB_COMPS = {
-  UEFA: { cl: 'Champions League', el: 'Europa League', clMin: 76, elMin: 68, elMax: 82 },
+  UEFA: { cl: 'Champions League', el: 'Europa League', ecl: 'Conference League', clMin: 76, elMin: 68, elMax: 82, eclMin: 58, eclMax: 76 },
   AFC: { cl: 'AFC Champions League Elite', el: null, clMin: 66, elMin: 0, elMax: 0 },
   CONCACAF: { cl: 'CONCACAF Champions Cup', el: null, clMin: 66, elMin: 0, elMax: 0 },
   CONMEBOL: { cl: 'Copa Libertadores', el: 'Copa Sudamericana', clMin: 71, elMin: 64, elMax: 74 },
@@ -1271,6 +1277,8 @@ function europeFor(club) {
   const C = CLUB_COMPS[confOf(L)];
   if (idx < L.cl) return 'cl';
   if (C.el && idx < L.cl + L.el) return 'el';
+  // Conference League: der nächste Platz nach den Europa-League-Plätzen (nur in Ligen mit Europapokal-Plätzen)
+  if (C.ecl && L.el > 0 && idx < L.cl + L.el + (L.ecl ?? 1)) return 'ecl';
   return null;
 }
 
@@ -1802,7 +1810,7 @@ function cupRun(club) {
 // Mögliche Gegner im internationalen Wettbewerb des eigenen Kontinentalverbands
 function euroPool(club, comp) {
   const L = clubLeague(club), conf = confOf(L), C = CLUB_COMPS[conf];
-  const min = comp === 'cl' ? C.clMin : C.elMin, maxS = comp === 'cl' ? 99 : C.elMax;
+  const min = comp === 'cl' ? C.clMin : comp === 'ecl' ? C.eclMin : C.elMin, maxS = comp === 'cl' ? 99 : comp === 'ecl' ? C.eclMax : C.elMax;
   // In Europa trifft man keine Klubs aus der eigenen Liga; anderswo gibt es zu wenige spielbare Ligen dafür
   const pool = Object.keys(S.clubs).filter(n => n !== club && confOf(clubLeague(n)) === conf
     && (conf !== 'UEFA' || S.clubs[n].league !== L.id) && clubStr(n) >= min && clubStr(n) <= maxS)
@@ -6843,6 +6851,10 @@ const TROPHY_SVG = {
     <ellipse cx="32" cy="6" rx="11" ry="2" fill="#fff" opacity=".6"/>`,
   europa: `${BASE}<path d="M24 5 H40 C40 12 47 18 47 28 C47 41 39 47 32 47 C25 47 17 41 17 28 C17 18 24 12 24 5 Z" fill="url(#tg-silver)" stroke="#00000033"/>
     <path d="M22 22 C28 26 36 26 42 22" fill="none" stroke="#8a939d" stroke-width="1.5"/><ellipse cx="32" cy="5" rx="8" ry="1.8" fill="#fff" opacity=".7"/>`,
+  conference: `${BASE}<rect x="29" y="40" width="6" height="10" fill="url(#tg-silver)"/>
+    <path d="M24 6 H40 L37 38 C36 42 28 42 27 38 Z" fill="url(#tg-silver)" stroke="#00000033"/>
+    <path d="M23 18 C17 16 15 26 25 28 M41 18 C47 16 49 26 39 28" fill="none" stroke="url(#tg-silver)" stroke-width="2.5"/>
+    <rect x="25" y="20" width="14" height="4" rx="1" fill="#2fbf71"/><ellipse cx="32" cy="6" rx="8" ry="1.8" fill="#fff" opacity=".7"/>`,
   ballon: `${BASE}<path d="M27 49 L29 42 H35 L37 49 Z" fill="url(#tg-gold)"/>
     <circle cx="32" cy="24" r="18" fill="url(#tg-gold)" stroke="#94660f"/>
     <path d="M32 16 L39 21 L36.5 29 H27.5 L25 21 Z" fill="#b8860b" opacity=".8"/>
@@ -6873,7 +6885,8 @@ function trophyType(name) {
   if (/Europameister/.test(name)) return 'euro-silver';
   if (/Copa-América|Afrikameister|Asienmeister|Gold-Cup|Libertadores|CONCACAF/.test(name)) return 'euro-gold';
   if (/Champions/.test(name)) return 'bigears';
-  if (/Europa|Conference/.test(name)) return 'europa';
+  if (/Conference/.test(name)) return 'conference';
+  if (/Europa/.test(name)) return 'europa';
   if (/^(Deutscher|Zweitliga)-? ?Meister$/.test(name)) return 'shale';
   if (/Meister$/.test(name)) return 'goblet-silver';
   return 'goblet-gold';
@@ -7831,11 +7844,13 @@ function videoGameRating() {
   const ballon = S.awards.some(a => a.endsWith(last) && a.startsWith("Ballon d'Or"));
   const toty = S.awards.some(a => a.endsWith(last) && a.startsWith('Spieler der Saison'));
   const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
+  const el = S.titles.some(t => t.endsWith(last) && /^Europa[- ]League-Sieger/.test(t));
+  const ecl = S.titles.some(t => t.endsWith(last) && /^Conference[- ]League-Sieger/.test(t));
   // Nur Meister geworden: Karte im Stil der jeweiligen Liga
   // Meister geworden: Karte im Stil der jeweiligen Liga
   const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
-  const special = ballon ? 'ballon' : toty ? 'toty' : rttf ? 'rttf' : champ ? 'potm' : null;
-  const bonus = { ballon: 3, toty: 2, rttf: 2, potm: 1 }[special] || 0;
+  const special = ballon ? 'ballon' : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
+  const bonus = { ballon: 3, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
 }
@@ -7844,6 +7859,8 @@ const VG_SPECIAL = {
   ballon: { label: "BALLON D'OR", text: "Für den Ballon d'Or bekommst du die goldene Diamant-Karte – mit +3 auf deine Wertung!" },
   toty: { label: 'TEAM DES JAHRES', text: 'Als Spieler der Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!' },
   rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
+  'rttf-el': { label: 'WEG INS FINALE', text: 'Für den Europa-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Europa League – mit +2 auf deine Wertung!' },
+  'rttf-ecl': { label: 'WEG INS FINALE', text: 'Für den Conference-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Conference League – mit +1 auf deine Wertung!' },
   potm: { label: 'SPIELER DES MONATS', text: 'Für die Meisterschaft bekommst du eine Sonderkarte „Spieler des Monats“ deiner Liga – mit +1 auf deine Wertung!' },
 };
 // Ligen mit eigenem Kartendesign, alle anderen bekommen ein neutrales Meister-Design
@@ -7852,9 +7869,9 @@ const POTM_LEAGUES = ['bl', 'bl2', 'pl', 'laliga', 'seriea', 'ligue1'];
 // Kleine Karte im Videospiel-Stil
 function vgCard(v) {
   const sp = v.special;
-  const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp || 'base';
+  const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
-    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
     <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }

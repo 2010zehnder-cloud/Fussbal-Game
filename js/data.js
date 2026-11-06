@@ -244,7 +244,7 @@ const LEAGUE_WAGE = {
 
 // Internationale Klubwettbewerbe je Kontinentalverband
 const CLUB_COMPS = {
-  UEFA: { cl: 'Champions League', el: 'Europa League', clMin: 76, elMin: 68, elMax: 82 },
+  UEFA: { cl: 'Champions League', el: 'Europa League', ecl: 'Conference League', clMin: 76, elMin: 68, elMax: 82, eclMin: 58, eclMax: 76 },
   AFC: { cl: 'AFC Champions League Elite', el: null, clMin: 66, elMin: 0, elMax: 0 },
   CONCACAF: { cl: 'CONCACAF Champions Cup', el: null, clMin: 66, elMin: 0, elMax: 0 },
   CONMEBOL: { cl: 'Copa Libertadores', el: 'Copa Sudamericana', clMin: 71, elMin: 64, elMax: 74 },
