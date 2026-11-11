@@ -6,8 +6,9 @@
 function newStar(young) {
   const clubs = Object.keys(S.clubs).filter(n => clubStr(n) >= 84);
   const nats = NATIONS.filter(n => n.str >= 80);
+  const nation = pick(nats).name;
   return {
-    name: randomName(), nation: pick(nats).name, club: pick(clubs),
+    name: nameFor(nation), nation, club: pick(clubs),
     age: young ? randInt(19, 21) : randInt(21, 29), rating: young ? randInt(85, 88) : randInt(87, 93) + (S.diff === 'world' ? 2 : 0),
     ballon: 0, year: S.year,
   };

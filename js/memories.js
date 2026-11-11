@@ -116,7 +116,8 @@ function renderTrophyCabinet(titles = S.titles, awards = S.awards) {
 function starOf(team) {
   S.stars = S.stars || {};
   const s = S.stars[team];
-  if (!s || S.year - s.since > randInt(6, 9)) S.stars[team] = { name: randomName(), since: S.year };
+  const nation = NATIONS.some(n => n.name === team) ? team : nationForClub(team);
+  if (!s || S.year - s.since > randInt(6, 9)) S.stars[team] = { name: nameFor(nation), since: S.year };
   return S.stars[team].name;
 }
 

@@ -2,21 +2,17 @@
 
 // Rivale, Familie und Mitspieler
 
-const FIRST_NAMES = ['Lukas', 'Jonas', 'Leon', 'Felix', 'Tim', 'Niklas', 'Julian', 'Marco', 'Kevin', 'Luca', 'Mateo', 'Diego',
-  'Rafael', 'Hugo', 'Théo', 'Enzo', 'Kai', 'Ryan', 'Jamal', 'Youssef', 'Ismael', 'Mats', 'Emil', 'Tobias', 'Ivan', 'Andrej',
-  'Kenji', 'Omar', 'Nico', 'Sandro'];
-const SURNAMES = ['Becker', 'Schulz', 'Hoffmann', 'Wagner', 'Keller', 'Richter', 'Neumann', 'Krüger', 'Silva', 'Santos', 'García',
-  'Martínez', 'Rossi', 'Bianchi', 'Dubois', 'Moreau', 'Smith', 'Walker', 'Jansen', 'de Vries', 'Kovač', 'Novak', 'Yılmaz',
-  'Diallo', 'Mensah', 'Tanaka', 'Kim', 'Hansen', 'Nielsen', 'Costa'];
 const BROTHER_NAMES = ['Leon', 'Paul', 'Ben', 'Finn', 'Elias', 'Noah', 'Luca', 'Matteo'];
 const SISTER_NAMES = ['Mia', 'Emma', 'Lina', 'Ella', 'Mila', 'Sofia', 'Hanna', 'Lia'];
-const randomName = () => `${pick(FIRST_NAMES)} ${pick(SURNAMES)}`;
+// Name passend zur Nationalität (siehe names.js); ohne Angabe aus einem zufälligen Land
+const randomName = nation => nameFor(nation);
 
 // ---------- Rivale ----------
 function initRival() {
   const p = S.player;
+  const nation = chance(0.5) ? p.nation : pick(NATIONS).name;
   S.rival = {
-    name: randomName(), nation: chance(0.5) ? p.nation : pick(NATIONS).name, pos: p.pos, age: p.age,
+    name: nameFor(nation), nation, pos: p.pos, age: p.age,
     rating: p.rating + randInt(-2, 3), potential: clamp(p.potential + randInt(-4, 4), 75, 99),
     club: pick(Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= 70)),
     games: 0, goals: 0, titles: 0, ballon: 0, retired: false, wins: 0, losses: 0, last: null,
@@ -114,7 +110,7 @@ function familySeason(res) {
 function initTeam() {
   S.team = {
     club: S.clubId,
-    mates: Array.from({ length: 4 }, () => ({ name: randomName(), pos: pick(Object.keys(POSITIONS)), rel: randInt(-10, 30) })),
+    mates: Array.from({ length: 4 }, () => { const nation = nationForClub(S.clubId); return { name: nameFor(nation), nation, pos: pick(Object.keys(POSITIONS)), rel: randInt(-10, 30) }; }),
   };
 }
 function ensureTeam() {

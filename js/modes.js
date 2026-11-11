@@ -146,7 +146,7 @@ function foeFor(club) {
   if (!S.foes[club]) {
     const grp = POSITIONS[S.player.pos].group;
     const role = grp === 'att' || grp === 'mid' ? (chance(0.6) ? FOE_ROLES.gk : FOE_ROLES.def) : FOE_ROLES.att;
-    S.foes[club] = { name: randomName(), role, meetings: 0, wins: 0, losses: 0, last: null };
+    S.foes[club] = { name: nameFor(nationForClub(club)), role, meetings: 0, wins: 0, losses: 0, last: null };
   }
   return S.foes[club];
 }
@@ -246,8 +246,8 @@ const MORE_STORIES = [
     cond: () => !S.youth && !hasFlag('journalist') && !hasFlag('journalistDone') && S.player.popularity >= 30,
     text: () => 'Ein Reporter einer großen Zeitung schreibt einen bösen Artikel über dich: „Überbezahlt und überschätzt.“',
     options: [
-      { label: 'Ihn öffentlich anprangern', run: () => { setFlag('journalist', { name: `${pick(FIRST_NAMES)} ${pick(SURNAMES)}`, war: true }); return 'Ab jetzt hast du einen Feind in der Presse.' + mod({ popularity: 3, trust: -2 }); } },
-      { label: 'Zum Interview einladen', run: () => { setFlag('journalist', { name: `${pick(FIRST_NAMES)} ${pick(SURNAMES)}`, war: false }); return 'Er nimmt an. Das Gespräch ist überraschend fair.' + mod({ popularity: 2 }); } },
+      { label: 'Ihn öffentlich anprangern', run: () => { setFlag('journalist', { name: nameFor(nationForClub(S.clubId)), war: true }); return 'Ab jetzt hast du einen Feind in der Presse.' + mod({ popularity: 3, trust: -2 }); } },
+      { label: 'Zum Interview einladen', run: () => { setFlag('journalist', { name: nameFor(nationForClub(S.clubId)), war: false }); return 'Er nimmt an. Das Gespräch ist überraschend fair.' + mod({ popularity: 2 }); } },
     ],
   },
   {
@@ -402,7 +402,7 @@ function startRandomCareer() {
   if (!slot) { toast('Alle Spielstände sind belegt. Lösche zuerst einen.'); return false; }
   pendingSlot = slot;
   const nat = pick(NATIONS).name;
-  newGame(`${pick(FIRST_NAMES)} ${pick(SURNAMES)}`, nat, pick(Object.keys(POSITIONS)), randInt(1, 99), null, 'normal');
+  newGame(nameFor(nat), nat, pick(Object.keys(POSITIONS)), randInt(1, 99), null, 'normal');
   applyOrigin(pick(Object.keys(ORIGINS)));
   return true;
 }

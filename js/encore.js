@@ -261,7 +261,7 @@ function foundSchool() {
   S.money -= SCHOOL_COST;
   S.school = {
     name: `Fußballschule ${surname()}`, founder: S.player.name, founded: S.year,
-    talents: Array.from({ length: 3 }, () => ({ name: randomName(), pos: pick(Object.keys(POSITIONS)), born: S.year - randInt(9, 12), talent: randInt(60, 95) })),
+    talents: Array.from({ length: 3 }, () => ({ name: nameFor(chance(0.7) ? S.player.nation : null), pos: pick(Object.keys(POSITIONS)), born: S.year - randInt(9, 12), talent: randInt(60, 95) })),
   };
   S.player.popularity = clamp(S.player.popularity + 5, 0, 100);
   addPhoto('🏫', `Eröffnung der ${S.school.name}`);

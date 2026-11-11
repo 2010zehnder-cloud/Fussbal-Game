@@ -39,7 +39,7 @@ const EVENTS = [
       { label: 'Noch härter arbeiten', run: () => 'Du nimmst die Herausforderung an und legst eine Schippe drauf.' + mod({ devBonus: 0.8, trust: 3, injuryProne: 2 }) },
       {
         label: 'Ihn als Mentor unterstützen', run: () => {
-          if (!hasFlag('mentee')) setFlag('mentee', { name: `${pick(FIRST_NAMES)} ${pick(SURNAMES)}` });
+          if (!hasFlag('mentee')) setFlag('mentee', { name: nameFor(nationForClub(S.clubId)) });
           return `Du nimmst ${flags().mentee.name} unter deine Fittiche. Kabine und Fans lieben es.` + mod({ trust: 6, popularity: 4, form: -1 });
         },
       },
