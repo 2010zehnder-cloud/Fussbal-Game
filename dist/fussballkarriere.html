@@ -682,6 +682,21 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-cont-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #8a5a12, #e6b94a, #8a5a12); }
 .vg-card.cont em { color: #2a1a02; z-index: 1; }
 
+/* Ikonen-Karte: Creme-Weiß mit Gold */
+.vg-card.icon { color: #5a4208; border: 2px solid #e8c862;
+  background: radial-gradient(circle at 50% 30%, #fffdf4 0%, #f4e9c8 55%, #d9c58c 100%); box-shadow: 0 0 16px rgba(232,200,98,.6); }
+.vg-card.icon em { color: #5a4208; }
+.vg-icon-glow { position: absolute; left: 50%; top: 40px; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.95), transparent 70%); }
+.vg-card.icon b, .vg-card.icon small { position: relative; z-index: 1; }
+
+/* Karten-Album */
+.card-album { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.ca-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ca-item small { color: var(--muted); font-size: 11px; }
+
+.legend ul.lines { list-style: none; padding-left: 0; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="sound-btn" class="helpbtn" type="button" aria-label="Ton an oder aus">🔊</button><button id="theme-btn" class="helpbtn" type="button" aria-label="Hell oder dunkel">☀️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -1510,6 +1525,7 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + schoolMention(opp) + chantIntro() + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  captainScene(S.current);
   lateScene(S.current);
   maybeDerby(S.current, L);
   flavorMatch(S.current, L);
@@ -1546,6 +1562,8 @@ function resolveMatch(i) {
         : `Du springst in die falsche Ecke, der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`;
       eff = { form: -1 };
     }
+  } else if (o.kind === 'captain') {
+    ({ us, them, text, eff } = resolveCaptain(o, us, them));
   } else if (o.kind === 'var') {
     ({ us, them, text, eff } = resolveVar(c, o, us, them));
   } else {
@@ -2186,6 +2204,7 @@ function retire(reason) {
   S.retireReason = reason;
   S.retireAge = S.player.age;
   S.offers = null;
+  awardIconCard();
   updateRecords(null);
   saveHallOfFame();
 }
@@ -2735,10 +2754,14 @@ function legacyScore() {
 }
 function legacy() {
   const score = legacyScore();
-  if (score >= 190) return ['🐐', 'G.O.A.T.', 'Du bist einer der größten Spieler aller Zeiten.'];
-  if (score >= 150) return ['👑', 'Weltstar', 'Deine Karriere wird noch Jahrzehnte später erzählt.'];
-  if (score >= 125) return ['⭐', 'Nationalheld', 'Du hast Fußballgeschichte in deinem Land geschrieben.'];
-  if (score >= 105) return ['💪', 'Solider Profi', 'Eine starke Karriere, auf die du stolz sein kannst.'];
+  // G.O.A.T. nur mit allem: viele Ballon d'Ors, Champions League und Weltmeister
+  const bd = S.awards.filter(a => a.startsWith("Ballon d'Or")).length;
+  const goat = bd >= 5 && S.titles.some(isCLTitle) && S.titles.some(t => t.startsWith('Weltmeister'));
+  if (score >= 400 && goat) return ['🐐', 'G.O.A.T.', 'Du bist einer der größten Spieler aller Zeiten.'];
+  if (score >= 270) return ['🏛️', 'Legende', 'Dein Name steht für immer in den Geschichtsbüchern des Fußballs.'];
+  if (score >= 200) return ['👑', 'Weltstar', 'Deine Karriere wird noch Jahrzehnte später erzählt.'];
+  if (score >= 145) return ['⭐', 'Nationalheld', 'Du hast Fußballgeschichte in deinem Land geschrieben.'];
+  if (score >= 110) return ['💪', 'Solider Profi', 'Eine starke Karriere, auf die du stolz sein kannst.'];
   return ['🙂', 'Wandervogel', 'Nicht jeder wird ein Superstar – aber du hast deinen Traum gelebt.'];
 }
 
@@ -2823,6 +2846,7 @@ function renderRetired() {
   ${renderSchool()}
   ${renderDoc()}
   ${renderCareerCard()}
+  ${renderCardAlbum()}
   ${renderTrophyCabinet()}
   ${renderChant()}
   ${renderLegends()}
@@ -4282,7 +4306,7 @@ function saveHallOfFame() {
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
     titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
-    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), cards: (S.cardAlbum || []).slice(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -4318,7 +4342,7 @@ function hofDetail(e) {
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
-    + renderStations(e.stations) + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
+    + renderStations(e.stations) + (e.cards && e.cards.length ? `<h4>Karten-Album (${e.cards.length})</h4>${cardAlbumGrid(e.cards)}` : '') + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
 // Stationen als Spieler in zeitlicher Reihenfolge (für die Ruhmeshalle)
@@ -4580,7 +4604,7 @@ function renderHub() {
   else if (uiTab === 'people') content = renderPeople() + `<section class="card"><h3>Bester Freund</h3><div class="people">${renderBuddy()}</div></section>`;
   else if (uiTab === 'money') content = renderMoneyOverview() + renderBusiness() + renderShop();
   else if (uiTab === 'mail') content = renderInbox();
-  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderBallonRace() + renderChant() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
+  else if (uiTab === 'career') content = renderPerks() + renderCareerCard() + renderCardAlbum() + renderBallonRace() + renderChant() + renderTrophyCabinet() + renderAlbum() + renderShirts() + renderDiary() + (renderCareerChart() + renderHistory() || '<section class="card"><p class="muted">Dein Karriereverlauf erscheint hier nach der ersten Saison.</p></section>') + renderDreamClub() + renderShare();
   else content = S.phase === 'preseason' ? renderPreseason() : renderTransfer();
   return `<nav class="tabs" aria-label="Bereiche">${tabs}</nav>${uiTab === 'main' ? tip(S.phase) : ''}${openAll(content)}`;
 }
@@ -6528,6 +6552,9 @@ const CHALLENGES = [
   { id: 'fifty', level: 'Schwer', name: 'Die 50-Tore-Saison', text: 'Schieße in einer einzigen Saison mindestens 50 Tore.', nation: 'Norwegen', pos: 'ST', club: null, age: 17, rating: 53, test: () => S.history.some(h => !h.youth && h.goals >= 50) },
   { id: 'napoleon', level: 'Schwer', name: 'Napoleon', text: 'Erobere Europa: Gewinne in einer Karriere die Champions League, die Europa League und die Conference League.', nation: 'Frankreich', pos: null, club: null, age: 17, rating: 54,
     test: () => S.titles.some(isCLTitle) && S.titles.some(t => /^Europa[- ]League-Sieger/.test(t)) && S.titles.some(t => /^Conference[- ]League-Sieger/.test(t)) },
+  { id: 'defballon', level: 'Schwer', name: 'Die Mauer gewinnt Gold', text: "Gewinne als Innenverteidiger den Ballon d'Or.", nation: 'Italien', pos: 'IV', club: null, age: 17, rating: 54, test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'elversberg', level: 'Schwer', name: 'Das Dorf-Double', text: 'Gewinne mit der SV Elversberg in derselben Saison die Deutsche Meisterschaft und den DFB-Pokal.', nation: 'Deutschland', pos: 'ZOM', club: 'SV Elversberg', age: 19, rating: 62,
+    test: () => S.history.some(h => h.club === 'SV Elversberg' && S.titles.includes(`Deutscher Meister (${seasonLabel(h.year)})`) && S.titles.includes(`DFB-Pokal-Sieger (${seasonLabel(h.year)})`)) },
   { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Meisterschaft, nationaler Pokal und Champions League in derselben Saison
@@ -7894,9 +7921,15 @@ function videoGameRating() {
   const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
+  // Sonderkarten im Karten-Album sammeln
+  if (special) {
+    S.cardAlbum = (S.cardAlbum || []).filter(c => c.year !== S.year || c.special === 'icon');
+    S.cardAlbum.push({ special, rating: S.vg.rating, year: S.year, league: S.vg.league, leagueName: S.vg.leagueName, contTitle: S.vg.contTitle, pos: S.player.pos });
+  }
 }
 
 const VG_SPECIAL = {
+  icon: { label: 'IKONE', text: 'Eine Legende des Fußballs.' },
   wm: { label: 'WELTMEISTER', text: 'Für den WM-Titel bekommst du die Weltmeister-Karte – mit +3 auf deine Wertung!' },
   cont: { label: 'KONTINENTALMEISTER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Kontinental-Karte – mit +2 auf deine Wertung!' },
   euro: { label: 'TURNIERSIEGER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Turnier-Karte – mit +2 auf deine Wertung!' },
@@ -7917,8 +7950,9 @@ function vgCard(v) {
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    ${sp === 'icon' ? '<span class="vg-icon-glow"></span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
-    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
+    <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
 function reactRating(kind) {
@@ -8016,6 +8050,30 @@ function medicalCheck(o) {
   return true;
 }
 
+// ---------- Karten-Album und Ikonen-Karte ----------
+// Echte Legenden bekommen zum Karriereende eine Ikonen-Karte mit ihrer besten Wertung
+function awardIconCard() {
+  if (!S.player || (S.cardAlbum || []).some(c => c.special === 'icon')) return;
+  if (!['G.O.A.T.', 'Legende'].includes(legacy()[1])) return;
+  S.cardAlbum = [...(S.cardAlbum || []), { special: 'icon', rating: S.peak, year: S.year, pos: S.player.pos }];
+  toast('🃏 Du bekommst eine Ikonen-Karte!');
+}
+
+function cardAlbumGrid(list) {
+  return `<div class="card-album">${list.map(c => `<div class="ca-item">${vgCard(c)}<small>${c.special === 'icon' ? 'Karriereende' : seasonLabel(c.year)}</small></div>`).join('')}</div>`;
+}
+
+function renderCardAlbum() {
+  const list = S.cardAlbum || [];
+  if (!list.length) return '';
+  return `
+  <section class="card">
+    <details${S.phase === 'retired' ? ' open' : ''}><summary>🎴 Karten-Album · ${list.length} ${list.length === 1 ? 'Sonderkarte' : 'Sonderkarten'}</summary>
+      ${cardAlbumGrid(list)}
+    </details>
+  </section>`;
+}
+
 'use strict';
 
 // Ballon-d'Or-Konkurrenten, Kettenszenen, Szenen passend zum Spielstand, VAR-Drama
@@ -8085,7 +8143,7 @@ function chainStart(i) {
 
 // ---------- Szenen passend zum Spielstand und VAR ----------
 function lateScene(c) {
-  if (S.youth || c.drama) return;
+  if (S.youth || c.drama || c.captain) return;
   const q = quality(), gk = POSITIONS[S.player.pos].group === 'gk';
   if (!gk && chance(0.07)) {
     c.var = true;
@@ -8141,6 +8199,43 @@ function resolveVar(c, o, us, them) {
     else text += ' Der Schiri hört dir sogar zu.';
   }
   return { us, them, text: `${text} Endstand ${us}:${them}.`, eff };
+}
+
+// ---------- Kapitäns-Szenen ----------
+function captainScene(c) {
+  if (S.youth || c.drama || S.captainAt !== S.clubId || !chance(0.18)) return;
+  const q = quality();
+  c.captain = true;
+  const kind = pick(['brawl', 'penalty', 'referee']);
+  if (kind === 'brawl') {
+    c.situation = `${c.minute}. Minute. Nach einem harten Foul gibt es eine Rudelbildung – zehn Spieler schubsen sich. Als Kapitän schauen alle auf dich.`;
+    c.options = [
+      { label: 'Dazwischengehen und beruhigen', kind: 'captain', p: 0.75, okText: 'Du ziehst deine Mitspieler weg und redest auf alle ein. Der Schiri bedankt sich – keine Karten, Ruhe im Spiel.', failText: 'In der Hektik verliert ihr die Ordnung – der Gegner nutzt die Unruhe zum Tor.', okEff: { trust: 4, popularity: 2 }, failEff: { trust: -1 }, failConcede: true },
+      { label: 'Für deinen Mitspieler einstehen', kind: 'captain', p: 0.5, okText: 'Du stellst dich schützend vor deinen Mitspieler. Die Mannschaft rückt zusammen und spielt plötzlich mit Feuer – Tor!', failText: 'Der Schiri zeigt dir Gelb wegen Rudelbildung.', okEff: { trust: 5, form: 2 }, failEff: { trust: -2, form: -1 }, okGoal: true },
+      { label: 'Raushalten', kind: 'captain', p: 0.9, okText: 'Du bleibst ruhig am Mittelkreis. Nach zwei Minuten ist alles vorbei.', failText: 'Die Mannschaft fühlt sich im Stich gelassen.', okEff: { trust: -1 }, failEff: { trust: -4 } },
+    ];
+  } else if (kind === 'penalty') {
+    c.situation = `${c.minute}. Minute. Elfmeter für euch! Als Kapitän entscheidest du, wer schießt. Ein 18-jähriges Talent schaut dich mit großen Augen an.`;
+    c.options = [
+      { label: 'Selbst schießen', kind: 'captain', p: clamp(0.72 + q * 0.18, 0.1, 0.95), okText: 'Du nimmst die Verantwortung – und verwandelst eiskalt!', failText: 'Der Torwart hält deinen Elfmeter. Bitter.', okEff: { form: 2, trust: 2, popularity: 2, goals: 1 }, failEff: { form: -2, popularity: -2 }, okGoal: true },
+      { label: 'Dem jungen Talent den Ball geben', kind: 'captain', p: 0.68, okText: 'Das Talent trifft zu seinem ersten Profitor und fällt dir in die Arme. Die Fans feiern deine Geste!', failText: 'Das Talent schießt drüber. Du tröstest ihn – die Fans verstehen deine Geste trotzdem.', okEff: { trust: 5, popularity: 5, assists: 1 }, failEff: { trust: 1, popularity: 1 }, okGoal: true },
+      { label: 'Dem besten Schützen überlassen', kind: 'captain', p: 0.8, okText: 'Euer Elfmeterspezialist verwandelt sicher. Kluge Entscheidung.', failText: 'Ausgerechnet er verschießt.', okEff: { trust: 3 }, failEff: { trust: -1 }, okGoal: true },
+    ];
+  } else {
+    c.situation = `${c.minute}. Minute. Der Schiri verweigert euch einen klaren Freistoß. Die Mannschaft ist außer sich – als Kapitän darfst du mit ihm reden.`;
+    c.options = [
+      { label: 'Ruhig und respektvoll nachfragen', kind: 'captain', p: 0.55, okText: 'Der Schiri hört dir zu, schaut sich die Szene an – und gibt den Freistoß doch noch. Dein Mitspieler trifft direkt!', failText: 'Der Schiri bleibt bei seiner Entscheidung. Immerhin keine Karte.', okEff: { trust: 4, popularity: 2 }, failEff: { trust: 1 }, okGoal: true },
+      { label: 'Lautstark protestieren', kind: 'captain', p: 0.25, okText: 'Der Schiri gibt nach! Die Fans lieben deinen Einsatz – und der Freistoß sitzt.', failText: 'Gelb für dich – und im Gegenzug kassiert ihr ein Gegentor.', okEff: { popularity: 4 }, failEff: { trust: -3, popularity: -1 }, okGoal: true, failConcede: true },
+      { label: 'Die Mannschaft beruhigen und weiterspielen', kind: 'captain', p: 0.85, okText: 'Du sammelst alle um dich: „Konzentration!“ Ihr bleibt fokussiert.', failText: 'Die Wut bleibt – ihr verliert die Linie und kassiert ein Gegentor.', okEff: { trust: 3, form: 1 }, failEff: { trust: -1 }, failConcede: true },
+    ];
+  }
+}
+
+function resolveCaptain(o, us, them) {
+  const ok = chance(o.p);
+  if (ok && o.okGoal) us++;
+  if (!ok && o.failConcede) them++;
+  return { us, them, text: `${ok ? o.okText : o.failText} Endstand ${us}:${them}.`, eff: { ...(ok ? o.okEff : o.failEff) } };
 }
 
 </script>

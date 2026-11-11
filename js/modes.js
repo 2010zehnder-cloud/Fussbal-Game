@@ -330,6 +330,9 @@ const CHALLENGES = [
   { id: 'fifty', level: 'Schwer', name: 'Die 50-Tore-Saison', text: 'Schieße in einer einzigen Saison mindestens 50 Tore.', nation: 'Norwegen', pos: 'ST', club: null, age: 17, rating: 53, test: () => S.history.some(h => !h.youth && h.goals >= 50) },
   { id: 'napoleon', level: 'Schwer', name: 'Napoleon', text: 'Erobere Europa: Gewinne in einer Karriere die Champions League, die Europa League und die Conference League.', nation: 'Frankreich', pos: null, club: null, age: 17, rating: 54,
     test: () => S.titles.some(isCLTitle) && S.titles.some(t => /^Europa[- ]League-Sieger/.test(t)) && S.titles.some(t => /^Conference[- ]League-Sieger/.test(t)) },
+  { id: 'defballon', level: 'Schwer', name: 'Die Mauer gewinnt Gold', text: "Gewinne als Innenverteidiger den Ballon d'Or.", nation: 'Italien', pos: 'IV', club: null, age: 17, rating: 54, test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'elversberg', level: 'Schwer', name: 'Das Dorf-Double', text: 'Gewinne mit der SV Elversberg in derselben Saison die Deutsche Meisterschaft und den DFB-Pokal.', nation: 'Deutschland', pos: 'ZOM', club: 'SV Elversberg', age: 19, rating: 62,
+    test: () => S.history.some(h => h.club === 'SV Elversberg' && S.titles.includes(`Deutscher Meister (${seasonLabel(h.year)})`) && S.titles.includes(`DFB-Pokal-Sieger (${seasonLabel(h.year)})`)) },
   { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Meisterschaft, nationaler Pokal und Champions League in derselben Saison

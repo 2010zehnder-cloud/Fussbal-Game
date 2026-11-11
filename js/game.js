@@ -518,6 +518,7 @@ function setupMatch() {
       + (rivalMatch ? `Duell mit deinem Rivalen ${S.rival.name}! ` : '') + legacyOpponent(opp) + schoolMention(opp) + chantIntro() + scene.situation,
     options: scene.options.map(o => ({ ...o, p: o.p !== undefined ? clamp(o.p, 0.05, 0.92) : undefined })),
   };
+  captainScene(S.current);
   lateScene(S.current);
   maybeDerby(S.current, L);
   flavorMatch(S.current, L);
@@ -554,6 +555,8 @@ function resolveMatch(i) {
         : `Du springst in die falsche Ecke, der Ball schlägt ${['links', 'in der Mitte', 'rechts'][shot]} ein. Endstand ${us}:${them}.`;
       eff = { form: -1 };
     }
+  } else if (o.kind === 'captain') {
+    ({ us, them, text, eff } = resolveCaptain(o, us, them));
   } else if (o.kind === 'var') {
     ({ us, them, text, eff } = resolveVar(c, o, us, them));
   } else {
@@ -1194,6 +1197,7 @@ function retire(reason) {
   S.retireReason = reason;
   S.retireAge = S.player.age;
   S.offers = null;
+  awardIconCard();
   updateRecords(null);
   saveHallOfFame();
 }
@@ -1743,10 +1747,14 @@ function legacyScore() {
 }
 function legacy() {
   const score = legacyScore();
-  if (score >= 190) return ['🐐', 'G.O.A.T.', 'Du bist einer der größten Spieler aller Zeiten.'];
-  if (score >= 150) return ['👑', 'Weltstar', 'Deine Karriere wird noch Jahrzehnte später erzählt.'];
-  if (score >= 125) return ['⭐', 'Nationalheld', 'Du hast Fußballgeschichte in deinem Land geschrieben.'];
-  if (score >= 105) return ['💪', 'Solider Profi', 'Eine starke Karriere, auf die du stolz sein kannst.'];
+  // G.O.A.T. nur mit allem: viele Ballon d'Ors, Champions League und Weltmeister
+  const bd = S.awards.filter(a => a.startsWith("Ballon d'Or")).length;
+  const goat = bd >= 5 && S.titles.some(isCLTitle) && S.titles.some(t => t.startsWith('Weltmeister'));
+  if (score >= 400 && goat) return ['🐐', 'G.O.A.T.', 'Du bist einer der größten Spieler aller Zeiten.'];
+  if (score >= 270) return ['🏛️', 'Legende', 'Dein Name steht für immer in den Geschichtsbüchern des Fußballs.'];
+  if (score >= 200) return ['👑', 'Weltstar', 'Deine Karriere wird noch Jahrzehnte später erzählt.'];
+  if (score >= 145) return ['⭐', 'Nationalheld', 'Du hast Fußballgeschichte in deinem Land geschrieben.'];
+  if (score >= 110) return ['💪', 'Solider Profi', 'Eine starke Karriere, auf die du stolz sein kannst.'];
   return ['🙂', 'Wandervogel', 'Nicht jeder wird ein Superstar – aber du hast deinen Traum gelebt.'];
 }
 
@@ -1831,6 +1839,7 @@ function renderRetired() {
   ${renderSchool()}
   ${renderDoc()}
   ${renderCareerCard()}
+  ${renderCardAlbum()}
   ${renderTrophyCabinet()}
   ${renderChant()}
   ${renderLegends()}

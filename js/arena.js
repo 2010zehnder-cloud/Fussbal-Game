@@ -67,7 +67,7 @@ function chainStart(i) {
 
 // ---------- Szenen passend zum Spielstand und VAR ----------
 function lateScene(c) {
-  if (S.youth || c.drama) return;
+  if (S.youth || c.drama || c.captain) return;
   const q = quality(), gk = POSITIONS[S.player.pos].group === 'gk';
   if (!gk && chance(0.07)) {
     c.var = true;
@@ -123,4 +123,41 @@ function resolveVar(c, o, us, them) {
     else text += ' Der Schiri hört dir sogar zu.';
   }
   return { us, them, text: `${text} Endstand ${us}:${them}.`, eff };
+}
+
+// ---------- Kapitäns-Szenen ----------
+function captainScene(c) {
+  if (S.youth || c.drama || S.captainAt !== S.clubId || !chance(0.18)) return;
+  const q = quality();
+  c.captain = true;
+  const kind = pick(['brawl', 'penalty', 'referee']);
+  if (kind === 'brawl') {
+    c.situation = `${c.minute}. Minute. Nach einem harten Foul gibt es eine Rudelbildung – zehn Spieler schubsen sich. Als Kapitän schauen alle auf dich.`;
+    c.options = [
+      { label: 'Dazwischengehen und beruhigen', kind: 'captain', p: 0.75, okText: 'Du ziehst deine Mitspieler weg und redest auf alle ein. Der Schiri bedankt sich – keine Karten, Ruhe im Spiel.', failText: 'In der Hektik verliert ihr die Ordnung – der Gegner nutzt die Unruhe zum Tor.', okEff: { trust: 4, popularity: 2 }, failEff: { trust: -1 }, failConcede: true },
+      { label: 'Für deinen Mitspieler einstehen', kind: 'captain', p: 0.5, okText: 'Du stellst dich schützend vor deinen Mitspieler. Die Mannschaft rückt zusammen und spielt plötzlich mit Feuer – Tor!', failText: 'Der Schiri zeigt dir Gelb wegen Rudelbildung.', okEff: { trust: 5, form: 2 }, failEff: { trust: -2, form: -1 }, okGoal: true },
+      { label: 'Raushalten', kind: 'captain', p: 0.9, okText: 'Du bleibst ruhig am Mittelkreis. Nach zwei Minuten ist alles vorbei.', failText: 'Die Mannschaft fühlt sich im Stich gelassen.', okEff: { trust: -1 }, failEff: { trust: -4 } },
+    ];
+  } else if (kind === 'penalty') {
+    c.situation = `${c.minute}. Minute. Elfmeter für euch! Als Kapitän entscheidest du, wer schießt. Ein 18-jähriges Talent schaut dich mit großen Augen an.`;
+    c.options = [
+      { label: 'Selbst schießen', kind: 'captain', p: clamp(0.72 + q * 0.18, 0.1, 0.95), okText: 'Du nimmst die Verantwortung – und verwandelst eiskalt!', failText: 'Der Torwart hält deinen Elfmeter. Bitter.', okEff: { form: 2, trust: 2, popularity: 2, goals: 1 }, failEff: { form: -2, popularity: -2 }, okGoal: true },
+      { label: 'Dem jungen Talent den Ball geben', kind: 'captain', p: 0.68, okText: 'Das Talent trifft zu seinem ersten Profitor und fällt dir in die Arme. Die Fans feiern deine Geste!', failText: 'Das Talent schießt drüber. Du tröstest ihn – die Fans verstehen deine Geste trotzdem.', okEff: { trust: 5, popularity: 5, assists: 1 }, failEff: { trust: 1, popularity: 1 }, okGoal: true },
+      { label: 'Dem besten Schützen überlassen', kind: 'captain', p: 0.8, okText: 'Euer Elfmeterspezialist verwandelt sicher. Kluge Entscheidung.', failText: 'Ausgerechnet er verschießt.', okEff: { trust: 3 }, failEff: { trust: -1 }, okGoal: true },
+    ];
+  } else {
+    c.situation = `${c.minute}. Minute. Der Schiri verweigert euch einen klaren Freistoß. Die Mannschaft ist außer sich – als Kapitän darfst du mit ihm reden.`;
+    c.options = [
+      { label: 'Ruhig und respektvoll nachfragen', kind: 'captain', p: 0.55, okText: 'Der Schiri hört dir zu, schaut sich die Szene an – und gibt den Freistoß doch noch. Dein Mitspieler trifft direkt!', failText: 'Der Schiri bleibt bei seiner Entscheidung. Immerhin keine Karte.', okEff: { trust: 4, popularity: 2 }, failEff: { trust: 1 }, okGoal: true },
+      { label: 'Lautstark protestieren', kind: 'captain', p: 0.25, okText: 'Der Schiri gibt nach! Die Fans lieben deinen Einsatz – und der Freistoß sitzt.', failText: 'Gelb für dich – und im Gegenzug kassiert ihr ein Gegentor.', okEff: { popularity: 4 }, failEff: { trust: -3, popularity: -1 }, okGoal: true, failConcede: true },
+      { label: 'Die Mannschaft beruhigen und weiterspielen', kind: 'captain', p: 0.85, okText: 'Du sammelst alle um dich: „Konzentration!“ Ihr bleibt fokussiert.', failText: 'Die Wut bleibt – ihr verliert die Linie und kassiert ein Gegentor.', okEff: { trust: 3, form: 1 }, failEff: { trust: -1 }, failConcede: true },
+    ];
+  }
+}
+
+function resolveCaptain(o, us, them) {
+  const ok = chance(o.p);
+  if (ok && o.okGoal) us++;
+  if (!ok && o.failConcede) them++;
+  return { us, them, text: `${ok ? o.okText : o.failText} Endstand ${us}:${them}.`, eff: { ...(ok ? o.okEff : o.failEff) } };
 }

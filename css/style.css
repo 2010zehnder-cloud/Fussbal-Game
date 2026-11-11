@@ -676,3 +676,18 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
   -webkit-mask: radial-gradient(circle, transparent 18px, #000 19px); mask: radial-gradient(circle, transparent 18px, #000 19px); }
 .vg-cont-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(90deg, #8a5a12, #e6b94a, #8a5a12); }
 .vg-card.cont em { color: #2a1a02; z-index: 1; }
+
+/* Ikonen-Karte: Creme-Weiß mit Gold */
+.vg-card.icon { color: #5a4208; border: 2px solid #e8c862;
+  background: radial-gradient(circle at 50% 30%, #fffdf4 0%, #f4e9c8 55%, #d9c58c 100%); box-shadow: 0 0 16px rgba(232,200,98,.6); }
+.vg-card.icon em { color: #5a4208; }
+.vg-icon-glow { position: absolute; left: 50%; top: 40px; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.95), transparent 70%); }
+.vg-card.icon b, .vg-card.icon small { position: relative; z-index: 1; }
+
+/* Karten-Album */
+.card-album { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.ca-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ca-item small { color: var(--muted); font-size: 11px; }
+
+.legend ul.lines { list-style: none; padding-left: 0; }

@@ -83,9 +83,15 @@ function videoGameRating() {
   const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
+  // Sonderkarten im Karten-Album sammeln
+  if (special) {
+    S.cardAlbum = (S.cardAlbum || []).filter(c => c.year !== S.year || c.special === 'icon');
+    S.cardAlbum.push({ special, rating: S.vg.rating, year: S.year, league: S.vg.league, leagueName: S.vg.leagueName, contTitle: S.vg.contTitle, pos: S.player.pos });
+  }
 }
 
 const VG_SPECIAL = {
+  icon: { label: 'IKONE', text: 'Eine Legende des Fußballs.' },
   wm: { label: 'WELTMEISTER', text: 'Für den WM-Titel bekommst du die Weltmeister-Karte – mit +3 auf deine Wertung!' },
   cont: { label: 'KONTINENTALMEISTER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Kontinental-Karte – mit +2 auf deine Wertung!' },
   euro: { label: 'TURNIERSIEGER', text: 'Für den Titel mit der Nationalmannschaft bekommst du die Turnier-Karte – mit +2 auf deine Wertung!' },
@@ -106,8 +112,9 @@ function vgCard(v) {
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
+    ${sp === 'icon' ? '<span class="vg-icon-glow"></span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
-    <b>${v.rating}</b><small>${esc(S.player.pos)}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
+    <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
 function reactRating(kind) {
@@ -203,4 +210,28 @@ function medicalCheck(o) {
     offers.msgs.unshift(`🩺 Medizincheck bei ${o.club}: kleiner Befund ${part}. ${o.club} will dich trotzdem – aber nur noch für ${money(o.salary)} pro Jahr und höchstens 2 Jahre. Tippe erneut auf „Wechseln“, wenn du einverstanden bist.`);
   }
   return true;
+}
+
+// ---------- Karten-Album und Ikonen-Karte ----------
+// Echte Legenden bekommen zum Karriereende eine Ikonen-Karte mit ihrer besten Wertung
+function awardIconCard() {
+  if (!S.player || (S.cardAlbum || []).some(c => c.special === 'icon')) return;
+  if (!['G.O.A.T.', 'Legende'].includes(legacy()[1])) return;
+  S.cardAlbum = [...(S.cardAlbum || []), { special: 'icon', rating: S.peak, year: S.year, pos: S.player.pos }];
+  toast('🃏 Du bekommst eine Ikonen-Karte!');
+}
+
+function cardAlbumGrid(list) {
+  return `<div class="card-album">${list.map(c => `<div class="ca-item">${vgCard(c)}<small>${c.special === 'icon' ? 'Karriereende' : seasonLabel(c.year)}</small></div>`).join('')}</div>`;
+}
+
+function renderCardAlbum() {
+  const list = S.cardAlbum || [];
+  if (!list.length) return '';
+  return `
+  <section class="card">
+    <details${S.phase === 'retired' ? ' open' : ''}><summary>🎴 Karten-Album · ${list.length} ${list.length === 1 ? 'Sonderkarte' : 'Sonderkarten'}</summary>
+      ${cardAlbumGrid(list)}
+    </details>
+  </section>`;
 }

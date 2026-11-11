@@ -91,7 +91,7 @@ function saveHallOfFame() {
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
     titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
-    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
+    coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), cards: (S.cardAlbum || []).slice(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
   };
@@ -127,7 +127,7 @@ function hofDetail(e) {
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
-    + renderStations(e.stations) + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
+    + renderStations(e.stations) + (e.cards && e.cards.length ? `<h4>Karten-Album (${e.cards.length})</h4>${cardAlbumGrid(e.cards)}` : '') + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
 // Stationen als Spieler in zeitlicher Reihenfolge (für die Ruhmeshalle)
