@@ -112,7 +112,7 @@ function vgCard(v) {
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
-    ${sp === 'icon' ? '<span class="vg-icon-glow"></span>' : ''}
+    ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
     <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
