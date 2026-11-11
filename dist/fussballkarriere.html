@@ -8635,8 +8635,12 @@ const DEADLINE_SECONDS = 20;
 function maybeDeadline(offers, newOffer) {
   const p = S.player;
   if (offers.released || S.youth || p.age > 33 || !chance(0.25)) return;
+  // Nur Vereine, die zur eigenen Stärke passen: etwas stärker als der jetzige Verein, aber höchstens ein paar Punkte über dir
   const str = clubStr(S.clubId);
-  const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= Math.max(str + 2, p.rating - 4) && !offers.list.some(o => o.club === n));
+  const res = S.seasonEnd || {};
+  const good = res.note !== null && res.note !== undefined && res.note <= 2.8 ? 2 : 0;
+  const lo = Math.max(str + 1, p.rating - 4), hi = p.rating + 3 + good;
+  const cands = Object.keys(S.clubs).filter(n => n !== S.clubId && clubStr(n) >= lo && clubStr(n) <= hi && !offers.list.some(o => o.club === n));
   if (!cands.length) return;
   const o = newOffer(pick(cands));
   o.salary *= 1.25; o.signing *= 1.5; o.deadline = true;
