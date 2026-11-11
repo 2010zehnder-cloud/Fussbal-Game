@@ -82,6 +82,9 @@ Einfach `index.html` im Browser öffnen. Alternativ gibt es `dist/fussballkarrie
 - **Videospiel-Wertung** vor jeder Saison – freuen oder öffentlich beschweren.
 - **Weihnachten, Boxing Day und Silvester** als Ereignisse im Dezember.
 - **Medizincheck** bei großen Wechseln: Der Transfer kann platzen oder nur zu schlechteren Bedingungen klappen.
+- **Walkout-Animation** für neue Sonderkarten (Flagge, Position, Verein, Karte) – in den **Einstellungen** (⚙️) abschaltbar, dort auch Saison-Rückblick, Ton und Design.
+- **Traumelf** zum Karriereende aus Mitspielern, Rivalen und Stars.
+- **Deadline Day:** Last-Minute-Angebot im Transferfenster mit Countdown.
 - **Doku über deine Karriere** mit Filmtitel und Kapiteln wie Aufstieg, Absturz und Comeback.
 - **Ruhmeshalle** mit Vorlagen und aufklappbaren Titeln, Auszeichnungen und Spielerkarte pro Karriere.
 - **Gegen Wiederholung:** Geschichten über mehrere Saisons, eigene Ereignisse für junge Talente, beste Jahre und Routiniers, Saison-Themen (WM-Jahr, Vertragsjahr, Neuanfang, Comeback, Abschiedstour, neuer Trainer), Ereignisse in der Fußballwelt, seltene Momente, schon erlebte Ereignisse werden seltener, und Spielszenen mit wechselndem Wetter, Spielstand und Texten.

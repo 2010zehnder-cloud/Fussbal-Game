@@ -1054,6 +1054,7 @@ function openTransfer() {
   const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
   const spare = spareClub ? newOffer(spareClub) : null;
   S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
+  maybeDeadline(S.offers, newOffer);
   S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   S.phase = 'transfer';
 }
@@ -1237,6 +1238,7 @@ function render(keepScroll = false) {
     if (!prefs().noRecap) openRecap();
   }
   flushFx();
+  maybeWalkout();
 }
 
 function renderStart() {
@@ -1546,6 +1548,7 @@ function renderTransfer() {
     ? btn('Berater entlassen<small>keine Provision mehr</small>', () => { S.agent = false; o.msgs.push('Du trennst dich von deinem Berater.'); render(); }, 'small')
     : btn('Topberater engagieren<small>+15 % Gehalt, mehr Angebote · 10 % Provision</small>', () => { hireAgent(); render(); });
   return `
+  ${renderDeadline()}
   <section class="card">
     <h2>Transferfenster – Sommer ${S.year + 1}</h2>
     ${o.msgs.map(m => `<p class="note">${esc(m)}</p>`).join('')}
@@ -1840,6 +1843,7 @@ function renderRetired() {
   ${renderDoc()}
   ${renderCareerCard()}
   ${renderCardAlbum()}
+  ${renderDreamTeam()}
   ${renderTrophyCabinet()}
   ${renderChant()}
   ${renderLegends()}
@@ -1886,6 +1890,8 @@ function goHome() {
 function init() {
   const mb = document.getElementById('home-btn');
   if (mb) mb.addEventListener('click', goHome);
+  const setb = document.getElementById('settings-btn');
+  if (setb) setb.addEventListener('click', openSettings);
   const hb = document.getElementById('help-btn');
   if (hb) hb.addEventListener('click', toggleHelp);
   const tb = document.getElementById('theme-btn');

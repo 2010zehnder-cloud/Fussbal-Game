@@ -697,3 +697,50 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .ca-item small { color: var(--muted); font-size: 11px; }
 
 .legend ul.lines { list-style: none; padding-left: 0; }
+
+/* Walkout-Animation */
+.card-overlay.walkout { background: radial-gradient(circle at 50% 40%, #1b2a4a 0%, #05070d 75%); z-index: 70; }
+.wo-stage { position: relative; width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; }
+.wo-beam { position: absolute; top: -20%; left: 50%; width: 260px; height: 140%; margin-left: -130px;
+  background: linear-gradient(180deg, rgba(255,230,150,.35), transparent 75%); filter: blur(8px); animation: wo-beam 2.4s ease-in-out infinite; }
+@keyframes wo-beam { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+.wo-slot { position: relative; text-align: center; color: #fff; }
+.wo-step { animation: wo-in .55s cubic-bezier(.2,1.4,.4,1) both; }
+.wo-step.last { animation: wo-flip .9s ease-out both; }
+@keyframes wo-in { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes wo-flip { 0% { opacity: 0; transform: perspective(600px) rotateY(90deg) scale(.6); } 60% { opacity: 1; transform: perspective(600px) rotateY(-12deg) scale(1.15); } 100% { transform: perspective(600px) rotateY(0) scale(1); } }
+.wo-big { font-size: 96px; line-height: 1.1; }
+.wo-big .crest { width: 110px; height: 110px; font-size: 34px; }
+.wo-pos { font: 800 88px var(--font-display); color: #ffd76a; }
+.wo-txt { margin-top: 10px; font: 700 22px var(--font-display); letter-spacing: 1px; text-transform: uppercase; }
+.wo-card .vg-card { transform: scale(2.2); margin: 70px auto 80px; }
+.wo-hint { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,.5); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .wo-step, .wo-step.last, .wo-beam { animation: none; } }
+
+/* Einstellungen */
+.settings h2 { margin: 0 0 10px; }
+.set-row { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; text-align: left; padding: 10px 4px;
+  background: none; border: 0; border-bottom: 1px solid var(--line); color: var(--text); font: inherit; cursor: pointer; }
+.set-row small { display: block; color: var(--muted); font-size: 12px; }
+.switch { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--line); position: relative; transition: background .2s; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .2s; }
+.switch.on { background: var(--accent); }
+.switch.on::after { left: 21px; }
+
+/* Traumelf */
+.pitch { margin-top: 10px; padding: 14px 6px; border-radius: 12px; background: repeating-linear-gradient(180deg, #2f7d45 0 34px, #2a7340 34px 68px); display: grid; gap: 14px; }
+.pitch-row { display: flex; justify-content: space-around; }
+.pitch-p { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #fff; font-size: 11px; font-weight: 700; text-shadow: 0 1px 2px #000; max-width: 70px; text-align: center; }
+.pp-card { width: 38px; height: 48px; border-radius: 6px 6px 10px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #2a1d05; background: linear-gradient(150deg, #f3d36b, #a8801c); text-shadow: none; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.pp-card b { font: 800 17px/1 var(--font-display); }
+.pp-card small { font-size: 9px; font-weight: 800; }
+.pitch-p.me .pp-card { background: linear-gradient(135deg, #f2fdff 0%, #a6e6f8 30%, #ecfbff 48%, #64bce8 72%, #cdf3ff 100%); color: #0b2a3d; box-shadow: 0 0 10px #a6e6f8; }
+
+/* Deadline Day */
+.deadline { border: 2px solid var(--red); }
+.deadline.gone { border-color: var(--line); }
+.dl-head { display: flex; justify-content: space-between; align-items: center; font: 800 18px var(--font-display); color: var(--red); letter-spacing: 1px; }
+.dl-head b { font-size: 24px; animation: dl-pulse 1s ease-in-out infinite; }
+@keyframes dl-pulse { 50% { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .dl-head b { animation: none; } }
