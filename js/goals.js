@@ -97,7 +97,9 @@ function checkCollection() {
 }
 
 function renderCollection() {
-  const c = syncCollection();
+  // Auch auf der Startseite prüfen, nicht nur während einer Karriere
+  checkCollection();
+  const c = loadCollection();
   return `
   <section class="card">
     <details><summary>🎴 Sammelziele · ${c.goals.length} von ${COLLECTION_GOALS.length}</summary>
@@ -140,6 +142,7 @@ const prestigeChip = () => { const lv = prestigeLevel(); return prestigeOn() && 
 
 function renderPrestige() {
   if (!prestigeOn()) return '';
+  checkCollection();
   const lv = prestigeLevel();
   const d = doneChallenges();
   return `
