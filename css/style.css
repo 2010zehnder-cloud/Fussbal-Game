@@ -746,3 +746,6 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @media (prefers-reduced-motion: reduce) { .dl-head b { animation: none; } }
 
 .ach-prog { margin-top: 4px; font-weight: 600; }
+.tag.mid { background: rgba(232,197,71,.18); color: var(--gold); }
+.ch-level { margin: 14px 0 6px; font-size: 16px; }
+.ch-level .muted { font-weight: 400; font-size: 13px; }

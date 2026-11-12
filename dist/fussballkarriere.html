@@ -751,6 +751,9 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @media (prefers-reduced-motion: reduce) { .dl-head b { animation: none; } }
 
 .ach-prog { margin-top: 4px; font-weight: 600; }
+.tag.mid { background: rgba(232,197,71,.18); color: var(--gold); }
+.ch-level { margin: 14px 0 6px; font-size: 16px; }
+.ch-level .muted { font-weight: 400; font-size: 13px; }
 
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="settings-btn" class="helpbtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
@@ -6812,20 +6815,20 @@ const CH_KEY = 'fussballkarriere-herausforderungen';
 const normTitle = t => t.replace(/ /g, '-');
 const titleAt = (club, prefix) => (S.titleLog || []).some(t => t.club === club && normTitle(t.title).startsWith(normTitle(prefix)));
 const CHALLENGES = [
-  { id: 'hsv', name: 'Die Rothosen zurück an die Spitze', text: 'Werde mit dem Hamburger SV Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Hamburger SV', age: 19, rating: 64, test: () => titleAt('Hamburger SV', 'Deutscher Meister') },
-  { id: 'fck', name: 'Das Wunder vom Betzenberg', text: 'Gewinne mit dem 1. FC Kaiserslautern die Champions League.', nation: 'Deutschland', pos: 'ZOM', club: '1. FC Kaiserslautern', age: 18, rating: 62, test: () => titleAt('1. FC Kaiserslautern', 'Champions-League-Sieger') },
-  { id: 'gk', name: 'Der fliegende Torwart', text: "Gewinne als Torwart den Ballon d'Or.", nation: 'Österreich', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
-  { id: 'kosovo', name: 'Vom Kosovo nach ganz oben', text: 'Werde als Spieler aus dem Kosovo Champions-League-Sieger.', nation: 'Kosovo', pos: 'FL', club: null, age: 17, rating: 52, test: () => S.titles.some(isCLTitle) },
-  { id: 'iv', name: 'Torjäger in der Abwehr', text: 'Schieße als Innenverteidiger 100 Karrieretore.', nation: 'Spanien', pos: 'IV', club: null, age: 17, rating: 53, test: () => totals().goals >= 100 },
-  { id: 'loyal', name: 'Ein Leben, ein Verein', text: 'Spiele die ganze Karriere beim FC St. Pauli und werde Vereinslegende.', nation: 'Deutschland', pos: 'ZM', club: 'FC St. Pauli', age: 17, rating: 55, academy: true, test: () => S.phase === 'retired' && S.clubsPlayed.length === 1 && S.clubsPlayed[0] === 'FC St. Pauli' && legends().length > 0 },
-  { id: 'muenster', name: 'Aus der 2. Liga zur Schale', text: 'Werde mit Preußen Münster Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Preußen Münster', age: 19, rating: 60, test: () => titleAt('Preußen Münster', 'Deutscher Meister') },
-  { id: 'triple', name: 'Das Triple', text: 'Gewinne in einer Saison Meisterschaft, Pokal und Champions League.', nation: 'Italien', pos: 'ZM', club: null, age: 17, rating: 54, test: () => hasTriple() },
-  { id: 'austria', name: 'Rot-Weiß-Rot an der Spitze', text: 'Werde mit Österreich Weltmeister.', nation: 'Österreich', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
-  { id: 'miami', name: 'Amerikanischer Traum', text: 'Gewinne mit Inter Miami die MLS und den CONCACAF Champions Cup.', nation: 'USA', pos: 'ST', club: 'Inter Miami', age: 19, rating: 64, test: () => titleAt('Inter Miami', 'MLS-Meister') && titleAt('Inter Miami', 'CONCACAF Champions Cup-Sieger') },
-  { id: 'wall', name: 'Die Mauer', text: 'Spiele als Torwart in einer Saison mindestens 25-mal zu null.', nation: 'Deutschland', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.history.some(h => !h.youth && h.cleanSheets >= 25) },
-  { id: 'forty', name: 'Ewige Jugend', text: 'Bestreite mit 40 Jahren noch mindestens 10 Pflichtspiele.', nation: 'Portugal', pos: 'ST', club: null, age: 17, rating: 55, test: () => S.history.some(h => h.age >= 40 && h.games >= 10) },
-  { id: 'billion', name: 'Der Milliardär', text: 'Besitze ein Vermögen von 1 Milliarde €.', nation: 'Saudi-Arabien', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.money >= 1000 },
-  { id: 'goldenboy', name: 'Das nächste große Ding', text: 'Gewinne den Golden Boy und später den Ballon d\'Or.', nation: 'Brasilien', pos: 'FL', club: null, age: 17, rating: 55, test: () => S.awards.some(a => a.startsWith('Golden Boy')) && S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'hsv', level: 'Mittel', name: 'Die Rothosen zurück an die Spitze', text: 'Werde mit dem Hamburger SV Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Hamburger SV', age: 19, rating: 64, test: () => titleAt('Hamburger SV', 'Deutscher Meister') },
+  { id: 'fck', level: 'Schwer', name: 'Das Wunder vom Betzenberg', text: 'Gewinne mit dem 1. FC Kaiserslautern die Champions League.', nation: 'Deutschland', pos: 'ZOM', club: '1. FC Kaiserslautern', age: 18, rating: 62, test: () => titleAt('1. FC Kaiserslautern', 'Champions-League-Sieger') },
+  { id: 'gk', level: 'Schwer', name: 'Der fliegende Torwart', text: "Gewinne als Torwart den Ballon d'Or.", nation: 'Österreich', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.awards.some(a => a.startsWith("Ballon d'Or")) },
+  { id: 'kosovo', level: 'Mittel', name: 'Vom Kosovo nach ganz oben', text: 'Werde als Spieler aus dem Kosovo Champions-League-Sieger.', nation: 'Kosovo', pos: 'FL', club: null, age: 17, rating: 52, test: () => S.titles.some(isCLTitle) },
+  { id: 'iv', level: 'Schwer', name: 'Torjäger in der Abwehr', text: 'Schieße als Innenverteidiger 100 Karrieretore.', nation: 'Spanien', pos: 'IV', club: null, age: 17, rating: 53, test: () => totals().goals >= 100 },
+  { id: 'loyal', level: 'Mittel', name: 'Ein Leben, ein Verein', text: 'Spiele die ganze Karriere beim FC St. Pauli und werde Vereinslegende.', nation: 'Deutschland', pos: 'ZM', club: 'FC St. Pauli', age: 17, rating: 55, academy: true, test: () => S.phase === 'retired' && S.clubsPlayed.length === 1 && S.clubsPlayed[0] === 'FC St. Pauli' && legends().length > 0 },
+  { id: 'muenster', level: 'Schwer', name: 'Aus der 2. Liga zur Schale', text: 'Werde mit Preußen Münster Deutscher Meister.', nation: 'Deutschland', pos: 'ST', club: 'Preußen Münster', age: 19, rating: 60, test: () => titleAt('Preußen Münster', 'Deutscher Meister') },
+  { id: 'triple', level: 'Schwer', name: 'Das Triple', text: 'Gewinne in einer Saison Meisterschaft, Pokal und Champions League.', nation: 'Italien', pos: 'ZM', club: null, age: 17, rating: 54, test: () => hasTriple() },
+  { id: 'austria', level: 'Schwer', name: 'Rot-Weiß-Rot an der Spitze', text: 'Werde mit Österreich Weltmeister.', nation: 'Österreich', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
+  { id: 'miami', level: 'Mittel', name: 'Amerikanischer Traum', text: 'Gewinne mit Inter Miami die MLS und den CONCACAF Champions Cup.', nation: 'USA', pos: 'ST', club: 'Inter Miami', age: 19, rating: 64, test: () => titleAt('Inter Miami', 'MLS-Meister') && titleAt('Inter Miami', 'CONCACAF Champions Cup-Sieger') },
+  { id: 'wall', level: 'Mittel', name: 'Die Mauer', text: 'Spiele als Torwart in einer Saison mindestens 25-mal zu null.', nation: 'Deutschland', pos: 'TW', club: null, age: 17, rating: 54, test: () => S.history.some(h => !h.youth && h.cleanSheets >= 25) },
+  { id: 'forty', level: 'Mittel', name: 'Ewige Jugend', text: 'Bestreite mit 40 Jahren noch mindestens 10 Pflichtspiele.', nation: 'Portugal', pos: 'ST', club: null, age: 17, rating: 55, test: () => S.history.some(h => h.age >= 40 && h.games >= 10) },
+  { id: 'billion', level: 'Mittel', name: 'Der Milliardär', text: 'Besitze ein Vermögen von 1 Milliarde €.', nation: 'Saudi-Arabien', pos: 'ZOM', club: null, age: 17, rating: 54, test: () => S.money >= 1000 },
+  { id: 'goldenboy', level: 'Schwer', name: 'Das nächste große Ding', text: 'Gewinne den Golden Boy und später den Ballon d\'Or.', nation: 'Brasilien', pos: 'FL', club: null, age: 17, rating: 55, test: () => S.awards.some(a => a.startsWith('Golden Boy')) && S.awards.some(a => a.startsWith("Ballon d'Or")) },
   { id: 'werder', level: 'Einfach', name: 'Pokalheld an der Weser', text: 'Gewinne mit Werder Bremen den DFB-Pokal.', nation: 'Deutschland', pos: 'ZOM', club: 'SV Werder Bremen', age: 19, rating: 64, test: () => titleAt('SV Werder Bremen', 'DFB-Pokal-Sieger') },
   { id: 'torino', level: 'Mittel', name: 'Der Stier von Turin', text: 'Gewinne mit dem FC Turin die Coppa Italia und bestreite 100 Spiele für den Verein.', nation: 'Italien', pos: 'ST', club: 'FC Turin', age: 19, rating: 63, test: () => titleAt('FC Turin', 'Coppa Italia-Sieger') && clubStats().some(c => c.club === 'FC Turin' && c.games >= 100) },
   { id: 'worldclass', level: 'Schwer', name: 'Weltklasse im Weltklasse-Modus', text: "Gewinne den Ballon d'Or im Schwierigkeitsgrad Weltklasse.", nation: 'Deutschland', pos: 'ST', club: null, age: 17, rating: 52, diff: 'world', test: () => S.diff === 'world' && S.awards.some(a => a.startsWith("Ballon d'Or")) },
@@ -6851,7 +6854,7 @@ const CHALLENGES = [
     test: () => { const sa = (S.titleLog || []).filter(t => S.clubs[t.club] && clubLeague(t.club).id === 'sa'); return sa.some(t => /^AFC[- ]Champions/.test(t.title)) && sa.some(t => t.title === 'Saudischer Meister'); } },
   { id: 'coach10', level: 'Schwer', name: 'Trainer-Legende', text: 'Gewinne als Trainer 10 Meisterschaften.', nation: 'Italien', pos: 'ZDM', club: null, age: 17, rating: 54,
     test: () => ((S.coach && S.coach.titles) || []).filter(t => /Meister \(\d{4}/.test(t)).length >= 10 },
-  { id: 'dynasty', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
+  { id: 'dynasty', level: 'Mittel', name: 'Die goldene Familie', text: 'Gewinne in drei Generationen hintereinander jeweils mindestens einen Titel.', nation: 'Niederlande', pos: 'ZM', club: null, age: 17, rating: 54, test: () => (S.gen || 1) >= 3 && S.titles.length > 0 && (S.dynasty || []).slice(-2).every(d => d.titles > 0) },
 ];
 // Triple und im Sommer danach WM oder Kontinentaltitel
 function hasQuadruple() {
@@ -6910,16 +6913,22 @@ function checkChallenge() {
   toast(`🏅 Herausforderung geschafft: ${ch.name}!`);
   queueFx('fanfare', 'confetti');
 }
+// Reihenfolge und Farben der Schwierigkeitsstufen
+const CHALLENGE_LEVELS = [['Einfach', '🟢', 'good'], ['Mittel', '🟡', 'mid'], ['Schwer', '🔴', 'bad']];
 function renderChallenges() {
   const done = doneChallenges();
   return `
   <section class="card">
     <details><summary>🎯 Herausforderungen · ${done.length} von ${CHALLENGES.length} geschafft</summary>
       <p class="muted small">Fertige Szenarien mit festem Start. Sie nutzen Spielstand ${SLOT_COUNT}.</p>
-      <div class="offers">${CHALLENGES.map(ch => `
-        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)}${ch.level ? ` <span class="tag ${ch.level === 'Schwer' ? 'bad' : 'good'}">${ch.level}</span>` : ''}</strong><small>${esc(ch.text)}</small>
+      ${CHALLENGE_LEVELS.map(([lv, icon, cls]) => {
+        const list = CHALLENGES.filter(ch => ch.level === lv);
+        return `<h3 class="ch-level">${icon} ${lv} <span class="muted">· ${list.filter(ch => done.includes(ch.id)).length} von ${list.length}</span></h3>
+        <div class="offers">${list.map(ch => `
+        <div class="offer"><div class="offer-info"><strong>${done.includes(ch.id) ? '✅ ' : ''}${esc(ch.name)} <span class="tag ${cls}">${lv}</span></strong><small>${esc(ch.text)}</small>
         <small>${esc(ch.nation)} · ${ch.pos ? esc(POSITIONS[ch.pos].name) : 'Position frei wählbar'}${ch.club ? ` · ${esc(ch.club)}` : ''}</small></div>
-        ${btn('Starten', () => { startChallenge(ch); render(); }, 'primary small')}</div>`).join('')}</div>
+        ${btn('Starten', () => { startChallenge(ch); render(); }, 'primary small')}</div>`).join('')}</div>`;
+      }).join('')}
     </details>
   </section>`;
 }
