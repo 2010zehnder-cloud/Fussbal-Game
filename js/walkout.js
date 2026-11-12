@@ -60,6 +60,8 @@ function openSettings() {
       <h2>⚙️ Einstellungen</h2>
       ${row('recap', 'Saison-Rückblick', 'Am Saisonende automatisch als Video-Story zeigen', !p.noRecap)}
       ${row('walkout', 'Walkout-Animation', 'Neue Sonderkarten wie in FIFA enthüllen', !p.noWalkout)}
+      ${row('prestige', 'Prestige-Rahmen', 'Deine Prestige-Stufe als Rahmen um deinen Spieler zeigen', !p.noPrestige)}
+      ${row('rules', 'Verrückte Regeln', 'Jede neue Karriere bekommt eine zufällige Sonderregel', !!p.crazyRules)}
       ${row('sound', 'Ton', 'Jubel, Pfiffe und Fanfaren', !p.mute)}
       ${row('theme', 'Helles Design', 'Zwischen hell und dunkel wechseln', currentTheme() === 'light')}
       <div class="actions"><button class="btn primary small set-close">Fertig</button></div></div>`;
@@ -71,6 +73,8 @@ function openSettings() {
       const k = r.dataset.set;
       if (k === 'recap') setPref('noRecap', !prefs().noRecap);
       if (k === 'walkout') setPref('noWalkout', !prefs().noWalkout);
+      if (k === 'prestige') setPref('noPrestige', !prefs().noPrestige);
+      if (k === 'rules') setPref('crazyRules', !prefs().crazyRules);
       if (k === 'sound') toggleSound();
       if (k === 'theme') toggleTheme();
       draw();

@@ -58,7 +58,7 @@ function money(mio) {
 function salaryFor(rating, club, role) {
   const wage = LEAGUE_WAGE[S.clubs[club].league] || 0.5;
   const roleF = { 'Stammspieler': 1, 'Rotation': 0.8, 'Ergänzungsspieler': 0.65 }[role] || 0.8;
-  return Math.max(0.03, 0.08 * Math.exp((rating - 60) / 6.5) * wage * roleF);
+  return Math.max(0.03, 0.08 * Math.exp((rating - 60) / 6.5) * wage * roleF) * (S.rule === 'poor' ? 0.5 : 1);
 }
 function sponsorIncome() {
   const p = S.player;
@@ -160,6 +160,7 @@ function newGame(name, nationName, pos, number, heir = null, difficulty = 'norma
   S.academyOffers = academyOffers();
   initRival();
   initFamily(heir);
+  rollRule();
 }
 
 function startHeir(child) {
@@ -1047,15 +1048,18 @@ function openTransfer() {
     retire('Kein Verein will dich mehr verpflichten. Du beendest deine Karriere.');
     return;
   }
+  // Verrückte Regel: kein freiwilliger Wechsel mehr
+  const blocked = !released && ruleBlocksMove();
+  if (blocked) { offers.length = 0; msgs.push(`${activeRule().icon} ${activeRule().name}: Du darfst den Verein nicht wechseln.`); }
   const stayRole = roleFor(p.rating, str, p.trust);
   const extension = !released && expired
     ? { salary: salaryFor(p.rating, S.clubId, stayRole) * rand(0.95, 1.15), years: p.age >= 31 ? randInt(1, 2) : randInt(2, 4) }
     : null;
   // Ein weiterer Interessent, den nur ein Topberater an Land zieht
   const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
-  const spare = spareClub ? newOffer(spareClub) : null;
+  const spare = spareClub && !blocked ? newOffer(spareClub) : null;
   S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
-  maybeDeadline(S.offers, newOffer);
+  if (!blocked) maybeDeadline(S.offers, newOffer);
   S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   S.phase = 'transfer';
 }
@@ -1064,6 +1068,7 @@ function acceptOffer(o) {
   if (o && medicalCheck(o)) return;
   recordDecision(o);
   if (o && !o.loan && o.club !== S.clubId) chantTransfer(S.clubId, o.club);
+  if (o && !o.loan && o.club !== S.clubId && S.offers && !S.offers.released) S.ruleMoves = (S.ruleMoves || 0) + 1;
   if (o) {
     if (o.loan) S.loan = { parent: S.clubId };
     else {
@@ -1232,7 +1237,7 @@ function render(keepScroll = false) {
   if (!keepScroll) window.scrollTo({ top: 0 });
   // Während der Gala nichts verraten: Erfolge erst nach der Enthüllung prüfen
   const galaPending = S && S.phase === 'seasonEnd' && S.seasonEnd && S.seasonEnd.gala && !S.seasonEnd.gala.done;
-  if (S && S.player && S.phase !== 'create' && !galaPending) { checkAchievements(); checkDaily(); checkChallenge(); }
+  if (S && S.player && S.phase !== 'create' && !galaPending) { checkAchievements(); checkDaily(); checkChallenge(); checkLongGoals(); }
   if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated && !(S.seasonEnd.gala && !S.seasonEnd.gala.done)) {
     S.seasonEnd.animated = true;
     animateRecap();
@@ -1250,6 +1255,7 @@ function renderStart() {
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
   </section>
   ${renderSlots()}
+  ${renderPrestige()}
   <section class="card"><div class="actions">${btn('🎲 Zufallskarriere starten<small>Land, Position und Startszenario per Zufall</small>', () => { if (startRandomCareer()) render(); }, 'primary')}</div></section>
   ${renderDailyCard()}
   ${renderChallenges()}
@@ -1264,6 +1270,8 @@ function renderStart() {
   </section>
   ${renderHallOfFame()}
   ${renderRecords()}
+  ${renderCollection()}
+  ${renderRules()}
   ${renderAchievements()}`;
 }
 
@@ -1284,6 +1292,7 @@ function renderCreate() {
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${h && h.parentNumber ? h.parentNumber : randInt(7, 30)}"></label>${h && h.parentNumber ? `<p class="muted">Vorschlag: die #${h.parentNumber} von ${esc(h.parentName)}.</p>` : ''}
     ${h || dl ? '' : `<label>Startszenario<select id="f-origin">${Object.entries(ORIGINS).map(([k, o]) => `<option value="${k}">${o.name} – ${o.desc}</option>`).join('')}</select></label>`}
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
+    ${rulesOn() && !dl ? '<p class="note">🃏 Verrückte Regeln sind an: Deine Karriere bekommt eine zufällige Regel.</p>' : ''}
     <p class="err" id="f-err"></p>
     <div class="actions">
       ${btn('Los geht\'s', () => {
@@ -1298,6 +1307,7 @@ function renderCreate() {
         newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, (daily && daily.pos) || document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
         if (dl0 && !chalId) applyDaily(dl0);
         if (chalId) applyChallenge(chalId);
+        if (dl0 || chalId) S.rule = null;
         if (fo && fo.value !== 'academy') applyOrigin(fo.value);
         render();
       }, 'primary')}
@@ -1321,6 +1331,7 @@ function renderAcademy() {
     <p>Du bist 17 Jahre alt, ${esc(POSITIONS[p.pos].name)} aus ${esc(p.nation)} mit der Nummer ${p.number}. Deine aktuelle Stärke: <b>${Math.round(p.rating)}</b>.</p>
     <p>Die Scouts schätzen dein Talent auf <span class="stars">${'★'.repeat(clamp(stars, 1, 5))}${'☆'.repeat(5 - clamp(stars, 1, 5))}</span>.</p>
     ${tip('academy')}
+    ${ruleNote()}
     <p>Drei Nachwuchsleistungszentren wollen dich für ihre U19 verpflichten:</p>
     <div class="offers">${cards}</div>
   </section>`;
@@ -1337,10 +1348,10 @@ function renderPlayerCard() {
   const club = S.clubId;
   const L = club ? clubLeague(club) : null;
   return `
-  <section class="player">
+  <section class="player${prestigeClass()}">
     <div class="rating ${r > 87 ? 'diamond' : r >= 85 ? 'gold' : r >= 75 ? 'silver' : 'bronze'}"><b>${r}</b><small>${p.pos}</small></div>
     <div class="pinfo">
-      <h2>${esc(p.name)} <span class="num">#${p.number}</span></h2>
+      <h2>${esc(p.name)} <span class="num">#${p.number}</span>${prestigeChip()}</h2>
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
       <p class="mv">Saison ${seasonLabel(S.year)}${S.season && S.season.role && S.phase !== 'transfer' ? ` · <span class="rolechip">${esc(S.season.role)}</span>` : ''}${S.gen > 1 ? ` · Generation ${S.gen}` : ''}${S.youth ? '' : ` · ${renderPhaseTag()}`}</p>
@@ -1394,6 +1405,7 @@ function renderPreseason() {
         () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
     }).join('')}</div>
     ${S.daily ? `<p class="note">🎯 Tagesziel: ${esc(S.daily.text)}${S.daily.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
+    ${ruleNote()}
     ${S.challenge && S.challenge.text ? `<p class="note">🎯 Herausforderung: ${esc(S.challenge.text)}${S.challenge.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
     <div class="actions">${btn('Saison starten', () => {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);

@@ -817,6 +817,24 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-cl-starball { position: absolute; left: 50%; top: 42px; width: 62px; height: 62px; margin: -31px 0 0 -31px; z-index: 0; }
 .vg-cl-starball i { position: absolute; font-style: normal; font-size: 9px; color: rgba(255,255,255,.28); }
 
+/* Prestige-Stufen: Rahmen um den Spieler */
+.player.prestige, .card.prestige { border-width: 2px; border-style: solid; }
+.prestige-bronze { border-color: #cd7f32 !important; box-shadow: 0 0 10px rgba(205,127,50,.45); }
+.prestige-silver { border-color: #c9d1d9 !important; box-shadow: 0 0 12px rgba(201,209,217,.55); }
+.prestige-gold { border-color: #f0c53e !important; box-shadow: 0 0 14px rgba(240,197,62,.6); }
+.prestige-diamond { border-color: #b9f2ff !important; box-shadow: 0 0 16px rgba(185,242,255,.8), 0 0 4px #fff; }
+.prestige-chip { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 99px; font: 700 11px/1.4 var(--font-body); vertical-align: middle; color: #1b1b1b; }
+.prestige-chip.p-bronze { background: linear-gradient(135deg, #e8a76a, #a8622a); }
+.prestige-chip.p-silver { background: linear-gradient(135deg, #f4f7fa, #a9b3bd); }
+.prestige-chip.p-gold { background: linear-gradient(135deg, #fff2b0, #e0a91c); }
+.prestige-chip.p-diamond { background: linear-gradient(135deg, #ffffff, #9fe8ff 50%, #e4f9ff); }
+.prestige-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 8px; }
+.pstep { background: var(--card2); border-radius: 10px; padding: 8px 10px; opacity: .55; display: flex; flex-direction: column; }
+.pstep small { color: var(--muted); }
+.pstep.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
+.pstep.next { opacity: .9; box-shadow: inset 0 0 0 1px var(--muted); }
+.rule-note { border-left: 3px solid #b06cff; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="settings-btn" class="helpbtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -1392,7 +1410,7 @@ function money(mio) {
 function salaryFor(rating, club, role) {
   const wage = LEAGUE_WAGE[S.clubs[club].league] || 0.5;
   const roleF = { 'Stammspieler': 1, 'Rotation': 0.8, 'Ergänzungsspieler': 0.65 }[role] || 0.8;
-  return Math.max(0.03, 0.08 * Math.exp((rating - 60) / 6.5) * wage * roleF);
+  return Math.max(0.03, 0.08 * Math.exp((rating - 60) / 6.5) * wage * roleF) * (S.rule === 'poor' ? 0.5 : 1);
 }
 function sponsorIncome() {
   const p = S.player;
@@ -1494,6 +1512,7 @@ function newGame(name, nationName, pos, number, heir = null, difficulty = 'norma
   S.academyOffers = academyOffers();
   initRival();
   initFamily(heir);
+  rollRule();
 }
 
 function startHeir(child) {
@@ -2381,15 +2400,18 @@ function openTransfer() {
     retire('Kein Verein will dich mehr verpflichten. Du beendest deine Karriere.');
     return;
   }
+  // Verrückte Regel: kein freiwilliger Wechsel mehr
+  const blocked = !released && ruleBlocksMove();
+  if (blocked) { offers.length = 0; msgs.push(`${activeRule().icon} ${activeRule().name}: Du darfst den Verein nicht wechseln.`); }
   const stayRole = roleFor(p.rating, str, p.trust);
   const extension = !released && expired
     ? { salary: salaryFor(p.rating, S.clubId, stayRole) * rand(0.95, 1.15), years: p.age >= 31 ? randInt(1, 2) : randInt(2, 4) }
     : null;
   // Ein weiterer Interessent, den nur ein Topberater an Land zieht
   const spareClub = top.find(n => !chosen.includes(n) && !offers.some(o => o.club === n));
-  const spare = spareClub ? newOffer(spareClub) : null;
+  const spare = spareClub && !blocked ? newOffer(spareClub) : null;
   S.offers = { list: offers, released, msgs, extension, raiseTried: false, spare };
-  maybeDeadline(S.offers, newOffer);
+  if (!blocked) maybeDeadline(S.offers, newOffer);
   S.lifeMsg = null; S.peopleMsg = null; S.bizMsg = null;
   S.phase = 'transfer';
 }
@@ -2398,6 +2420,7 @@ function acceptOffer(o) {
   if (o && medicalCheck(o)) return;
   recordDecision(o);
   if (o && !o.loan && o.club !== S.clubId) chantTransfer(S.clubId, o.club);
+  if (o && !o.loan && o.club !== S.clubId && S.offers && !S.offers.released) S.ruleMoves = (S.ruleMoves || 0) + 1;
   if (o) {
     if (o.loan) S.loan = { parent: S.clubId };
     else {
@@ -2566,7 +2589,7 @@ function render(keepScroll = false) {
   if (!keepScroll) window.scrollTo({ top: 0 });
   // Während der Gala nichts verraten: Erfolge erst nach der Enthüllung prüfen
   const galaPending = S && S.phase === 'seasonEnd' && S.seasonEnd && S.seasonEnd.gala && !S.seasonEnd.gala.done;
-  if (S && S.player && S.phase !== 'create' && !galaPending) { checkAchievements(); checkDaily(); checkChallenge(); }
+  if (S && S.player && S.phase !== 'create' && !galaPending) { checkAchievements(); checkDaily(); checkChallenge(); checkLongGoals(); }
   if (S && S.phase === 'seasonEnd' && S.seasonEnd && !S.seasonEnd.animated && !(S.seasonEnd.gala && !S.seasonEnd.gala.done)) {
     S.seasonEnd.animated = true;
     animateRecap();
@@ -2584,6 +2607,7 @@ function renderStart() {
     <p class="lead">Vom Nachwuchstalent zur Legende. Triff Entscheidungen, spiele Schlüsselszenen und gewinne Titel mit echten Vereinen aus ganz Europa.</p>
   </section>
   ${renderSlots()}
+  ${renderPrestige()}
   <section class="card"><div class="actions">${btn('🎲 Zufallskarriere starten<small>Land, Position und Startszenario per Zufall</small>', () => { if (startRandomCareer()) render(); }, 'primary')}</div></section>
   ${renderDailyCard()}
   ${renderChallenges()}
@@ -2598,6 +2622,8 @@ function renderStart() {
   </section>
   ${renderHallOfFame()}
   ${renderRecords()}
+  ${renderCollection()}
+  ${renderRules()}
   ${renderAchievements()}`;
 }
 
@@ -2618,6 +2644,7 @@ function renderCreate() {
     <label>Rückennummer<input id="f-num" type="number" min="1" max="99" value="${h && h.parentNumber ? h.parentNumber : randInt(7, 30)}"></label>${h && h.parentNumber ? `<p class="muted">Vorschlag: die #${h.parentNumber} von ${esc(h.parentName)}.</p>` : ''}
     ${h || dl ? '' : `<label>Startszenario<select id="f-origin">${Object.entries(ORIGINS).map(([k, o]) => `<option value="${k}">${o.name} – ${o.desc}</option>`).join('')}</select></label>`}
     ${h ? '' : `<label>Schwierigkeit<select id="f-diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}"${k === 'normal' ? ' selected' : ''}>${d.name} – ${d.desc}</option>`).join('')}</select></label>`}
+    ${rulesOn() && !dl ? '<p class="note">🃏 Verrückte Regeln sind an: Deine Karriere bekommt eine zufällige Regel.</p>' : ''}
     <p class="err" id="f-err"></p>
     <div class="actions">
       ${btn('Los geht\'s', () => {
@@ -2632,6 +2659,7 @@ function renderCreate() {
         newGame(name, daily ? daily.nation : document.getElementById('f-nation').value, (daily && daily.pos) || document.getElementById('f-pos').value, num, S.heir || null, fd ? fd.value : 'normal');
         if (dl0 && !chalId) applyDaily(dl0);
         if (chalId) applyChallenge(chalId);
+        if (dl0 || chalId) S.rule = null;
         if (fo && fo.value !== 'academy') applyOrigin(fo.value);
         render();
       }, 'primary')}
@@ -2655,6 +2683,7 @@ function renderAcademy() {
     <p>Du bist 17 Jahre alt, ${esc(POSITIONS[p.pos].name)} aus ${esc(p.nation)} mit der Nummer ${p.number}. Deine aktuelle Stärke: <b>${Math.round(p.rating)}</b>.</p>
     <p>Die Scouts schätzen dein Talent auf <span class="stars">${'★'.repeat(clamp(stars, 1, 5))}${'☆'.repeat(5 - clamp(stars, 1, 5))}</span>.</p>
     ${tip('academy')}
+    ${ruleNote()}
     <p>Drei Nachwuchsleistungszentren wollen dich für ihre U19 verpflichten:</p>
     <div class="offers">${cards}</div>
   </section>`;
@@ -2671,10 +2700,10 @@ function renderPlayerCard() {
   const club = S.clubId;
   const L = club ? clubLeague(club) : null;
   return `
-  <section class="player">
+  <section class="player${prestigeClass()}">
     <div class="rating ${r > 87 ? 'diamond' : r >= 85 ? 'gold' : r >= 75 ? 'silver' : 'bronze'}"><b>${r}</b><small>${p.pos}</small></div>
     <div class="pinfo">
-      <h2>${esc(p.name)} <span class="num">#${p.number}</span></h2>
+      <h2>${esc(p.name)} <span class="num">#${p.number}</span>${prestigeChip()}</h2>
       <p>${p.age} Jahre · ${esc(p.nation)} · ${esc(POSITIONS[p.pos].name)}</p>
       ${club ? `<p class="clubline">${crest(club)} ${esc(club)}${S.loan ? ' <em>(Leihe)</em>' : ''} · ${S.youth ? 'U19' : esc(L.name)}</p>` : ''}
       <p class="mv">Saison ${seasonLabel(S.year)}${S.season && S.season.role && S.phase !== 'transfer' ? ` · <span class="rolechip">${esc(S.season.role)}</span>` : ''}${S.gen > 1 ? ` · Generation ${S.gen}` : ''}${S.youth ? '' : ` · ${renderPhaseTag()}`}</p>
@@ -2728,6 +2757,7 @@ function renderPreseason() {
         () => { se.focus = k; render(); }, focusOf() === k ? 'chosen-focus' : '');
     }).join('')}</div>
     ${S.daily ? `<p class="note">🎯 Tagesziel: ${esc(S.daily.text)}${S.daily.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
+    ${ruleNote()}
     ${S.challenge && S.challenge.text ? `<p class="note">🎯 Herausforderung: ${esc(S.challenge.text)}${S.challenge.done ? ' – ✅ geschafft!' : ''}</p>` : ''}
     <div class="actions">${btn('Saison starten', () => {
       if (focusOf() === 'recovery') S.player.form = clamp(S.player.form + 2, -10, 10);
@@ -5075,7 +5105,13 @@ const DIFFICULTY = {
   legend: { name: 'Legende', desc: 'Weniger Talent, mehr Verletzungen, strengere Kontrollen.', rating: -2, potential: -3, injury: 12, growth: 0.9 },
   world: { name: 'Weltklasse', desc: "Für Profis: langsameres Wachstum, wählerische Topklubs, ein hart umkämpfter Ballon d'Or.", rating: -3, potential: -5, injury: 13, growth: 0.82, ballon: 3, transfer: 3 },
 };
-const diff = () => DIFFICULTY[(S && S.diff) || 'normal'];
+const diff = () => {
+  const d = DIFFICULTY[(S && S.diff) || 'normal'];
+  // Verrückte Regeln verändern die Schwierigkeit
+  if (S && S.rule === 'glass') return { ...d, injury: d.injury * 2 };
+  if (S && S.rule === 'slow') return { ...d, growth: d.growth * 0.75 };
+  return d;
+};
 
 // ---------- Karriere teilen ----------
 function shareText() {
@@ -8689,6 +8725,8 @@ function openSettings() {
       <h2>⚙️ Einstellungen</h2>
       ${row('recap', 'Saison-Rückblick', 'Am Saisonende automatisch als Video-Story zeigen', !p.noRecap)}
       ${row('walkout', 'Walkout-Animation', 'Neue Sonderkarten wie in FIFA enthüllen', !p.noWalkout)}
+      ${row('prestige', 'Prestige-Rahmen', 'Deine Prestige-Stufe als Rahmen um deinen Spieler zeigen', !p.noPrestige)}
+      ${row('rules', 'Verrückte Regeln', 'Jede neue Karriere bekommt eine zufällige Sonderregel', !!p.crazyRules)}
       ${row('sound', 'Ton', 'Jubel, Pfiffe und Fanfaren', !p.mute)}
       ${row('theme', 'Helles Design', 'Zwischen hell und dunkel wechseln', currentTheme() === 'light')}
       <div class="actions"><button class="btn primary small set-close">Fertig</button></div></div>`;
@@ -8700,6 +8738,8 @@ function openSettings() {
       const k = r.dataset.set;
       if (k === 'recap') setPref('noRecap', !prefs().noRecap);
       if (k === 'walkout') setPref('noWalkout', !prefs().noWalkout);
+      if (k === 'prestige') setPref('noPrestige', !prefs().noPrestige);
+      if (k === 'rules') setPref('crazyRules', !prefs().crazyRules);
       if (k === 'sound') toggleSound();
       if (k === 'theme') toggleTheme();
       draw();
@@ -8807,5 +8847,176 @@ function renderDeadline() {
       ${btn('Ablehnen', () => { d.state = 'declined'; clearInterval(deadlineTimer); render(true); })}</div>
   </section>`;
 }
+
+// ---------- Langzeitziele: Prestige-Stufen, verrückte Regeln und Sammelziele ----------
+
+// ---------- Sammelziele (über alle Karrieren) ----------
+const COLL_KEY = 'fussballkarriere-sammlung';
+const CARD_KINDS = [['wm', 'Weltmeister'], ['ballon', "Ballon d'Or"], ['euro', 'Europameister'], ['cont', 'Kontinentaltitel'], ['toty', 'Team des Jahres'],
+  ['rttf', 'Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League'], ['potm', 'Spieler des Monats'], ['icon', 'Ikone']];
+const POTM_KINDS = [['bl', 'Bundesliga'], ['bl2', '2. Bundesliga'], ['pl', 'Premier League'], ['laliga', 'LaLiga'], ['seriea', 'Serie A'], ['ligue1', 'Ligue 1'], ['other', 'Andere Liga']];
+const potmKind = c => `potm-${POTM_LEAGUES.includes(c.league) ? c.league : 'other'}`;
+
+function loadCollection() {
+  let c;
+  try { c = JSON.parse(localStorage.getItem(COLL_KEY) || '{}'); } catch (e) { c = {}; }
+  return { cards: c.cards || [], best: c.best || 0, perCareer: c.perCareer || 0, goals: c.goals || [] };
+}
+function saveCollection(c) { try { localStorage.setItem(COLL_KEY, JSON.stringify(c)); } catch (e) { /* ignorieren */ } }
+
+// Karten aus der laufenden Karriere und der Ruhmeshalle in die Sammlung übernehmen
+function syncCollection() {
+  const c = loadCollection();
+  const add = list => {
+    for (const card of list || []) {
+      if (!card || !card.special) continue;
+      for (const k of [card.special, card.special === 'potm' ? potmKind(card) : null]) if (k && !c.cards.includes(k)) c.cards.push(k);
+      c.best = Math.max(c.best, card.rating || 0);
+    }
+    c.perCareer = Math.max(c.perCareer, new Set((list || []).map(x => x && x.special).filter(Boolean)).size);
+  };
+  if (typeof loadHallOfFame === 'function') for (const e of loadHallOfFame()) add(e.cards);
+  if (S && S.player) {
+    add(S.cardAlbum);
+    if (S.vg) c.best = Math.max(c.best, S.vg.rating || 0);
+  }
+  saveCollection(c);
+  return c;
+}
+
+const COLLECTION_GOALS = [
+  { id: 'potmAll', name: 'Liga-Sammler', desc: 'Sammle die Spieler-des-Monats-Karte jeder Liga.',
+    parts: () => POTM_KINDS.map(([k, n]) => [`potm-${k}`, n]) },
+  { id: 'europe', name: 'Europapokal-Trio', desc: 'Sammle die Karten von Champions League, Europa League und Conference League.',
+    parts: () => [['rttf', 'Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League']] },
+  { id: 'nation', name: 'Nationalheld', desc: 'Sammle die Karten für WM, EM und einen anderen Kontinentaltitel.',
+    parts: () => [['wm', 'WM'], ['euro', 'EM'], ['cont', 'Kontinentaltitel']] },
+  { id: 'golden', name: 'Goldjunge', desc: "Sammle die Karten für den Ballon d'Or und das Team des Jahres.",
+    parts: () => [['ballon', "Ballon d'Or"], ['toty', 'Team des Jahres']] },
+  { id: 'icon', name: 'Unsterblich', desc: 'Hol dir eine Ikonen-Karte zum Karriereende.', parts: () => [['icon', 'Ikone']] },
+  { id: 'r99', name: 'Die perfekte 99', desc: 'Erreiche eine KICK-Wertung von 99.', test: c => c.best >= 99, prog: c => `Beste Wertung: ${c.best || '–'}` },
+  { id: 'album5', name: 'Volles Album', desc: 'Sammle 5 verschiedene Sonderkarten in einer einzigen Karriere.', test: c => c.perCareer >= 5, prog: c => `Bisher: ${c.perCareer} von 5` },
+  { id: 'master', name: 'Meistersammler', desc: 'Sammle jede Art von Sonderkarte mindestens einmal.', parts: () => CARD_KINDS },
+];
+const goalDone = (g, c) => g.test ? g.test(c) : g.parts().every(([k]) => c.cards.includes(k));
+
+function checkCollection() {
+  const c = syncCollection();
+  const fresh = COLLECTION_GOALS.filter(g => !c.goals.includes(g.id) && goalDone(g, c));
+  if (!fresh.length) return;
+  c.goals.push(...fresh.map(g => g.id));
+  saveCollection(c);
+  fresh.forEach(g => toast(`🎴 Sammelziel geschafft: ${g.name}!`));
+  queueFx('fanfare', 'confetti');
+}
+
+function renderCollection() {
+  const c = syncCollection();
+  return `
+  <section class="card">
+    <details><summary>🎴 Sammelziele · ${c.goals.length} von ${COLLECTION_GOALS.length}</summary>
+      <p class="muted small">Gilt über alle Karrieren. Jede Sonderkarte, die du bekommst, landet in deiner Sammlung.</p>
+      <div class="achs">${COLLECTION_GOALS.map(g => {
+        const done = c.goals.includes(g.id);
+        const prog = g.prog ? g.prog(c) : g.parts().map(([k, n]) => `${c.cards.includes(k) ? '✅' : '⬜'} ${n}`).join(' · ');
+        return `<div class="ach ${done ? 'got' : ''}"><b>${done ? '🎴' : '🔒'} ${esc(g.name)}</b><small>${esc(g.desc)}</small><small class="ach-prog">${esc(prog)}</small></div>`;
+      }).join('')}</div>
+    </details>
+  </section>`;
+}
+
+// ---------- Prestige-Stufen ----------
+const PRESTIGE_KEY = 'fussballkarriere-prestige';
+const PRESTIGE = [
+  { id: 'bronze', name: 'Bronze', icon: '🥉', need: 'Schaffe alle einfachen Herausforderungen.', test: d => CHALLENGES.filter(c => c.level === 'Einfach').every(c => d.includes(c.id)) },
+  { id: 'silver', name: 'Silber', icon: '🥈', need: 'Schaffe alle mittleren Herausforderungen.', test: d => CHALLENGES.filter(c => c.level === 'Mittel').every(c => d.includes(c.id)) },
+  { id: 'gold', name: 'Gold', icon: '🥇', need: 'Schaffe alle schweren Herausforderungen.', test: d => CHALLENGES.filter(c => c.level === 'Schwer').every(c => d.includes(c.id)) },
+  { id: 'diamond', name: 'Diamant', icon: '💎', need: 'Schaffe alle Sammelziele.', test: () => loadCollection().goals.length >= COLLECTION_GOALS.length },
+];
+const prestigeOn = () => !prefs().noPrestige;
+// Die Stufen bauen aufeinander auf: Silber gibt es erst nach Bronze usw.
+function prestigeLevel() {
+  const d = doneChallenges();
+  let lv = -1;
+  for (let i = 0; i < PRESTIGE.length; i++) { if (PRESTIGE[i].test(d)) lv = i; else break; }
+  return lv;
+}
+function checkPrestige() {
+  const lv = prestigeLevel();
+  let seen = -1;
+  try { seen = parseInt(localStorage.getItem(PRESTIGE_KEY) || '-1', 10); } catch (e) { /* ignorieren */ }
+  if (lv <= seen) return;
+  try { localStorage.setItem(PRESTIGE_KEY, String(lv)); } catch (e) { /* ignorieren */ }
+  if (prestigeOn()) { toast(`${PRESTIGE[lv].icon} Neue Prestige-Stufe: ${PRESTIGE[lv].name}!`); queueFx('fanfare', 'confetti'); }
+}
+const prestigeClass = () => { const lv = prestigeLevel(); return prestigeOn() && lv >= 0 ? ` prestige prestige-${PRESTIGE[lv].id}` : ''; };
+const prestigeChip = () => { const lv = prestigeLevel(); return prestigeOn() && lv >= 0 ? `<span class="prestige-chip p-${PRESTIGE[lv].id}">${PRESTIGE[lv].icon} ${PRESTIGE[lv].name}</span>` : ''; };
+
+function renderPrestige() {
+  if (!prestigeOn()) return '';
+  const lv = prestigeLevel();
+  const d = doneChallenges();
+  return `
+  <section class="card prestige-card${prestigeClass()}">
+    <h2>Prestige ${prestigeChip() || '<span class="muted">· noch keine Stufe</span>'}</h2>
+    <div class="prestige-steps">${PRESTIGE.map((p, i) => {
+      const lvl = ['Einfach', 'Mittel', 'Schwer'][i];
+      const prog = lvl ? `${CHALLENGES.filter(c => c.level === lvl && d.includes(c.id)).length} von ${CHALLENGES.filter(c => c.level === lvl).length}` : `${loadCollection().goals.length} von ${COLLECTION_GOALS.length}`;
+      return `<div class="pstep ${i <= lv ? 'got' : i === lv + 1 ? 'next' : ''}"><b>${p.icon} ${p.name}</b><small>${esc(p.need)}</small><small class="ach-prog">${i <= lv ? '✅ erreicht' : prog}</small></div>`;
+    }).join('')}</div>
+    <p class="muted small">Deine Stufe zeigt sich als Rahmen um deinen Spieler. In den Einstellungen kannst du das ausschalten.</p>
+  </section>`;
+}
+
+// ---------- Verrückte Regeln ----------
+const RULE_KEY = 'fussballkarriere-regeln';
+const CRAZY_RULES = [
+  { id: 'glass', icon: '🦴', name: 'Glasknochen', desc: 'Verletzungen kommen doppelt so oft.', goal: 'Gewinne trotzdem 5 Titel.', test: () => S.titles.length >= 5 },
+  { id: 'loyal', icon: '💍', name: 'Vereinstreue', desc: 'Du kannst nie freiwillig den Verein wechseln.', goal: 'Werde Vereinslegende.', test: () => legends().length >= 1 },
+  { id: 'onemove', icon: '☝️', name: 'Nur ein Wechsel', desc: 'Du darfst nur ein einziges Mal freiwillig den Verein wechseln.', goal: 'Gewinne die Champions League.', test: () => S.titles.some(isCLTitle) },
+  { id: 'slow', icon: '🐢', name: 'Spätzünder', desc: 'Training bringt dir ein Viertel weniger.', goal: 'Erreiche trotzdem eine Stärke von 88.', test: () => S.peak >= 88 },
+  { id: 'poor', icon: '🪙', name: 'Sparprogramm', desc: 'Du bekommst nur das halbe Gehalt.', goal: 'Besitze trotzdem 10 Mio. €.', test: () => S.money >= 10 },
+];
+const rulesOn = () => !!prefs().crazyRules;
+const activeRule = () => (S && S.rule ? CRAZY_RULES.find(r => r.id === S.rule) : null);
+function masteredRules() { try { return JSON.parse(localStorage.getItem(RULE_KEY) || '[]'); } catch (e) { return []; } }
+function rollRule() { S.rule = rulesOn() ? pick(CRAZY_RULES).id : null; S.ruleDone = false; S.ruleMoves = 0; }
+// Wechselsperre für „Vereinstreue“ und „Nur ein Wechsel“
+const ruleBlocksMove = () => S.rule === 'loyal' || (S.rule === 'onemove' && (S.ruleMoves || 0) >= 1);
+
+function checkRule() {
+  const r = activeRule();
+  if (!r || S.ruleDone) return;
+  let ok = false;
+  try { ok = r.test(); } catch (e) { ok = false; }
+  if (!ok) return;
+  S.ruleDone = true;
+  const m = masteredRules();
+  if (!m.includes(r.id)) try { localStorage.setItem(RULE_KEY, JSON.stringify([...m, r.id])); } catch (e) { /* ignorieren */ }
+  // Belohnung: Prämie und Beliebtheit
+  S.money += 2;
+  S.player.popularity = clamp(S.player.popularity + 5, 0, 100);
+  toast(`${r.icon} Regel gemeistert: ${r.name}! +2 Mio. € und +5 Beliebtheit`);
+  queueFx('fanfare', 'confetti');
+}
+
+function ruleNote() {
+  const r = activeRule();
+  return r ? `<p class="note rule-note">${r.icon} <b>Verrückte Regel: ${esc(r.name)}</b> – ${esc(r.desc)} Ziel: ${esc(r.goal)}${S.ruleDone ? ' – ✅ gemeistert!' : ''}</p>` : '';
+}
+
+function renderRules() {
+  if (!rulesOn()) return '';
+  const m = masteredRules();
+  return `
+  <section class="card">
+    <details><summary>🃏 Verrückte Regeln · ${m.length} von ${CRAZY_RULES.length} gemeistert</summary>
+      <p class="muted small">Jede neue Karriere bekommt eine zufällige Regel. Schaffst du ihr Ziel, gibt es 2 Mio. €, Beliebtheit und ein Abzeichen. Herausforderungen laufen ohne Regel.</p>
+      <div class="achs">${CRAZY_RULES.map(r => `<div class="ach ${m.includes(r.id) ? 'got' : ''}"><b>${m.includes(r.id) ? r.icon : '🔒'} ${esc(r.name)}</b><small>${esc(r.desc)}</small><small class="ach-prog">Ziel: ${esc(r.goal)}</small></div>`).join('')}</div>
+    </details>
+  </section>`;
+}
+
+function checkLongGoals() { checkRule(); checkCollection(); checkPrestige(); }
 
 </script>

@@ -55,7 +55,13 @@ const DIFFICULTY = {
   legend: { name: 'Legende', desc: 'Weniger Talent, mehr Verletzungen, strengere Kontrollen.', rating: -2, potential: -3, injury: 12, growth: 0.9 },
   world: { name: 'Weltklasse', desc: "Für Profis: langsameres Wachstum, wählerische Topklubs, ein hart umkämpfter Ballon d'Or.", rating: -3, potential: -5, injury: 13, growth: 0.82, ballon: 3, transfer: 3 },
 };
-const diff = () => DIFFICULTY[(S && S.diff) || 'normal'];
+const diff = () => {
+  const d = DIFFICULTY[(S && S.diff) || 'normal'];
+  // Verrückte Regeln verändern die Schwierigkeit
+  if (S && S.rule === 'glass') return { ...d, injury: d.injury * 2 };
+  if (S && S.rule === 'slow') return { ...d, growth: d.growth * 0.75 };
+  return d;
+};
 
 // ---------- Karriere teilen ----------
 function shareText() {
