@@ -123,7 +123,7 @@ function titleLines(list, icon) {
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
 function hofDetail(e) {
   if (!e.titleList) return renderCard(cardFromEntry(e)) + '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
-  const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
+  const block = (head, list, icon) => (list || []).length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`

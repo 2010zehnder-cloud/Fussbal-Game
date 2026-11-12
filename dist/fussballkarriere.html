@@ -750,6 +750,8 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @keyframes dl-pulse { 50% { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .dl-head b { animation: none; } }
 
+.ach-prog { margin-top: 4px; font-weight: 600; }
+
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="settings-btn" class="helpbtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
 <main id="app"></main>
@@ -4600,7 +4602,7 @@ function titleLines(list, icon) {
 // Aufklappbare Details einer Karriere: alle Titel und Auszeichnungen
 function hofDetail(e) {
   if (!e.titleList) return renderCard(cardFromEntry(e)) + '<p class="muted">Diese Karriere stammt aus einer älteren Version und ist in keinem Spielstand mehr gespeichert – die einzelnen Titel lassen sich leider nicht mehr wiederherstellen.</p>';
-  const block = (head, list, icon) => list.length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
+  const block = (head, list, icon) => (list || []).length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
   return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
@@ -5044,7 +5046,22 @@ function copyShare() {
 
 // ---------- Erfolge (über alle Karrieren) ----------
 const ACH_KEY = 'fussballkarriere-erfolge';
+// Kontinentaltitel über alle Karrieren (für „Erobere die Welt“)
+const CONT_KEY = 'fussballkarriere-kontinente';
+const CONTINENTS = [['Europameister', 'EM'], ['Copa-América-Sieger', 'Copa América'], ['Afrikameister', 'Afrika-Cup'], ['Asienmeister', 'Asienmeisterschaft'], ['Gold-Cup-Sieger', 'Gold Cup']];
+function continentsWon() {
+  let won = [];
+  try { won = JSON.parse(localStorage.getItem(CONT_KEY) || '[]'); } catch (e) { won = []; }
+  const titles = [...((S && S.titles) || []), ...(typeof loadHallOfFame === 'function' ? loadHallOfFame().flatMap(e => e.titleList || []) : [])];
+  const now = CONTINENTS.filter(([t]) => won.includes(t) || titles.some(x => x.startsWith(`${t} `))).map(([t]) => t);
+  if (now.length !== won.length) try { localStorage.setItem(CONT_KEY, JSON.stringify(now)); } catch (e) { /* ignorieren */ }
+  return now;
+}
+
 const ACHIEVEMENTS = [
+  { id: 'worldconq', name: 'Erobere die Welt', desc: 'Gewinne über alle Karrieren jeden Kontinentaltitel: EM, Copa América, Afrika-Cup, Asienmeisterschaft und Gold Cup.',
+    progress: () => { const w = continentsWon(); return CONTINENTS.map(([t, n]) => `${w.includes(t) ? '✅' : '⬜'} ${n}`).join(' · '); },
+    test: () => continentsWon().length === CONTINENTS.length },
   { id: 'firstTitle', name: 'Erster Pokal', desc: 'Gewinne deinen ersten Titel.', test: () => S.titles.length >= 1 },
   { id: 'cl', name: 'Königsklasse', desc: 'Gewinne die Champions League.', test: () => S.titles.some(isCLTitle) },
   { id: 'world', name: 'Weltmeister', desc: 'Werde Weltmeister.', test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
@@ -5085,7 +5102,7 @@ function renderAchievements() {
   return `
   <section class="card">
     <details><summary>Erfolge · ${have.length} von ${ACHIEVEMENTS.length}</summary>
-      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach ${have.includes(a.id) ? 'got' : ''}"><b>${have.includes(a.id) ? '🏅' : '🔒'} ${esc(a.name)}</b><small>${esc(a.desc)}</small></div>`).join('')}</div>
+      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach ${have.includes(a.id) ? 'got' : ''}"><b>${have.includes(a.id) ? '🏅' : '🔒'} ${esc(a.name)}</b><small>${esc(a.desc)}</small>${a.progress ? `<small class="ach-prog">${esc(a.progress())}</small>` : ''}</div>`).join('')}</div>
     </details>
   </section>`;
 }

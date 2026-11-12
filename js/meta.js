@@ -92,7 +92,22 @@ function copyShare() {
 
 // ---------- Erfolge (über alle Karrieren) ----------
 const ACH_KEY = 'fussballkarriere-erfolge';
+// Kontinentaltitel über alle Karrieren (für „Erobere die Welt“)
+const CONT_KEY = 'fussballkarriere-kontinente';
+const CONTINENTS = [['Europameister', 'EM'], ['Copa-América-Sieger', 'Copa América'], ['Afrikameister', 'Afrika-Cup'], ['Asienmeister', 'Asienmeisterschaft'], ['Gold-Cup-Sieger', 'Gold Cup']];
+function continentsWon() {
+  let won = [];
+  try { won = JSON.parse(localStorage.getItem(CONT_KEY) || '[]'); } catch (e) { won = []; }
+  const titles = [...((S && S.titles) || []), ...(typeof loadHallOfFame === 'function' ? loadHallOfFame().flatMap(e => e.titleList || []) : [])];
+  const now = CONTINENTS.filter(([t]) => won.includes(t) || titles.some(x => x.startsWith(`${t} `))).map(([t]) => t);
+  if (now.length !== won.length) try { localStorage.setItem(CONT_KEY, JSON.stringify(now)); } catch (e) { /* ignorieren */ }
+  return now;
+}
+
 const ACHIEVEMENTS = [
+  { id: 'worldconq', name: 'Erobere die Welt', desc: 'Gewinne über alle Karrieren jeden Kontinentaltitel: EM, Copa América, Afrika-Cup, Asienmeisterschaft und Gold Cup.',
+    progress: () => { const w = continentsWon(); return CONTINENTS.map(([t, n]) => `${w.includes(t) ? '✅' : '⬜'} ${n}`).join(' · '); },
+    test: () => continentsWon().length === CONTINENTS.length },
   { id: 'firstTitle', name: 'Erster Pokal', desc: 'Gewinne deinen ersten Titel.', test: () => S.titles.length >= 1 },
   { id: 'cl', name: 'Königsklasse', desc: 'Gewinne die Champions League.', test: () => S.titles.some(isCLTitle) },
   { id: 'world', name: 'Weltmeister', desc: 'Werde Weltmeister.', test: () => S.titles.some(t => t.startsWith('Weltmeister')) },
@@ -133,7 +148,7 @@ function renderAchievements() {
   return `
   <section class="card">
     <details><summary>Erfolge · ${have.length} von ${ACHIEVEMENTS.length}</summary>
-      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach ${have.includes(a.id) ? 'got' : ''}"><b>${have.includes(a.id) ? '🏅' : '🔒'} ${esc(a.name)}</b><small>${esc(a.desc)}</small></div>`).join('')}</div>
+      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach ${have.includes(a.id) ? 'got' : ''}"><b>${have.includes(a.id) ? '🏅' : '🔒'} ${esc(a.name)}</b><small>${esc(a.desc)}</small>${a.progress ? `<small class="ach-prog">${esc(a.progress())}</small>` : ''}</div>`).join('')}</div>
     </details>
   </section>`;
 }

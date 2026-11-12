@@ -744,3 +744,5 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .dl-head b { font-size: 24px; animation: dl-pulse 1s ease-in-out infinite; }
 @keyframes dl-pulse { 50% { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .dl-head b { animation: none; } }
+
+.ach-prog { margin-top: 4px; font-weight: 600; }
