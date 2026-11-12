@@ -669,9 +669,8 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-ballon-facets { position: absolute; inset: 0; z-index: 0; opacity: .55; pointer-events: none; background:
   linear-gradient(60deg, transparent 48%, rgba(255,255,255,.7) 50%, transparent 52%) 0 0/24px 24px,
   linear-gradient(-60deg, transparent 48%, rgba(180,120,10,.45) 50%, transparent 52%) 0 0/24px 24px; }
-.vg-ballon-crown { position: absolute; top: 3px; left: 0; right: 0; text-align: center; z-index: 1; font-size: 8px; letter-spacing: -1px; filter: drop-shadow(0 0 2px #fff); }
 .vg-card.ballon em { color: #3a2604; }
-.vg-gem { position: absolute; z-index: 1; font-size: 9px; top: 14px; left: 6px; filter: drop-shadow(0 0 2px #fff); animation: vg-twinkle 2s ease-in-out infinite; }
+.vg-gem { position: absolute; z-index: 1; font-size: 9px; top: 5px; left: 6px; filter: drop-shadow(0 0 2px #fff); animation: vg-twinkle 2s ease-in-out infinite; }
 .vg-gem.s2 { left: auto; right: 6px; animation-delay: .7s; }
 .vg-gem.s3 { top: 40px; left: 5px; font-size: 7px; animation-delay: 1.3s; }
 @media (prefers-reduced-motion: reduce) { .vg-gem { animation: none; } }
@@ -8336,7 +8335,7 @@ function vgCard(v) {
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
-    ${sp === 'ballon' ? '<span class="vg-ballon-facets"></span><span class="vg-ballon-crown">💎💎💎</span><span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-starball">${CL_STARBALL}</span>`
+    ${sp === 'ballon' ? '<span class="vg-ballon-facets"></span><span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-starball">${CL_STARBALL}</span>`
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
