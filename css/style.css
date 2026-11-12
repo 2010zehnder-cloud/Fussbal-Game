@@ -793,3 +793,5 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .tag.mid { background: rgba(232,197,71,.18); color: var(--gold); }
 .ch-level { margin: 14px 0 6px; font-size: 16px; }
 .ch-level .muted { font-weight: 400; font-size: 13px; }
+.vg-cl-starball { position: absolute; left: 50%; top: 42px; width: 62px; height: 62px; margin: -31px 0 0 -31px; z-index: 0; }
+.vg-cl-starball i { position: absolute; font-style: normal; font-size: 9px; color: rgba(255,255,255,.28); }

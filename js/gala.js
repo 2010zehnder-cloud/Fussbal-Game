@@ -105,13 +105,20 @@ const VG_SPECIAL = {
 // Ligen mit eigenem Kartendesign, alle anderen bekommen ein neutrales Meister-Design
 const POTM_LEAGUES = ['bl', 'bl2', 'pl', 'laliga', 'seriea', 'ligue1'];
 
+// Sternenball als Wasserzeichen der Champions-League-Karte: Sterne in drei Ringen wie eine Kugel
+const CL_STARBALL = [[0, 1], [0.55, 6], [0.95, 10]].flatMap(([r, n]) => Array.from({ length: n }, (_, i) => {
+  const a = i / n * Math.PI * 2 + (r > 0.9 ? 0.3 : 0);
+  const x = 50 + Math.cos(a) * r * 42, y = 50 + Math.sin(a) * r * 42 * 0.92;
+  return `<i style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;transform:translate(-50%,-50%) scale(${(1 - r * 0.35).toFixed(2)})">★</i>`;
+})).join('');
+
 // Kleine Karte im Videospiel-Stil
 function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
-    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-ball"></span>'
+    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-starball">${CL_STARBALL}</span>`
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
