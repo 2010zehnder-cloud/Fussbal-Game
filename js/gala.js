@@ -122,7 +122,7 @@ function vgCard(v) {
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
-    ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
+    ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>${['bl', 'laliga'].includes(v.league) ? '<span class="vg-potm-pattern"></span>' : '<span class="vg-potm-shade"></span><span class="vg-potm-edge"></span>'}` : ''}
     <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 

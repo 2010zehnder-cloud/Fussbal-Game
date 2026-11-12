@@ -648,6 +648,18 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.potm-ligue1 { background: linear-gradient(160deg, #1d2633 0%, #0b0f16 70%); color: #dafa3c; border-color: #dafa3c; }
 .vg-card.potm-ligue1 em, .vg-card.potm-ligue1 .vg-league { color: #dafa3c; }
 .vg-card.potm-other { background: linear-gradient(160deg, #1fa37a 0%, #0c5a43 60%, #06281e 100%); }
+.vg-card.potm b, .vg-card.potm small, .vg-card.potm em { position: relative; z-index: 1; }
+.vg-card.potm em { position: absolute; }
+.vg-potm-pattern, .vg-potm-shade { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.potm-bl .vg-potm-pattern { background: repeating-linear-gradient(120deg, rgba(255,255,255,.10) 0 2px, transparent 2px 9px); }
+.potm-laliga .vg-potm-pattern { background: repeating-conic-gradient(from 0deg at 50% 42%, rgba(255,210,122,.18) 0deg 8deg, transparent 8deg 22deg); }
+.vg-potm-shade { background: linear-gradient(135deg, transparent 0 52%, rgba(0,0,0,.35) 52% 100%); }
+.vg-potm-edge { position: absolute; left: -20%; right: -20%; top: 50%; height: 2px; z-index: 0; transform: rotate(-38deg); opacity: .7; pointer-events: none;
+  --edge: #ffffff; background: var(--edge); box-shadow: 0 0 6px var(--edge); }
+.potm-pl .vg-potm-edge { --edge: #04f5ff; }
+.potm-seriea .vg-potm-edge { --edge: #61e3ff; }
+.potm-ligue1 .vg-potm-edge { --edge: #dafa3c; }
+.potm-other .vg-potm-edge { --edge: #7dffcf; }
 
 /* Ballon-d'Or-Karte: Gold mit Diamanten */
 .vg-card.ballon { color: #3a2604; border: 2px solid #fff3c4;
@@ -8323,7 +8335,7 @@ function vgCard(v) {
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
-    ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
+    ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>${['bl', 'laliga'].includes(v.league) ? '<span class="vg-potm-pattern"></span>' : '<span class="vg-potm-shade"></span><span class="vg-potm-edge"></span>'}` : ''}
     <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }
 
