@@ -656,11 +656,26 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.rttf-ecl em { color: #2fe08a; }
 
 /* Weltmeister-Karte: Weinrot und Gold */
-.vg-card.wm { color: #f6d77a; border: 2px solid #e8c25a;
-  background: radial-gradient(circle at 50% 20%, #9b1b3a 0%, #5c0f24 55%, #2a0610 100%); box-shadow: 0 0 16px rgba(232,194,90,.6); }
-.vg-card.wm em { color: #f6d77a; }
-.vg-wm-band { position: absolute; left: -10px; right: -10px; top: 58px; height: 10px; transform: rotate(-12deg);
-  background: linear-gradient(90deg, transparent, rgba(246,215,122,.35), transparent); }
+.vg-card.wm { color: #ffe08a; border: 2px solid transparent; isolation: isolate;
+  background: linear-gradient(#5c0f24, #5c0f24) padding-box, conic-gradient(from var(--wm-angle, 0deg), #fff3b0, #c8921a, #fff3b0, #e8c25a, #fff3b0) border-box;
+  background-image: radial-gradient(circle at 50% 30%, #b0203f 0%, #6a1129 50%, #2a0610 100%), conic-gradient(from var(--wm-angle, 0deg), #fff3b0, #c8921a, #fff3b0, #e8c25a, #fff3b0);
+  background-origin: padding-box, border-box; background-clip: padding-box, border-box;
+  box-shadow: 0 0 22px rgba(232,194,90,.75), 0 0 40px rgba(176,32,63,.45); animation: wm-spin 4s linear infinite; }
+@property --wm-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes wm-spin { to { --wm-angle: 360deg; } }
+.vg-card.wm b, .vg-card.wm small { position: relative; z-index: 2; text-shadow: 0 0 8px rgba(255,215,106,.6); }
+.vg-card.wm b { background: linear-gradient(180deg, #fff6c8 0%, #f1c94e 55%, #b07a12 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.vg-card.wm em { color: #3a1006; z-index: 2; background: linear-gradient(90deg, #b07a12, #ffe08a, #b07a12); padding: 2px 0; bottom: 4px; font-weight: 800; }
+.vg-wm-swirl { position: absolute; inset: -30%; z-index: 0; opacity: .18;
+  background: repeating-conic-gradient(from 0deg at 50% 45%, #ffe08a 0deg 5deg, transparent 5deg 20deg); }
+.vg-wm-cup { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); font-size: 54px; opacity: .22; z-index: 1; filter: sepia(1) saturate(3); }
+.vg-wm-band { position: absolute; left: -10px; right: -10px; top: 62px; height: 8px; transform: rotate(-12deg); z-index: 1;
+  background: linear-gradient(90deg, transparent, rgba(255,224,138,.45), transparent); }
+.vg-wm-star { position: absolute; top: 4px; left: 0; right: 0; text-align: center; color: #ffe08a; font-size: 13px; z-index: 2; text-shadow: 0 0 6px #ffd76a; }
+.vg-card.wm .vg-sparkle { color: #ffe08a; z-index: 2; }
+.vg-card.wm .vg-sparkle.s3 { top: 52px; left: 8px; font-size: 7px; animation-delay: .5s; }
+@media (prefers-reduced-motion: reduce) { .vg-card.wm { animation: none; } }
+
 /* Turnier-Karte (EM & Co.): Silber wie der EM-Pokal, mit Sternenkranz und blauem Band */
 .vg-card.euro { color: #0a2a6e; border: 2px solid #1d4fb8;
   background: linear-gradient(150deg, #ffffff 0%, #dfe5ee 35%, #f7f9fc 55%, #b9c3d1 100%); box-shadow: 0 0 14px rgba(29,79,184,.45); }
@@ -8265,7 +8280,7 @@ function vgCard(v) {
   const sp = v.special;
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
-    ${sp === 'wm' ? '<span class="vg-wm-band"></span><span class="vg-gem" style="font-size:12px">🏆</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
+    ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp && sp.startsWith('rttf') ? '<span class="vg-star">★</span><span class="vg-star s2">★</span><span class="vg-star s3">★</span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>` : ''}
