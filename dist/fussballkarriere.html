@@ -8864,7 +8864,40 @@ function loadCollection() {
 }
 function saveCollection(c) { try { localStorage.setItem(COLL_KEY, JSON.stringify(c)); } catch (e) { /* ignorieren */ } }
 
-// Karten aus der laufenden Karriere und der Ruhmeshalle in die Sammlung übernehmen
+// Ältere Karrieren haben kein Karten-Album gespeichert: Karten aus Titeln und Auszeichnungen nachbauen.
+// Wie im Spiel gibt es pro Saison nur eine Sonderkarte, und zwar die wertvollste.
+const CARD_ORDER = ['wm', 'ballon', 'euro', 'cont', 'toty', 'rttf', 'rttf-el', 'rttf-ecl', 'potm'];
+function cardsFromRecord(titles, awards, legacyTitle) {
+  const byYear = {};
+  const put = (y, card) => { (byYear[y] = byYear[y] || []).push(card); };
+  const seasonYear = s => { const m = s.match(/\((\d{4})\/\d{2}\)$/); return m ? +m[1] + 1 : null; };
+  for (const t of titles || []) {
+    const y = seasonYear(t);
+    if (y) {
+      if (isCLTitle(t)) put(y, { special: 'rttf' });
+      else if (/^Europa[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-el' });
+      else if (/^Conference[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-ecl' });
+      else { const L = LEAGUES.find(l => t.startsWith(`${l.champion} (`)); if (L) put(y, { special: 'potm', league: L.id }); }
+      continue;
+    }
+    const m = t.match(/^(.*) (\d{4})$/);
+    if (!m) continue;
+    if (m[1] === 'Weltmeister') put(+m[2], { special: 'wm' });
+    else if (m[1] === 'Europameister') put(+m[2], { special: 'euro' });
+    else if (/^(Copa-América-Sieger|Afrikameister|Asienmeister|Gold-Cup-Sieger)$/.test(m[1])) put(+m[2], { special: 'cont' });
+  }
+  for (const a of awards || []) {
+    const y = seasonYear(a);
+    if (!y) continue;
+    if (a.startsWith("Ballon d'Or")) put(y, { special: 'ballon' });
+    else if (a.startsWith('Spieler der Saison')) put(y, { special: 'toty' });
+  }
+  const list = Object.values(byYear).map(cards => cards.sort((a, b) => CARD_ORDER.indexOf(a.special) - CARD_ORDER.indexOf(b.special))[0]);
+  if (['G.O.A.T.', 'Legende'].includes(legacyTitle)) list.push({ special: 'icon' });
+  return list;
+}
+
+// Karten aus der laufenden Karriere, den Spielständen und der Ruhmeshalle in die Sammlung übernehmen
 function syncCollection() {
   const c = loadCollection();
   const add = list => {
@@ -8875,7 +8908,10 @@ function syncCollection() {
     }
     c.perCareer = Math.max(c.perCareer, new Set((list || []).map(x => x && x.special).filter(Boolean)).size);
   };
-  if (typeof loadHallOfFame === 'function') for (const e of loadHallOfFame()) add(e.cards);
+  // Gespeichertes Album plus nachgebaute Karten (das Album gibt es erst seit einer späteren Version)
+  const fromCareer = (album, titles, awards, legacyTitle) => add([...(album || []), ...cardsFromRecord(titles, awards, legacyTitle)]);
+  if (typeof loadHallOfFame === 'function') for (const e of loadHallOfFame()) fromCareer(e.cards, e.titleList, e.awardList, e.title);
+  for (let n = 1; n <= SLOT_COUNT; n++) { const s = readSlot(n); if (s && s.player) fromCareer(s.cardAlbum, s.titles, s.awards, null); }
   if (S && S.player) {
     add(S.cardAlbum);
     if (S.vg) c.best = Math.max(c.best, S.vg.rating || 0);
