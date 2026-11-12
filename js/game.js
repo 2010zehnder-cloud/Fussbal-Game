@@ -959,6 +959,7 @@ function tournament(res) {
   out.bracket = br;
   const played = 3 + br.ko.filter(m => !m.live).length;
   const games = starter ? played : randInt(1, played);
+  if (!S.firstCapAge && games) S.firstCapAge = p.age;
   const rate = POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4);
   const goals = Math.round(games * rate * rand(0.6, 1.3));
   p.caps += games; p.intGoals += goals;

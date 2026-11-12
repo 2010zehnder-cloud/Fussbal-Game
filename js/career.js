@@ -87,6 +87,7 @@ function nationalSeason(res) {
   const games = p.rating >= nat.str ? randInt(5, 8) : p.rating >= nat.str - 3 ? randInt(2, 5) : randInt(0, 2);
   if (!games) return;
   const goals = Math.round(games * POSITIONS[p.pos].goals * clamp((p.rating - 60) / 25, 0.2, 1.4) * rand(0.6, 1.3));
+  if (!S.firstCapAge) S.firstCapAge = p.age;
   p.caps += games; p.intGoals += goals;
   res.lines.push(`🌍 Nationalmannschaft: ${games} Länderspiele${goals ? `, ${goals} Tore` : ''} (insgesamt ${p.caps} Spiele, ${p.intGoals} Tore).`);
   if (!S.natCaptain && p.caps >= 40 && p.age >= 26 && p.rating >= nat.str) {
