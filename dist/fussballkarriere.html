@@ -654,11 +654,13 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.rttf b, .vg-card.rttf small { position: relative; z-index: 1; }
 .vg-card.rttf em { z-index: 1; padding: 2px 0; bottom: 4px; }
 .vg-comp { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 5.5px/1 var(--font-body); letter-spacing: .4px; opacity: .85; z-index: 1; white-space: nowrap; }
-/* Champions League: Sternenball und Silber */
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) { background: radial-gradient(circle at 50% 40%, #1f3d9e 0%, #0b1a4a 55%, #050a24 100%); border-color: #dfe6ff; box-shadow: 0 0 14px rgba(170,190,255,.5); }
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) em { color: #0b1a4a; background: linear-gradient(90deg, #aab4c8, #ffffff, #aab4c8); }
-.vg-starball { position: absolute; left: 50%; top: 36px; width: 0; height: 0; z-index: 0; }
-.vg-starball i { position: absolute; left: -4px; top: -5px; font-style: normal; font-size: 8px; color: rgba(255,255,255,.35); transform-origin: 4px 5px; }
+/* Champions League: Violett bis Schwarz, silberne Lichtstreifen und Ball-Umriss */
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) { color: #eef1ff; border-color: #c7cde0; box-shadow: 0 0 14px rgba(150,120,255,.45);
+  background: radial-gradient(circle at 50% 0%, #3b1f7a 0%, #170a3a 45%, #05030f 100%); }
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) em { color: #170a3a; background: linear-gradient(90deg, #9aa3b8, #ffffff, #9aa3b8); }
+.vg-cl-streaks { position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(100deg, transparent 0 9px, rgba(220,225,255,.08) 9px 11px); }
+.vg-cl-ball { position: absolute; left: 50%; top: 40px; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; z-index: 0;
+  border: 2px solid rgba(220,225,255,.28); box-shadow: inset 0 0 0 7px rgba(220,225,255,.06); }
 /* Europa League: Schwarz mit orangen Diagonalstreifen */
 .vg-card.rttf-el { color: #ff8a00; border-color: #ff8a00; box-shadow: 0 0 14px rgba(255,138,0,.45);
   background: linear-gradient(160deg, #262626 0%, #121212 55%, #2e1500 100%); }
@@ -8298,7 +8300,7 @@ function vgCard(v) {
   const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
-    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-starball">${Array.from({ length: 8 }, (_, i) => `<i style="transform:rotate(${i * 45 + 22.5}deg) translateY(-22px)">★</i>`).join('')}</span>`
+    ${sp === 'ballon' ? '<span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? '<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-ball"></span>'
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
