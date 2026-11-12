@@ -645,10 +645,27 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 @media (prefers-reduced-motion: reduce) { .vg-gem { animation: none; } }
 
 /* Weg ins Finale: Europa League (Orange) und Conference League (Grün) */
-.vg-card.rttf-el { color: #ff8a00; border-color: #ff8a00; background: linear-gradient(160deg, #2a2a2a 0%, #141414 50%, #3a1a00 100%); box-shadow: 0 0 14px rgba(255,138,0,.45); }
-.vg-card.rttf-el em { color: #ff8a00; }
-.vg-card.rttf-ecl { color: #2fe08a; border-color: #2fe08a; background: linear-gradient(160deg, #0f2a1f 0%, #07140e 55%, #04241a 100%); box-shadow: 0 0 14px rgba(47,224,138,.4); }
-.vg-card.rttf-ecl em { color: #2fe08a; }
+/* Weg ins Finale: je Wettbewerb eigener, schlichter Look mit Wettbewerbsname oben und Band unten */
+.vg-card.rttf b, .vg-card.rttf small { position: relative; z-index: 1; }
+.vg-card.rttf em { z-index: 1; padding: 2px 0; bottom: 4px; }
+.vg-comp { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 5.5px/1 var(--font-body); letter-spacing: .4px; opacity: .85; z-index: 1; white-space: nowrap; }
+/* Champions League: Sternenball und Silber */
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) { background: radial-gradient(circle at 50% 40%, #1f3d9e 0%, #0b1a4a 55%, #050a24 100%); border-color: #dfe6ff; box-shadow: 0 0 14px rgba(170,190,255,.5); }
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) em { color: #0b1a4a; background: linear-gradient(90deg, #aab4c8, #ffffff, #aab4c8); }
+.vg-starball { position: absolute; left: 50%; top: 36px; width: 0; height: 0; z-index: 0; }
+.vg-starball i { position: absolute; left: -4px; top: -5px; font-style: normal; font-size: 8px; color: rgba(255,255,255,.35); transform-origin: 4px 5px; }
+/* Europa League: Schwarz mit orangen Diagonalstreifen */
+.vg-card.rttf-el { color: #ff8a00; border-color: #ff8a00; box-shadow: 0 0 14px rgba(255,138,0,.45);
+  background: linear-gradient(160deg, #262626 0%, #121212 55%, #2e1500 100%); }
+.vg-card.rttf-el em { color: #1a0d00; background: linear-gradient(90deg, #c96a00, #ffa53a, #c96a00); }
+.vg-el-lines { position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(135deg, rgba(255,138,0,.12) 0 2px, transparent 2px 10px); }
+/* Conference League: Dunkelgrün mit Innenrahmen und Rauten */
+.vg-card.rttf-ecl { color: #2fe08a; border-color: #2fe08a; box-shadow: 0 0 14px rgba(47,224,138,.4);
+  background: linear-gradient(160deg, #0f2a1f 0%, #07140e 55%, #04241a 100%); }
+.vg-card.rttf-ecl em { color: #04241a; background: linear-gradient(90deg, #17a865, #5cf3a8, #17a865); }
+.vg-ecl-frame { position: absolute; inset: 13px 4px 4px; border: 1px solid rgba(47,224,138,.55); border-radius: 7px 7px 14px 14px; z-index: 0; }
+.vg-ecl-diamonds { position: absolute; inset: 0; z-index: 0; opacity: .14;
+  background: repeating-linear-gradient(45deg, #2fe08a 0 1px, transparent 1px 11px), repeating-linear-gradient(-45deg, #2fe08a 0 1px, transparent 1px 11px); }
 
 /* Weltmeister-Karte: Weinrot und Gold */
 .vg-card.wm { color: #ffe08a; border: 2px solid transparent; isolation: isolate;
