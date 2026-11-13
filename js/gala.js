@@ -80,9 +80,11 @@ function videoGameRating() {
   const cont = S.titles.find(t => t.endsWith(` ${S.year}`) && /^(Europameister|Copa-América-Sieger|Afrikameister|Asienmeister|Gold-Cup-Sieger) /.test(t));
   // Meister geworden: Karte im Stil der jeweiligen Liga
   const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
-  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? (cont.startsWith('Europameister') ? 'euro' : 'cont') : toty ? 'toty' : rttf ? 'rttf' : afc ? 'rttf-afc' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
-  const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-afc': 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
-  S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
+  // Pokalsieger: Karte in den Landesfarben des Pokals
+  const cupL = LEAGUES.find(l => S.titles.includes(`${l.cup}-Sieger ${last}`));
+  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? (cont.startsWith('Europameister') ? 'euro' : 'cont') : toty ? 'toty' : rttf ? 'rttf' : afc ? 'rttf-afc' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : cupL ? 'cup' : null;
+  const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-afc': 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1, cup: 1 }[special] || 0;
+  S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : special === 'cup' ? cupL.country : null, leagueName: champ ? champ.name : special === 'cup' ? cupL.cup : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
   // Sonderkarten im Karten-Album sammeln
   if (special) {
@@ -102,10 +104,14 @@ const VG_SPECIAL = {
   'rttf-afc': { label: 'WEG INS FINALE', text: 'Für den Sieg in der AFC Champions League bekommst du die Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
   'rttf-el': { label: 'WEG INS FINALE', text: 'Für den Europa-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Europa League – mit +2 auf deine Wertung!' },
   'rttf-ecl': { label: 'WEG INS FINALE', text: 'Für den Conference-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Conference League – mit +1 auf deine Wertung!' },
+  cup: { label: 'POKALSIEGER', text: 'Für den Pokalsieg bekommst du die silberne Pokalsieger-Karte – mit +1 auf deine Wertung!' },
   potm: { label: 'SPIELER DES MONATS', text: 'Für die Meisterschaft bekommst du eine Sonderkarte „Spieler des Monats“ deiner Liga – mit +1 auf deine Wertung!' },
 };
 // Ligen mit eigenem Kartendesign, alle anderen bekommen ein neutrales Meister-Design
 const POTM_LEAGUES = ['bl', 'bl2', 'pl', 'laliga', 'seriea', 'ligue1'];
+// Pokale mit eigener Schärpe in Landesfarben, alle anderen bekommen eine neutrale
+const CUP_COUNTRIES = ['de', 'en', 'es', 'it', 'fr'];
+const CUP_TROPHY = '<svg class="vg-cup-trophy" viewBox="0 0 40 48"><path d="M10 4h20v4h6c0 8-3 13-8 14-1 4-4 7-7 8v6h6v4H13v-4h6v-6c-3-1-6-4-7-8-5-1-8-6-8-14h6zm-2 8c1 4 2 6 4 7-1-2-1-4-1-7zm24 0h-3c0 3 0 5-1 7 2-1 3-3 4-7z"/></svg>';
 
 // Sternenball als Wasserzeichen der Champions-League-Karte: Sterne in drei Ringen wie eine Kugel
 const CL_STARBALL = [[0, 1], [0.55, 6], [0.95, 10]].flatMap(([r, n]) => Array.from({ length: n }, (_, i) => {
@@ -117,7 +123,7 @@ const CL_STARBALL = [[0, 1], [0.55, 6], [0.95, 10]].flatMap(([r, n]) => Array.fr
 // Kleine Karte im Videospiel-Stil
 function vgCard(v) {
   const sp = v.special;
-  const cls = sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
+  const cls = sp === 'cup' ? `cup cup-${CUP_COUNTRIES.includes(v.league) ? v.league : 'other'}` : sp === 'potm' ? `potm potm-${POTM_LEAGUES.includes(v.league) ? v.league : 'other'}` : sp && sp.startsWith('rttf-') ? `rttf ${sp}` : sp || 'base';
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-ballon-facets"></span><span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-starball">${CL_STARBALL}</span>`
@@ -125,6 +131,7 @@ function vgCard(v) {
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
+    ${sp === 'cup' ? `<span class="vg-league">${esc(v.leagueName || 'Pokal')}</span>${CUP_TROPHY}<span class="vg-cup-sash"></span>` : ''}
     ${sp === 'potm' ? `<span class="vg-league">${esc(v.leagueName)}</span>${['bl', 'laliga'].includes(v.league) ? '<span class="vg-potm-pattern"></span>' : '<span class="vg-potm-shade"></span><span class="vg-potm-edge"></span>'}` : ''}
     <b>${v.rating}</b><small>${esc(v.pos || (S && S.player ? S.player.pos : ''))}</small>${sp ? `<em>${(sp === 'euro' || sp === 'cont') && v.contTitle ? esc(v.contTitle.replace(/-Sieger$/, '').toUpperCase()) : VG_SPECIAL[sp].label}</em>` : ''}</div>`;
 }

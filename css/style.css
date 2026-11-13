@@ -840,3 +840,19 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-afc-rays { position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background: repeating-conic-gradient(from -90deg at 50% 98px, rgba(255,200,90,.14) 0 5deg, transparent 5deg 15deg);
   -webkit-mask: linear-gradient(#000 0 75%, transparent 100%); mask: linear-gradient(#000 0 75%, transparent 100%); }
+
+/* Pokalsieger: Silberkarte mit Schärpe in Landesfarben */
+.vg-card.cup { color: #26323a; border: 2px solid #e9edf0; box-shadow: 0 0 10px rgba(200,210,220,.7);
+  background: linear-gradient(135deg, #f4f6f8 0%, #c3cbd1 35%, #f9fbfc 55%, #9aa5ad 100%);
+  --c1: #35505e; --c2: #1c2b33; --c3: #c9d3d8; }
+.vg-card.cup b, .vg-card.cup small, .vg-card.cup .vg-league { position: relative; z-index: 1; }
+.vg-card.cup .vg-league { position: absolute; }
+.vg-card.cup em { z-index: 1; color: #26323a; background: linear-gradient(90deg, #c9d1d7, #ffffff, #c9d1d7); padding: 2px 0; bottom: 4px; }
+.vg-cup-trophy { position: absolute; left: 50%; top: 30px; width: 40px; margin-left: -20px; z-index: 0; fill: rgba(60,70,80,.12); pointer-events: none; }
+.vg-cup-sash { position: absolute; left: -30%; right: -30%; top: 71px; height: 10px; transform: rotate(-16deg); z-index: 0; opacity: .85; pointer-events: none;
+  background: linear-gradient(var(--c1) 0 33%, var(--c2) 33% 66%, var(--c3) 66%); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.vg-card.cup-de { --c1: #1a1a1a; --c2: #dd0000; --c3: #ffce00; }
+.vg-card.cup-en { --c1: #012169; --c2: #c8102e; --c3: #ffffff; }
+.vg-card.cup-es { --c1: #aa151b; --c2: #7a0d12; --c3: #f1bf00; }
+.vg-card.cup-it { --c1: #00703a; --c2: #ce2b37; --c3: #ffffff; }
+.vg-card.cup-fr { --c1: #002395; --c2: #ed2939; --c3: #ffffff; }
