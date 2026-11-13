@@ -3,7 +3,7 @@
 // ---------- Sammelziele (über alle Karrieren) ----------
 const COLL_KEY = 'fussballkarriere-sammlung';
 const CARD_KINDS = [['wm', 'Weltmeister'], ['ballon', "Ballon d'Or"], ['euro', 'Europameister'], ['cont', 'Kontinentaltitel'], ['toty', 'Team des Jahres'],
-  ['rttf', 'Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League'], ['potm', 'Spieler des Monats'], ['icon', 'Ikone']];
+  ['rttf', 'Champions League'], ['rttf-afc', 'AFC Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League'], ['potm', 'Spieler des Monats'], ['icon', 'Ikone']];
 const POTM_KINDS = [['bl', 'Bundesliga'], ['bl2', '2. Bundesliga'], ['pl', 'Premier League'], ['laliga', 'LaLiga'], ['seriea', 'Serie A'], ['ligue1', 'Ligue 1'], ['other', 'Andere Liga']];
 const potmKind = c => `potm-${POTM_LEAGUES.includes(c.league) ? c.league : 'other'}`;
 
@@ -16,7 +16,7 @@ function saveCollection(c) { try { localStorage.setItem(COLL_KEY, JSON.stringify
 
 // Ältere Karrieren haben kein Karten-Album gespeichert: Karten aus Titeln und Auszeichnungen nachbauen.
 // Wie im Spiel gibt es pro Saison nur eine Sonderkarte, und zwar die wertvollste.
-const CARD_ORDER = ['wm', 'ballon', 'euro', 'cont', 'toty', 'rttf', 'rttf-el', 'rttf-ecl', 'potm'];
+const CARD_ORDER = ['wm', 'ballon', 'euro', 'cont', 'toty', 'rttf', 'rttf-afc', 'rttf-el', 'rttf-ecl', 'potm'];
 function cardsFromRecord(titles, awards, legacyTitle) {
   const byYear = {};
   const put = (y, card) => { (byYear[y] = byYear[y] || []).push(card); };
@@ -25,6 +25,7 @@ function cardsFromRecord(titles, awards, legacyTitle) {
     const y = seasonYear(t);
     if (y) {
       if (isCLTitle(t)) put(y, { special: 'rttf' });
+      else if (/^AFC[- ]Champions[- ]League/.test(t)) put(y, { special: 'rttf-afc' });
       else if (/^Europa[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-el' });
       else if (/^Conference[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-ecl' });
       else { const L = LEAGUES.find(l => t.startsWith(`${l.champion} (`)); if (L) put(y, { special: 'potm', league: L.id }); }

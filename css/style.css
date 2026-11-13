@@ -676,9 +676,9 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.rttf em { z-index: 1; padding: 2px 0; bottom: 4px; }
 .vg-comp { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 5.5px/1 var(--font-body); letter-spacing: .4px; opacity: .85; z-index: 1; white-space: nowrap; }
 /* Champions League: Violett bis Schwarz, silberne Lichtstreifen und Ball-Umriss */
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) { color: #eef1ff; border-color: #c7cde0; box-shadow: 0 0 14px rgba(150,120,255,.45);
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl):not(.rttf-afc) { color: #eef1ff; border-color: #c7cde0; box-shadow: 0 0 14px rgba(150,120,255,.45);
   background: linear-gradient(170deg, #0a267c 0%, #17399e 26%, #3a2a9e 48%, #5a1f9a 72%, #6c18ac 100%); }
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) em { color: #1a1060; background: linear-gradient(90deg, #9aa3b8, #ffffff, #9aa3b8); }
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl):not(.rttf-afc) em { color: #1a1060; background: linear-gradient(90deg, #9aa3b8, #ffffff, #9aa3b8); }
 .vg-cl-streaks { position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(100deg, transparent 0 9px, rgba(220,225,255,.08) 9px 11px); }
 .vg-cl-ball { position: absolute; left: 50%; top: 40px; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; z-index: 0;
   border: 2px solid rgba(220,225,255,.28); box-shadow: inset 0 0 0 7px rgba(220,225,255,.06); }
@@ -829,3 +829,14 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .pstep.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
 .pstep.next { opacity: .9; box-shadow: inset 0 0 0 1px var(--muted); }
 .rule-note { border-left: 3px solid #b06cff; }
+
+/* AFC Champions League: aufgehende Sonne über dem Nachthimmel */
+.vg-card.rttf-afc { color: #fff; border-color: #f2c14e; box-shadow: 0 0 14px rgba(242,193,78,.55);
+  background: linear-gradient(180deg, #0b1a3a 0%, #123b5e 55%, #0d6b6b 100%); }
+.vg-card.rttf-afc .vg-comp { color: #f2c14e; font-size: 5px; letter-spacing: .2px; }
+.vg-card.rttf-afc em { color: #1a1206; background: linear-gradient(#f7d77c, #d9a531); }
+.vg-afc-sun { position: absolute; left: 50%; top: 58px; width: 80px; height: 80px; margin-left: -40px; border-radius: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,196,80,.55) 0 30%, rgba(255,140,40,.18) 55%, transparent 70%); }
+.vg-afc-rays { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-conic-gradient(from -90deg at 50% 98px, rgba(255,200,90,.14) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: linear-gradient(#000 0 75%, transparent 100%); mask: linear-gradient(#000 0 75%, transparent 100%); }

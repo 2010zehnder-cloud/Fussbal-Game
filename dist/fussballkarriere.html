@@ -681,9 +681,9 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.rttf em { z-index: 1; padding: 2px 0; bottom: 4px; }
 .vg-comp { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font: 700 5.5px/1 var(--font-body); letter-spacing: .4px; opacity: .85; z-index: 1; white-space: nowrap; }
 /* Champions League: Violett bis Schwarz, silberne Lichtstreifen und Ball-Umriss */
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) { color: #eef1ff; border-color: #c7cde0; box-shadow: 0 0 14px rgba(150,120,255,.45);
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl):not(.rttf-afc) { color: #eef1ff; border-color: #c7cde0; box-shadow: 0 0 14px rgba(150,120,255,.45);
   background: linear-gradient(170deg, #0a267c 0%, #17399e 26%, #3a2a9e 48%, #5a1f9a 72%, #6c18ac 100%); }
-.vg-card.rttf:not(.rttf-el):not(.rttf-ecl) em { color: #1a1060; background: linear-gradient(90deg, #9aa3b8, #ffffff, #9aa3b8); }
+.vg-card.rttf:not(.rttf-el):not(.rttf-ecl):not(.rttf-afc) em { color: #1a1060; background: linear-gradient(90deg, #9aa3b8, #ffffff, #9aa3b8); }
 .vg-cl-streaks { position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(100deg, transparent 0 9px, rgba(220,225,255,.08) 9px 11px); }
 .vg-cl-ball { position: absolute; left: 50%; top: 40px; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; z-index: 0;
   border: 2px solid rgba(220,225,255,.28); box-shadow: inset 0 0 0 7px rgba(220,225,255,.06); }
@@ -834,6 +834,17 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .pstep.got { opacity: 1; box-shadow: inset 0 0 0 1px var(--gold); }
 .pstep.next { opacity: .9; box-shadow: inset 0 0 0 1px var(--muted); }
 .rule-note { border-left: 3px solid #b06cff; }
+
+/* AFC Champions League: aufgehende Sonne über dem Nachthimmel */
+.vg-card.rttf-afc { color: #fff; border-color: #f2c14e; box-shadow: 0 0 14px rgba(242,193,78,.55);
+  background: linear-gradient(180deg, #0b1a3a 0%, #123b5e 55%, #0d6b6b 100%); }
+.vg-card.rttf-afc .vg-comp { color: #f2c14e; font-size: 5px; letter-spacing: .2px; }
+.vg-card.rttf-afc em { color: #1a1206; background: linear-gradient(#f7d77c, #d9a531); }
+.vg-afc-sun { position: absolute; left: 50%; top: 58px; width: 80px; height: 80px; margin-left: -40px; border-radius: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,196,80,.55) 0 30%, rgba(255,140,40,.18) 55%, transparent 70%); }
+.vg-afc-rays { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-conic-gradient(from -90deg at 50% 98px, rgba(255,200,90,.14) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: linear-gradient(#000 0 75%, transparent 100%); mask: linear-gradient(#000 0 75%, transparent 100%); }
 
 </style>
 <header class="top"><span>⚽ Fußballkarriere</span><span class="hbtns"><button id="home-btn" class="helpbtn" type="button" aria-label="Zum Hauptmenü" title="Zum Hauptmenü" hidden>🏠<span class="hl"> Menü</span></button><button id="settings-btn" class="helpbtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button><button id="help-btn" class="helpbtn" type="button" aria-label="Hilfe">?<span class="hl"> Hilfe</span></button></span></header>
@@ -8341,13 +8352,14 @@ function videoGameRating() {
   const rttf = S.titles.some(t => t.endsWith(last) && isCLTitle(t));
   const el = S.titles.some(t => t.endsWith(last) && /^Europa[- ]League-Sieger/.test(t));
   const ecl = S.titles.some(t => t.endsWith(last) && /^Conference[- ]League-Sieger/.test(t));
+  const afc = S.titles.some(t => t.endsWith(last) && /^AFC[- ]Champions[- ]League/.test(t));
   // Turniere mit der Nationalmannschaft werden mit der Jahreszahl des Sommers gespeichert (z. B. „Weltmeister 2034“)
   const wm = S.titles.includes(`Weltmeister ${S.year}`);
   const cont = S.titles.find(t => t.endsWith(` ${S.year}`) && /^(Europameister|Copa-América-Sieger|Afrikameister|Asienmeister|Gold-Cup-Sieger) /.test(t));
   // Meister geworden: Karte im Stil der jeweiligen Liga
   const champ = LEAGUES.find(l => S.titles.some(t => t === `${l.champion} ${last}`));
-  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? (cont.startsWith('Europameister') ? 'euro' : 'cont') : toty ? 'toty' : rttf ? 'rttf' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
-  const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
+  const special = wm ? 'wm' : ballon ? 'ballon' : cont ? (cont.startsWith('Europameister') ? 'euro' : 'cont') : toty ? 'toty' : rttf ? 'rttf' : afc ? 'rttf-afc' : el ? 'rttf-el' : ecl ? 'rttf-ecl' : champ ? 'potm' : null;
+  const bonus = { wm: 3, ballon: 3, euro: 2, cont: 2, toty: 2, rttf: 2, 'rttf-afc': 2, 'rttf-el': 2, 'rttf-ecl': 1, potm: 1 }[special] || 0;
   S.vg = { rating: Math.min(99, r + bonus), base: r, special, contTitle: cont ? cont.replace(/ \d{4}$/, '') : null, league: champ ? champ.id : null, leagueName: champ ? champ.name : null,
     year: S.year, old, reacted: false, title: `KICK ${String((S.year + 1) % 100).padStart(2, '0')}` };
   // Sonderkarten im Karten-Album sammeln
@@ -8365,6 +8377,7 @@ const VG_SPECIAL = {
   ballon: { label: "BALLON D'OR", text: "Für den Ballon d'Or bekommst du die goldene Diamant-Karte – mit +3 auf deine Wertung!" },
   toty: { label: 'TEAM DES JAHRES', text: 'Als Spieler der Saison bekommst du eine Sonderkarte im Team des Jahres – mit +2 auf deine Wertung!' },
   rttf: { label: 'WEG INS FINALE', text: 'Für den Champions-League-Sieg bekommst du eine Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
+  'rttf-afc': { label: 'WEG INS FINALE', text: 'Für den Sieg in der AFC Champions League bekommst du die Sonderkarte „Weg ins Finale“ – mit +2 auf deine Wertung!' },
   'rttf-el': { label: 'WEG INS FINALE', text: 'Für den Europa-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Europa League – mit +2 auf deine Wertung!' },
   'rttf-ecl': { label: 'WEG INS FINALE', text: 'Für den Conference-League-Sieg bekommst du die Sonderkarte „Weg ins Finale“ der Conference League – mit +1 auf deine Wertung!' },
   potm: { label: 'SPIELER DES MONATS', text: 'Für die Meisterschaft bekommst du eine Sonderkarte „Spieler des Monats“ deiner Liga – mit +1 auf deine Wertung!' },
@@ -8386,6 +8399,7 @@ function vgCard(v) {
   return `<div class="vg-card ${cls}">
     ${sp === 'wm' ? '<span class="vg-wm-swirl"></span><span class="vg-wm-cup">🏆</span><span class="vg-wm-band"></span><span class="vg-wm-star">★</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span><span class="vg-sparkle s3">✦</span>' : sp === 'euro' ? `<span class="vg-euro-ring">${Array.from({ length: 12 }, (_, i) => `<i style="transform:rotate(${i * 30}deg) translateY(-22px)">★</i>`).join('')}</span><span class="vg-euro-band"></span>` : sp === 'cont' ? '<span class="vg-cont-sun"></span><span class="vg-cont-band"></span>' : ''}
     ${sp === 'ballon' ? '<span class="vg-ballon-facets"></span><span class="vg-gem">💎</span><span class="vg-gem s2">💎</span><span class="vg-gem s3">💎</span>' : sp === 'toty' ? '<span class="vg-toty-sky"></span><span class="vg-toty-frame"></span><span class="vg-toty-xi">XI</span><span class="vg-sparkle">✦</span><span class="vg-sparkle s2">✦</span>' : sp === 'rttf' ? `<span class="vg-comp">CHAMPIONS LEAGUE</span><span class="vg-cl-streaks"></span><span class="vg-cl-starball">${CL_STARBALL}</span>`
+      : sp === 'rttf-afc' ? '<span class="vg-comp">AFC CHAMPIONS LEAGUE</span><span class="vg-afc-sun"></span><span class="vg-afc-rays"></span>'
       : sp === 'rttf-el' ? '<span class="vg-comp">EUROPA LEAGUE</span><span class="vg-el-lines"></span>'
       : sp === 'rttf-ecl' ? '<span class="vg-comp">CONFERENCE LEAGUE</span><span class="vg-ecl-frame"></span><span class="vg-ecl-diamonds"></span>' : ''}
     ${sp === 'icon' ? '<span class="vg-icon-glow"></span><span class="vg-icon-crown">👑</span><span class="vg-icon-star l">✦</span><span class="vg-icon-star r">✦</span>' : ''}
@@ -8867,7 +8881,7 @@ function renderDeadline() {
 // ---------- Sammelziele (über alle Karrieren) ----------
 const COLL_KEY = 'fussballkarriere-sammlung';
 const CARD_KINDS = [['wm', 'Weltmeister'], ['ballon', "Ballon d'Or"], ['euro', 'Europameister'], ['cont', 'Kontinentaltitel'], ['toty', 'Team des Jahres'],
-  ['rttf', 'Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League'], ['potm', 'Spieler des Monats'], ['icon', 'Ikone']];
+  ['rttf', 'Champions League'], ['rttf-afc', 'AFC Champions League'], ['rttf-el', 'Europa League'], ['rttf-ecl', 'Conference League'], ['potm', 'Spieler des Monats'], ['icon', 'Ikone']];
 const POTM_KINDS = [['bl', 'Bundesliga'], ['bl2', '2. Bundesliga'], ['pl', 'Premier League'], ['laliga', 'LaLiga'], ['seriea', 'Serie A'], ['ligue1', 'Ligue 1'], ['other', 'Andere Liga']];
 const potmKind = c => `potm-${POTM_LEAGUES.includes(c.league) ? c.league : 'other'}`;
 
@@ -8880,7 +8894,7 @@ function saveCollection(c) { try { localStorage.setItem(COLL_KEY, JSON.stringify
 
 // Ältere Karrieren haben kein Karten-Album gespeichert: Karten aus Titeln und Auszeichnungen nachbauen.
 // Wie im Spiel gibt es pro Saison nur eine Sonderkarte, und zwar die wertvollste.
-const CARD_ORDER = ['wm', 'ballon', 'euro', 'cont', 'toty', 'rttf', 'rttf-el', 'rttf-ecl', 'potm'];
+const CARD_ORDER = ['wm', 'ballon', 'euro', 'cont', 'toty', 'rttf', 'rttf-afc', 'rttf-el', 'rttf-ecl', 'potm'];
 function cardsFromRecord(titles, awards, legacyTitle) {
   const byYear = {};
   const put = (y, card) => { (byYear[y] = byYear[y] || []).push(card); };
@@ -8889,6 +8903,7 @@ function cardsFromRecord(titles, awards, legacyTitle) {
     const y = seasonYear(t);
     if (y) {
       if (isCLTitle(t)) put(y, { special: 'rttf' });
+      else if (/^AFC[- ]Champions[- ]League/.test(t)) put(y, { special: 'rttf-afc' });
       else if (/^Europa[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-el' });
       else if (/^Conference[- ]League-Sieger/.test(t)) put(y, { special: 'rttf-ecl' });
       else { const L = LEAGUES.find(l => t.startsWith(`${l.champion} (`)); if (L) put(y, { special: 'potm', league: L.id }); }
