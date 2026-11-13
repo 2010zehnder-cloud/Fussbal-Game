@@ -54,6 +54,10 @@ function money(mio) {
   return `${neg}${a < 10 ? fmt1(a) : Math.round(a)} Mio. €`;
 }
 
+// Ein Superstar zieht eine schwächere Mannschaft stärker mit: bis zu 1,5-fach bei Teamstärke 74 oder weniger
+// (nur wenn du besser bist als die Mannschaft, ein schwächerer Spieler zieht nicht stärker runter)
+const starGap = (rating, str) => (rating - str) * (rating > str ? 1 + 0.5 * clamp((84 - str) / 10, 0, 1) : 1);
+
 // Jahresgehalt (brutto, Mio. €) je nach Stärke, Liga und Rolle
 function salaryFor(rating, club, role) {
   const wage = LEAGUE_WAGE[S.clubs[club].league] || 0.5;
@@ -657,7 +661,7 @@ function endSeason() {
 
   // Spielerbonus für die Mannschaft
   const share = ROLE_SHARE[se.role];
-  const bonus = youth ? 0 : ((p.rating - str) * 0.025 + p.form * 0.012) * (se.role === 'Stammspieler' ? 1 : se.role === 'Rotation' ? 0.5 : 0.1);
+  const bonus = youth ? 0 : (starGap(p.rating, str) * 0.025 + p.form * 0.012) * (se.role === 'Stammspieler' ? 1 : se.role === 'Rotation' ? 0.5 : 0.1);
 
   // Alle Ligen simulieren
   const tables = {};
@@ -683,7 +687,7 @@ function endSeason() {
     euroGames = Math.round(matches * (se.role === 'Stammspieler' ? 0.85 : se.role === 'Rotation' ? 0.55 : 0.2));
   }
   const games = leagueGames + cupGames + euroGames;
-  const playStr = str + (se.role === 'Stammspieler' ? (p.rating - str) * 0.1 : 0);
+  const playStr = str + (se.role === 'Stammspieler' ? starGap(p.rating, str) * 0.1 : 0);
   if (cupRes) queueLiveFinal(cupRes, 'cup', `${L.cup}-Sieger`, L.cup, playStr);
   if (euroRes) queueLiveFinal(euroRes, 'euro', compTitle(euroName()), euroName(), playStr);
 
@@ -863,7 +867,7 @@ function endSeason() {
 function cupRun(club) {
   const L = clubLeague(club);
   const pool = Object.keys(S.clubs).filter(n => n !== club && clubLeague(n).country === L.country).map(n => ({ name: n, str: clubStr(n) }));
-  return knockout(clubStr(club) + (S.season.role === 'Stammspieler' ? (S.player.rating - clubStr(club)) * 0.1 : 0),
+  return knockout(clubStr(club) + (S.season.role === 'Stammspieler' ? starGap(S.player.rating, clubStr(club)) * 0.1 : 0),
     ['1. Runde', '2. Runde', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'], pool, 4.5, true);
 }
 
@@ -882,7 +886,7 @@ function euroPool(club, comp) {
 function europeRun(club, comp) {
   const pool = euroPool(club, comp);
   const avg = pool.reduce((s, x) => s + x.str, 0) / Math.max(1, pool.length);
-  const bonus = S.season.role === 'Stammspieler' ? (S.player.rating - clubStr(club)) * 0.1 : 0;
+  const bonus = S.season.role === 'Stammspieler' ? starGap(S.player.rating, clubStr(club)) * 0.1 : 0;
   const ownStr = clubStr(club) + bonus;
   // Ligaphase: Weiterkommen hängt von der Stärke ab
   const passLeague = sigmoid((ownStr - (avg - 3)) / 3.5);
