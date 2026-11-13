@@ -334,12 +334,26 @@ function nextStep() {
   S.phase = 'season';
 }
 
+// In der 3. Saison am Stück als Stammspieler mit viel Vertrauen gibt es die Kapitänsbinde fest angeboten
+function captainDue() {
+  if (S.youth || S.loan || S.captainAt === S.clubId || S.player.trust < 65 || !S.season || S.season.role !== 'Stammspieler') return false;
+  let seasons = 0;
+  for (let i = S.history.length - 1; i >= 0; i--) {
+    const h = S.history[i];
+    if (h.club !== S.clubId || h.youth || h.loan) break;
+    seasons++;
+  }
+  return seasons >= 2;
+}
+
 function setupEvent() {
   if (maybeSeriousInjury()) return;
   const pool = EVENTS.filter(e => !S.season.usedEvents.includes(e.id) && (!e.cond || e.cond()));
   const total = pool.reduce((s, e) => s + eventWeight(e), 0);
   let r = Math.random() * total, ev = pool[0];
   for (const e of pool) { r -= eventWeight(e); if (r <= 0) { ev = e; break; } }
+  const cap = EVENTS.find(e => e.id === 'captain');
+  if (cap && !S.season.usedEvents.includes('captain') && captainDue()) ev = cap;
   S.season.usedEvents.push(ev.id);
   markSeen(ev);
   S.current = { type: 'event', id: ev.id, ctx: {}, result: null };
