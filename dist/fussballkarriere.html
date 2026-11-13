@@ -4882,6 +4882,20 @@ function renderBestCoach(list) {
     </div>`;
 }
 
+// Hervorgehobene beste Torwartkarriere (die Liste ist nach Karriere-Wertung sortiert)
+function renderBestKeeper(list) {
+  const best = list.find(e => e.pos === 'TW');
+  if (!best) return '';
+  return `
+    <div class="best-coach">
+      <h3>🧤 Bester Torwart: ${esc(best.name)}</h3>
+      <p class="muted">${best.titles} Titel · ${best.games} Spiele${best.goals ? ` · ${best.goals} ${best.goals === 1 ? 'Tor' : 'Tore'}` : ''}${best.caps ? ` · ${best.caps} Länderspiele` : ''} · Stärke ${best.peak}</p>
+      <details><summary>Ganze Karriere anzeigen</summary>
+        <div class="hof-box">${hofDetail(best)}</div>
+      </details>
+    </div>`;
+}
+
 function renderHallOfFame() {
   const list = recoverHallOfFame();
   if (!list.length) return '';
@@ -4890,6 +4904,7 @@ function renderHallOfFame() {
     <h2>Ruhmeshalle</h2>
     <p class="muted">Deine besten beendeten Karrieren auf diesem Gerät. Tippe auf eine Karriere für alle Titel und Auszeichnungen.</p>
     ${renderBestCoach(list)}
+    ${renderBestKeeper(list)}
     <div class="scroll"><table class="hof">
       <thead><tr><th>#</th><th>Spieler</th><th>Status</th><th>Sp</th><th>T</th><th>V</th><th>Titel</th><th>Stä</th></tr></thead>
       <tbody>${list.slice(0, 10).map((e, i) => `<tr class="hof-row" data-hof="${i}"><td>${i + 1}</td>
