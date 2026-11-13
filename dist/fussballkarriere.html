@@ -2347,7 +2347,9 @@ function tournament(res) {
   }
   const pool = NATIONS.filter(n => n.name !== nat.name && (wm || n.conf === nat.conf)).map(n => ({ name: n.name, str: n.str }));
   const rounds = wm ? ['Gruppenphase', 'Sechzehntelfinale', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'] : ['Gruppenphase', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'];
-  const ownStr = nat.str + (starter ? (p.rating - nat.str) * 0.15 : 0);
+  // Ein Superstar zieht ein kleineres Land stärker mit als eine Topnation (Uruguay mit einem 99er: etwa 86)
+  const starPull = 0.15 + 0.15 * clamp((86 - nat.str) / 6, 0, 1);
+  const ownStr = nat.str + (starter ? (p.rating - nat.str) * starPull : 0);
   // Turnierbaum: Gruppenphase und frühe K.-o.-Runden werden simuliert, Halbfinale und Finale live gespielt
   const br = simTournament(ownStr, nat.name, pool, rounds);
   out.bracket = br;
