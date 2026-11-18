@@ -1267,6 +1267,7 @@ function render(keepScroll = false) {
   }
   flushFx();
   maybeWalkout();
+  updateHumpty();
 }
 
 function renderStart() {

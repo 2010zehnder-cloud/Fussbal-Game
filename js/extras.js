@@ -534,3 +534,55 @@ function closeRecap() {
   document.removeEventListener('keydown', recapKeys);
   recap = null;
 }
+
+// ---------- Easter Egg: Humpty Dumpty in der Saison 2036/37 ----------
+const HUMPTY_SVG = `<svg viewBox="0 0 64 72" width="64" height="72" aria-hidden="true">
+  <rect x="2" y="44" width="60" height="26" rx="2" fill="#b5523b"/>
+  <g stroke="#7d3424" stroke-width="1.4">
+    <line x1="2" y1="52.5" x2="62" y2="52.5"/><line x1="2" y1="61" x2="62" y2="61"/>
+    <line x1="16" y1="44" x2="16" y2="52.5"/><line x1="36" y1="44" x2="36" y2="52.5"/><line x1="54" y1="44" x2="54" y2="52.5"/>
+    <line x1="8" y1="52.5" x2="8" y2="61"/><line x1="26" y1="52.5" x2="26" y2="61"/><line x1="46" y1="52.5" x2="46" y2="61"/>
+    <line x1="16" y1="61" x2="16" y2="70"/><line x1="36" y1="61" x2="36" y2="70"/><line x1="54" y1="61" x2="54" y2="70"/>
+  </g>
+  <g class="hd-egg">
+    <path d="M25 42 q-1 9 -3 12" stroke="#2a3d8f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M39 42 q1 9 3 12" stroke="#2a3d8f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="21" cy="56" rx="4" ry="2.4" fill="#222"/><ellipse cx="43" cy="56" rx="4" ry="2.4" fill="#222"/>
+    <ellipse cx="32" cy="26" rx="15" ry="19" fill="#fbf3dc" stroke="#d9c79a" stroke-width="1.2"/>
+    <path d="M17.6 31 Q32 35 46.4 31 L46 35 Q32 39 18 35 Z" fill="#2a3d8f"/>
+    <path d="M28 33 l-5 -3 v6 z M36 33 l5 -3 v6 z" fill="#d6332b"/><circle cx="32" cy="33" r="1.8" fill="#d6332b"/>
+    <path d="M18 30 q-6 4 -5 10" stroke="#fbf3dc" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <path d="M46 30 q6 4 5 10" stroke="#fbf3dc" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="27" cy="20" rx="2" ry="2.6" fill="#222"/><ellipse cx="37" cy="20" rx="2" ry="2.6" fill="#222"/>
+    <circle cx="27.6" cy="19.2" r=".7" fill="#fff"/><circle cx="37.6" cy="19.2" r=".7" fill="#fff"/>
+    <path d="M24 15.5 q3 -2 5 0 M35 15.5 q3 -2 5 0" stroke="#7a5a2a" stroke-width="1" fill="none"/>
+    <path d="M26 25.5 q6 5 12 0" stroke="#222" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <circle cx="23" cy="24" r="1.8" fill="#f2a7a0" opacity=".7"/><circle cx="41" cy="24" r="1.8" fill="#f2a7a0" opacity=".7"/>
+  </g>
+  <g class="hd-broken">
+    <ellipse cx="32" cy="64" rx="13" ry="4.5" fill="#ffd23f"/><ellipse cx="32" cy="63.5" rx="5" ry="2.6" fill="#f5a300"/>
+    <path d="M14 66 q1 -9 8 -10 l-2 4 3 1 -2 4 3 1 z" fill="#fbf3dc" stroke="#d9c79a" stroke-width="1"/>
+    <path d="M50 66 q-1 -9 -8 -10 l2 4 -3 1 2 4 -3 1 z" fill="#fbf3dc" stroke="#d9c79a" stroke-width="1"/>
+  </g>
+</svg>`;
+
+// Sitzt nur in der Saison 2036/37 unten rechts; antippen lässt ihn von der Mauer fallen
+function updateHumpty() {
+  let el = document.getElementById('humpty');
+  const show = !!(S && S.player && S.year === 2036 && S.phase !== 'create');
+  if (!show) { if (el) el.remove(); return; }
+  if (el) return;
+  el = document.createElement('button');
+  el.id = 'humpty';
+  el.type = 'button';
+  el.title = 'Humpty Dumpty sat on a wall …';
+  el.setAttribute('aria-label', 'Humpty Dumpty');
+  el.innerHTML = HUMPTY_SVG;
+  el.addEventListener('click', () => {
+    if (el.classList.contains('falling') || el.classList.contains('broken')) return;
+    el.classList.add('falling');
+    setTimeout(() => { el.classList.remove('falling'); el.classList.add('broken'); }, 700);
+    setTimeout(() => el.classList.remove('broken'), 3200);
+  });
+  document.body.append(el);
+}

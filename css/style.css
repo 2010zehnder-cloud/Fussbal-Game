@@ -856,3 +856,15 @@ img.crest.logo { border-radius: 0; background: none; object-fit: contain; paddin
 .vg-card.cup-es { --c1: #aa151b; --c2: #f1bf00; --c3: #aa151b; }
 .vg-card.cup-it { --c1: #009246; --c2: #ffffff; --c3: #ce2b37; }
 .vg-card.cup-fr { --c1: #002395; --c2: #ffffff; --c3: #ed2939; }
+
+/* Easter Egg: Humpty Dumpty (Saison 2036/37) */
+#humpty { position: fixed; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 30; padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; -webkit-tap-highlight-color: transparent; }
+#humpty svg { overflow: visible; }
+#humpty .hd-egg { transform-box: view-box; transform-origin: 32px 44px; animation: hd-wobble 3s ease-in-out infinite; }
+#humpty .hd-broken { opacity: 0; transition: opacity .2s; }
+#humpty.falling .hd-egg { animation: hd-fall .7s ease-in forwards; }
+#humpty.broken .hd-egg { opacity: 0; animation: none; }
+#humpty.broken .hd-broken { opacity: 1; }
+@keyframes hd-wobble { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
+@keyframes hd-fall { 0% { transform: rotate(0); } 30% { transform: rotate(-20deg) translateY(-3px); } 100% { transform: translate(-6px, 30px) rotate(-100deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #humpty .hd-egg { animation: none; } }
