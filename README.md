@@ -115,6 +115,7 @@ Internationale Wettbewerbe: Champions League, Europa League, Copa Libertadores, 
 - `js/memories.js` – Trophäenschrank, Trikot-Sammlung, Fotoalbum, Abschiedsspiel, Erbe der Eltern, Spielerkarte, Was wäre wenn
 - `js/modes.js` – Startszenarien, Saisonverläufe, Spielstile, Gegenspieler, Pokal-Drama, Geschichten, Herausforderungen, Zufallskarriere
 - `js/goals.js` – Prestige-Stufen, verrückte Regeln und Sammelziele (Prestige und Regeln lassen sich in den Einstellungen ein- und ausschalten)
+- `js/vielfalt.js` – mehr Abwechslung: neue Ereignisse, neue Spielszenen, Geschichten über mehrere Saisons und Interviews
 - `js/variety.js` – Geschichten, Karrierephasen, Saison-Themen, Weltereignisse, seltene Momente, Szenen-Abwechslung
 - `js/career.js` – Saisonziele, Traumverein, Nationalmannschaft, Social Media, Wohnort, Haustiere, Reha, Gericht
 - `js/game.js` – Spiellogik und Oberfläche
