@@ -72,7 +72,7 @@ function shareText() {
     `⚽ Meine Fußballkarriere: ${S.player.name} (${S.player.nation}, ${POSITIONS[S.player.pos].name})`,
     `🏟️ ${S.clubsPlayed.join(' → ')}`,
     `📊 ${t.games} Spiele · ${t.goals} Tore · ${t.assists} Vorlagen · Stärke bis ${S.peak}`,
-    `🏆 ${S.titles.length} Titel${bd ? ` · ${bd}× Ballon d'Or` : ''} · ${S.player.caps} Länderspiele`,
+    `🏆 ${S.titles.length} Titel${bd ? ` · ${bd}× Ballon d'Or` : ''} · ${S.player.caps} Länderspiele (${S.player.intGoals || 0} Tore)`,
     `💰 Vermögen: ${money(S.money)}`,
     `⭐ Status: ${title}${S.phase === 'retired' ? '' : ' (Karriere läuft noch)'}`,
   ].join('\n');

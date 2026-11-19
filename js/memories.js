@@ -348,7 +348,7 @@ function cardData() {
   const pro = S.history.filter(h => !h.youth && !h.banned);
   return {
     name: S.player.name, nation: S.player.nation, pos: S.player.pos, number: S.player.number, peak: S.peak,
-    games: t.games, goals: t.goals, assists: t.assists, caps: S.player.caps || 0, titles: S.titles.length,
+    games: t.games, goals: t.goals, assists: t.assists, caps: S.player.caps || 0, intGoals: S.player.intGoals || 0, titles: S.titles.length,
     ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, club: cs.length ? cs[0].club : S.clubId,
     years: pro.length ? `${pro[0].year}–${pro[pro.length - 1].year + 1}` : '', legacy: legacy()[1], gen: S.gen || 1,
   };
@@ -357,10 +357,10 @@ function cardData() {
 // Auch alte Ruhmeshallen-Einträge ohne gespeicherte Karte bekommen eine
 function cardFromEntry(e) {
   return e.card || { name: e.name, nation: e.nation, pos: e.pos, number: null, peak: e.peak, games: e.games, goals: e.goals,
-    assists: e.assists, caps: e.caps || 0, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
+    assists: e.assists, caps: e.caps || 0, intGoals: e.intGoals, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
 }
 
-const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], ['LS', d.caps], ['BDO', d.ballon]];
+const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], d.intGoals !== undefined ? ['LS/TORE', `${d.caps}/${d.intGoals}`] : ['LS', d.caps], ['BDO', d.ballon]];
 
 function renderCard(d, saveBtn = true) {
   return `
@@ -408,7 +408,7 @@ function cardImage(d) {
   g.fillRect(80, 585, W - 160, 3);
   cardStats(d).forEach(([k, v], i) => {
     const x = 120 + (i % 3) * 180, y = 645 + Math.floor(i / 3) * 85;
-    g.font = 'bold 50px Arial, sans-serif'; g.fillText(String(v), x, y);
+    g.font = 'bold 50px Arial, sans-serif'; g.fillText(String(v), x, y, 170);
     g.font = '24px Arial, sans-serif'; g.fillText(k, x, y + 30);
   });
   g.font = 'bold 30px Arial, sans-serif'; g.fillText(d.legacy || '', W / 2, H - 36);

@@ -3289,6 +3289,7 @@ function renderRetired() {
       <div><b>${t.assists}</b><span>Vorlagen</span></div>
       <div><b>${S.peak}</b><span>Höchste Stärke</span></div>
       <div><b>${p.caps}</b><span>Länderspiele</span></div>
+      <div><b>${p.intGoals || 0}</b><span>Länderspieltore</span></div>
       <div><b>${money(S.money)}</b><span>Vermögen</span></div>
       <div><b>${money(S.earned)}</b><span>Netto verdient</span></div>
     </div>
@@ -4727,7 +4728,7 @@ function saveHallOfFame() {
   const [, title] = legacy();
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
-    titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
+    titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0, intGoals: S.player.intGoals || 0,
     coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), cards: (S.cardAlbum || []).slice(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
@@ -4763,7 +4764,7 @@ function hofDetail(e) {
   const block = (head, list, icon) => (list || []).length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
-  return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
+  return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele${e.intGoals !== undefined ? ` (${e.intGoals} Tore)` : ''}` : ''} · Stärke ${e.peak}</p>`
     + renderStations(e.stations) + (e.cards && e.cards.length ? `<h4>Karten-Album (${e.cards.length})</h4>${cardAlbumGrid(e.cards)}` : '') + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
@@ -4910,7 +4911,7 @@ function renderBestKeeper(list) {
   return `
     <div class="best-coach">
       <h3>🧤 Bester Torwart: ${esc(best.name)}</h3>
-      <p class="muted">${best.titles} Titel · ${best.games} Spiele${best.goals ? ` · ${best.goals} ${best.goals === 1 ? 'Tor' : 'Tore'}` : ''}${best.caps ? ` · ${best.caps} Länderspiele` : ''} · Stärke ${best.peak}</p>
+      <p class="muted">${best.titles} Titel · ${best.games} Spiele${best.goals ? ` · ${best.goals} ${best.goals === 1 ? 'Tor' : 'Tore'}` : ''}${best.caps ? ` · ${best.caps} Länderspiele${best.intGoals !== undefined ? ` (${best.intGoals} Tore)` : ''}` : ''} · Stärke ${best.peak}</p>
       <details><summary>Ganze Karriere anzeigen</summary>
         <div class="hof-box">${hofDetail(best)}</div>
       </details>
@@ -5199,7 +5200,7 @@ function shareText() {
     `⚽ Meine Fußballkarriere: ${S.player.name} (${S.player.nation}, ${POSITIONS[S.player.pos].name})`,
     `🏟️ ${S.clubsPlayed.join(' → ')}`,
     `📊 ${t.games} Spiele · ${t.goals} Tore · ${t.assists} Vorlagen · Stärke bis ${S.peak}`,
-    `🏆 ${S.titles.length} Titel${bd ? ` · ${bd}× Ballon d'Or` : ''} · ${S.player.caps} Länderspiele`,
+    `🏆 ${S.titles.length} Titel${bd ? ` · ${bd}× Ballon d'Or` : ''} · ${S.player.caps} Länderspiele (${S.player.intGoals || 0} Tore)`,
     `💰 Vermögen: ${money(S.money)}`,
     `⭐ Status: ${title}${S.phase === 'retired' ? '' : ' (Karriere läuft noch)'}`,
   ].join('\n');
@@ -7762,7 +7763,7 @@ function cardData() {
   const pro = S.history.filter(h => !h.youth && !h.banned);
   return {
     name: S.player.name, nation: S.player.nation, pos: S.player.pos, number: S.player.number, peak: S.peak,
-    games: t.games, goals: t.goals, assists: t.assists, caps: S.player.caps || 0, titles: S.titles.length,
+    games: t.games, goals: t.goals, assists: t.assists, caps: S.player.caps || 0, intGoals: S.player.intGoals || 0, titles: S.titles.length,
     ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, club: cs.length ? cs[0].club : S.clubId,
     years: pro.length ? `${pro[0].year}–${pro[pro.length - 1].year + 1}` : '', legacy: legacy()[1], gen: S.gen || 1,
   };
@@ -7771,10 +7772,10 @@ function cardData() {
 // Auch alte Ruhmeshallen-Einträge ohne gespeicherte Karte bekommen eine
 function cardFromEntry(e) {
   return e.card || { name: e.name, nation: e.nation, pos: e.pos, number: null, peak: e.peak, games: e.games, goals: e.goals,
-    assists: e.assists, caps: e.caps || 0, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
+    assists: e.assists, caps: e.caps || 0, intGoals: e.intGoals, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
 }
 
-const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], ['LS', d.caps], ['BDO', d.ballon]];
+const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], d.intGoals !== undefined ? ['LS/TORE', `${d.caps}/${d.intGoals}`] : ['LS', d.caps], ['BDO', d.ballon]];
 
 function renderCard(d, saveBtn = true) {
   return `
@@ -7822,7 +7823,7 @@ function cardImage(d) {
   g.fillRect(80, 585, W - 160, 3);
   cardStats(d).forEach(([k, v], i) => {
     const x = 120 + (i % 3) * 180, y = 645 + Math.floor(i / 3) * 85;
-    g.font = 'bold 50px Arial, sans-serif'; g.fillText(String(v), x, y);
+    g.font = 'bold 50px Arial, sans-serif'; g.fillText(String(v), x, y, 170);
     g.font = '24px Arial, sans-serif'; g.fillText(k, x, y + 30);
   });
   g.font = 'bold 30px Arial, sans-serif'; g.fillText(d.legacy || '', W / 2, H - 36);

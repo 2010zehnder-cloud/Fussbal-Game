@@ -90,7 +90,7 @@ function saveHallOfFame() {
   const [, title] = legacy();
   const entry = {
     id: S.hofId, name: S.player.name, nation: S.player.nation, pos: S.player.pos, peak: S.peak, games: t.games, goals: t.goals, assists: t.assists,
-    titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0,
+    titleList: S.titles.slice(), awardList: S.awards.slice(), caps: S.player.caps || 0, intGoals: S.player.intGoals || 0,
     coachList: S.coachDone ? S.coachDone.titles.slice() : [], ...coachClubData(S), stations: playerStations(), cards: (S.cardAlbum || []).slice(), ownerList: S.ownerDone ? S.ownerDone.titles.slice() : [], card: cardData(),
     titles: S.titles.length, ballon: S.awards.filter(a => a.startsWith("Ballon d'Or")).length, money: S.money, title,
     gen: S.gen || 1, score: legacyScore(), coachTitles: S.coachDone ? S.coachDone.titles.length : 0, doping: S.dopeCaught || 0,
@@ -126,7 +126,7 @@ function hofDetail(e) {
   const block = (head, list, icon) => (list || []).length ? `<h4>${head} (${list.length})</h4>${titleLines(list, icon)}` : '';
   const html = block('Titel als Spieler', e.titleList, '🏆') + block('Auszeichnungen', e.awardList, '⭐')
     + ((e.coachList || []).length ? `<h4>Titel als Trainer (${e.coachList.length})</h4>${coachTitleLines(e)}` : '') + block('Titel als Klubbesitzer', e.ownerList || [], '💼');
-  return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele` : ''} · Stärke ${e.peak}</p>`
+  return renderCard(cardFromEntry(e)) + `<p class="muted">${e.games} Spiele · ${e.goals} Tore · ${e.assists ?? '–'} Vorlagen${e.caps ? ` · ${e.caps} Länderspiele${e.intGoals !== undefined ? ` (${e.intGoals} Tore)` : ''}` : ''} · Stärke ${e.peak}</p>`
     + renderStations(e.stations) + (e.cards && e.cards.length ? `<h4>Karten-Album (${e.cards.length})</h4>${cardAlbumGrid(e.cards)}` : '') + (html || '<p class="muted">Keine Titel oder Auszeichnungen gewonnen.</p>');
 }
 
@@ -273,7 +273,7 @@ function renderBestKeeper(list) {
   return `
     <div class="best-coach">
       <h3>🧤 Bester Torwart: ${esc(best.name)}</h3>
-      <p class="muted">${best.titles} Titel · ${best.games} Spiele${best.goals ? ` · ${best.goals} ${best.goals === 1 ? 'Tor' : 'Tore'}` : ''}${best.caps ? ` · ${best.caps} Länderspiele` : ''} · Stärke ${best.peak}</p>
+      <p class="muted">${best.titles} Titel · ${best.games} Spiele${best.goals ? ` · ${best.goals} ${best.goals === 1 ? 'Tor' : 'Tore'}` : ''}${best.caps ? ` · ${best.caps} Länderspiele${best.intGoals !== undefined ? ` (${best.intGoals} Tore)` : ''}` : ''} · Stärke ${best.peak}</p>
       <details><summary>Ganze Karriere anzeigen</summary>
         <div class="hof-box">${hofDetail(best)}</div>
       </details>

@@ -1898,6 +1898,7 @@ function renderRetired() {
       <div><b>${t.assists}</b><span>Vorlagen</span></div>
       <div><b>${S.peak}</b><span>Höchste Stärke</span></div>
       <div><b>${p.caps}</b><span>Länderspiele</span></div>
+      <div><b>${p.intGoals || 0}</b><span>Länderspieltore</span></div>
       <div><b>${money(S.money)}</b><span>Vermögen</span></div>
       <div><b>${money(S.earned)}</b><span>Netto verdient</span></div>
     </div>
