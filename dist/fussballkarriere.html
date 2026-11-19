@@ -3144,7 +3144,10 @@ function totals() {
   return {
     seasons: pro.length,
     games: pro.reduce((s, h) => s + h.games, 0),
-    goals: pro.reduce((s, h) => s + h.goals, 0),
+    // Karrieretore: Vereinstore plus Tore für die Nationalmannschaft (auch in WM- und EM-Finals)
+    goals: pro.reduce((s, h) => s + h.goals, 0) + (S.player.intGoals || 0),
+    clubGoals: pro.reduce((s, h) => s + h.goals, 0),
+    intGoals: S.player.intGoals || 0,
     assists: pro.reduce((s, h) => s + h.assists, 0),
   };
 }
@@ -3157,7 +3160,7 @@ function renderHistory() {
   const t = totals();
   return `
   <section class="card">
-    <details${S.phase === 'retired' ? ' open' : ''}><summary>Karriereverlauf (${t.games} Spiele, ${t.goals} Tore, ${t.assists} Vorlagen)</summary>
+    <details${S.phase === 'retired' ? ' open' : ''}><summary>Karriereverlauf (${t.games} Spiele, ${t.goals} Tore${t.intGoals ? `, davon ${t.intGoals} für ${esc(S.player.nation)}` : ''}, ${t.assists} Vorlagen)</summary>
       <div class="scroll"><table>
         <thead><tr><th>Saison</th><th>Alter</th><th>Verein</th><th>Sp</th><th>T</th><th>V</th><th>Note</th><th>Stä</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
@@ -3289,7 +3292,7 @@ function renderRetired() {
       <div><b>${t.assists}</b><span>Vorlagen</span></div>
       <div><b>${S.peak}</b><span>Höchste Stärke</span></div>
       <div><b>${p.caps}</b><span>Länderspiele</span></div>
-      <div><b>${p.intGoals || 0}</b><span>Länderspieltore</span></div>
+      <div><b>${p.intGoals || 0}</b><span>davon Länderspieltore</span></div>
       <div><b>${money(S.money)}</b><span>Vermögen</span></div>
       <div><b>${money(S.earned)}</b><span>Netto verdient</span></div>
     </div>
@@ -7775,7 +7778,7 @@ function cardFromEntry(e) {
     assists: e.assists, caps: e.caps || 0, intGoals: e.intGoals, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
 }
 
-const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], d.intGoals !== undefined ? ['LS/TORE', `${d.caps}/${d.intGoals}`] : ['LS', d.caps], ['BDO', d.ballon]];
+const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], ['LS', d.caps], ['BDO', d.ballon]];
 
 function renderCard(d, saveBtn = true) {
   return `

@@ -360,7 +360,7 @@ function cardFromEntry(e) {
     assists: e.assists, caps: e.caps || 0, intGoals: e.intGoals, titles: e.titles, ballon: e.ballon, club: null, years: '', legacy: e.title, gen: e.gen || 1 };
 }
 
-const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], d.intGoals !== undefined ? ['LS/TORE', `${d.caps}/${d.intGoals}`] : ['LS', d.caps], ['BDO', d.ballon]];
+const cardStats = d => [['SP', d.games], ['TOR', d.goals], ['VOR', d.assists ?? '–'], ['TIT', d.titles], ['LS', d.caps], ['BDO', d.ballon]];
 
 function renderCard(d, saveBtn = true) {
   return `
