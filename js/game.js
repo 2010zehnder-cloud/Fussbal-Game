@@ -825,7 +825,13 @@ function endSeason() {
     // Ein Superstar als Stammspieler lockt Sponsoren und bessere Mitspieler an, auch ohne Spitzenplatz
     const star = se.role === 'Stammspieler' && p.rating >= str + 10;
     if (up.includes(own)) c.base += 3;
-    else if (pos <= 5 || star) c.base = Math.max(c.base, Math.min(L.id === PROMOTION.lower ? 68 : 85, c.base + (pos <= 5 ? 2 : 1)));
+    else if (pos <= 5 || star) {
+      const step = pos <= 5 ? 2 : 1;
+      // In der höchsten Liga bis 88, ab 84 wird es immer schwerer (halber, ab 86 nur noch ein Viertel des Zuwachses)
+      const grown = L.id === PROMOTION.lower ? Math.min(68, c.base + step)
+        : Math.min(88, c.base + step * (c.base < 84 ? 1 : c.base < 86 ? 0.5 : 0.25));
+      c.base = Math.max(c.base, grown);
+    }
   }
   for (const n of Object.keys(S.clubs)) S.clubs[n].drift = S.clubs[n].drift * 0.6 + rand(-2.5, 2.5);
 
