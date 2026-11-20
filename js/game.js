@@ -629,14 +629,16 @@ function resolveMatch(i) {
 }
 
 // ---------- Saisonende ----------
-function simLeague(id, bonusClub, bonus) {
+function simLeague(id, bonusClub, bonus, starBonus = 0) {
   const clubs = clubsIn(id);
   const strs = clubs.map(clubStr);
   const min = Math.min(...strs), max = Math.max(...strs);
   const games = (clubs.length - 1) * 2;
+  // In Ligen mit kleinem Stärke-Unterschied (z. B. 2. Bundesliga) zählt ein Superstar entsprechend mehr
+  const spreadF = clamp(20 / Math.max(1, max - min), 1, 3);
   const rows = clubs.map((n, i) => {
     let ppg = 0.5 + ((strs[i] - min) / Math.max(1, max - min)) * 1.75 + gauss() * 0.22;
-    if (n === bonusClub) ppg += bonus;
+    if (n === bonusClub) ppg += bonus + starBonus * (starBonus > 0 ? spreadF : 1);
     return { name: n, pts: Math.round(clamp(ppg, 0.3, 2.75) * games), r: Math.random() };
   });
   rows.sort((a, b) => b.pts - a.pts || a.r - b.r);
@@ -663,12 +665,14 @@ function endSeason() {
 
   // Spielerbonus für die Mannschaft
   const share = ROLE_SHARE[se.role];
-  const bonus = youth ? 0 : (starGap(p.rating, str) * 0.025 + p.form * 0.012) * (se.role === 'Stammspieler' ? 1 : se.role === 'Rotation' ? 0.5 : 0.1);
+  const roleF = se.role === 'Stammspieler' ? 1 : se.role === 'Rotation' ? 0.5 : 0.1;
+  const bonus = youth ? 0 : p.form * 0.012 * roleF;
+  const starBonus = youth ? 0 : starGap(p.rating, str) * 0.025 * roleF;
 
   // Alle Ligen simulieren
   const tables = {};
   const teamBonus = bonus + (youth ? 0 : FLOWS[se.flow || 'normal'].bonus + (se.flowBonus || 0));
-  for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, teamBonus);
+  for (const lg of LEAGUES) tables[lg.id] = simLeague(lg.id, own, teamBonus, starBonus);
   const myTable = tables[L.id];
   applyDrama(myTable.rows);
   const pos = myTable.rows.findIndex(r => r.name === own) + 1;
@@ -815,6 +819,14 @@ function endSeason() {
   const down = S.lastTables[PROMOTION.upper].slice(-PROMOTION.count);
   up.forEach(n => { S.clubs[n].league = PROMOTION.upper; });
   down.forEach(n => { S.clubs[n].league = PROMOTION.lower; });
+  // Erfolg macht deinen Verein stärker: Aufstieg und Spitzenplätze bringen Geld und bessere Mitspieler
+  if (!youth && !S.loan) {
+    const c = S.clubs[own];
+    // Ein Superstar als Stammspieler lockt Sponsoren und bessere Mitspieler an, auch ohne Spitzenplatz
+    const star = se.role === 'Stammspieler' && p.rating >= str + 10;
+    if (up.includes(own)) c.base += 5;
+    else if (pos <= 5 || star) c.base = Math.max(c.base, Math.min(L.id === PROMOTION.lower ? 70 : 86, c.base + 2));
+  }
   for (const n of Object.keys(S.clubs)) S.clubs[n].drift = S.clubs[n].drift * 0.6 + rand(-2.5, 2.5);
 
   // Nationalmannschaft / Turnier im Sommer
