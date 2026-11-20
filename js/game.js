@@ -635,7 +635,7 @@ function simLeague(id, bonusClub, bonus, starBonus = 0) {
   const min = Math.min(...strs), max = Math.max(...strs);
   const games = (clubs.length - 1) * 2;
   // In Ligen mit kleinem Stärke-Unterschied (z. B. 2. Bundesliga) zählt ein Superstar entsprechend mehr
-  const spreadF = clamp(20 / Math.max(1, max - min), 1, 3);
+  const spreadF = clamp(20 / Math.max(1, max - min), 1, 2);
   const rows = clubs.map((n, i) => {
     let ppg = 0.5 + ((strs[i] - min) / Math.max(1, max - min)) * 1.75 + gauss() * 0.22;
     if (n === bonusClub) ppg += bonus + starBonus * (starBonus > 0 ? spreadF : 1);
@@ -824,8 +824,8 @@ function endSeason() {
     const c = S.clubs[own];
     // Ein Superstar als Stammspieler lockt Sponsoren und bessere Mitspieler an, auch ohne Spitzenplatz
     const star = se.role === 'Stammspieler' && p.rating >= str + 10;
-    if (up.includes(own)) c.base += 5;
-    else if (pos <= 5 || star) c.base = Math.max(c.base, Math.min(L.id === PROMOTION.lower ? 70 : 86, c.base + 2));
+    if (up.includes(own)) c.base += 3;
+    else if (pos <= 5 || star) c.base = Math.max(c.base, Math.min(L.id === PROMOTION.lower ? 68 : 85, c.base + (pos <= 5 ? 2 : 1)));
   }
   for (const n of Object.keys(S.clubs)) S.clubs[n].drift = S.clubs[n].drift * 0.6 + rand(-2.5, 2.5);
 
